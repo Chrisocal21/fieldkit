@@ -1,0 +1,15 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="32" height="32" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <!-- F: vertical stem -->
+  <line x1="7" y1="7" x2="7" y2="25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <!-- F: top bar -->
+  <line x1="7" y1="7" x2="15" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <!-- F: mid bar -->
+  <line x1="7" y1="16" x2="13" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <!-- K: vertical stem -->
+  <line x1="19" y1="7" x2="19" y2="25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <!-- K: upper diagonal -->
+  <line x1="19" y1="16" x2="26" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <!-- K: lower diagonal -->
+  <line x1="19" y1="16" x2="26" y2="25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,48 @@
+{
+  "name": "FIELDKIT",
+  "short_name": "FIELDKIT",
+  "description": "Free, lightweight operations tool for service businesses",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "any",
+  "scope": "/",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-blue.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-blue-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Jobs",
+      "url": "/jobs",
+      "description": "View and manage jobs"
+    },
+    {
+      "name": "New Quote",
+      "url": "/quotes",
+      "description": "Create a new quote"
+    },
+    {
+      "name": "Schedule",
+      "url": "/schedule",
+      "description": "View job schedule"
+    },
+    {
+      "name": "Inventory",
+      "url": "/inventory",
+      "description": "Check inventory levels"
+    }
+  ]
+}
