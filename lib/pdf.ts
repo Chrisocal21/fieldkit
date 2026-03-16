@@ -36,7 +36,7 @@ export function generateQuotePDF(quote: Quote) {
   
   // Table Header
   doc.setFontSize(9)
-  doc.setFont(undefined, 'bold')
+  doc.setFont('helvetica', 'bold')
   doc.text('Description', 20, yPos)
   doc.text('Qty', 120, yPos)
   doc.text('Price', 145, yPos)
@@ -48,7 +48,7 @@ export function generateQuotePDF(quote: Quote) {
   yPos += 5
   
   // Line Items
-  doc.setFont(undefined, 'normal')
+  doc.setFont('helvetica', 'normal')
   quote.lineItems.forEach((item) => {
     const lineTotal = item.quantity * item.unitPrice
     
@@ -85,7 +85,7 @@ export function generateQuotePDF(quote: Quote) {
   doc.text(`$${tax.toFixed(2)}`, 190, yPos, { align: 'right' })
   yPos += 6
   
-  doc.setFont(undefined, 'bold')
+  doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
   doc.text('TOTAL:', 145, yPos)
   doc.text(`$${total.toFixed(2)}`, 190, yPos, { align: 'right' })
@@ -93,7 +93,7 @@ export function generateQuotePDF(quote: Quote) {
   // Notes
   if (quote.notes) {
     yPos += 15
-    doc.setFont(undefined, 'normal')
+    doc.setFont('helvetica', 'normal')
     doc.setFontSize(10)
     doc.text('NOTES / TERMS:', 20, yPos)
     yPos += 6
