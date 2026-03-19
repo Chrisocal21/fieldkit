@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Job, useJobStore } from '@/store/jobStore'
 import EmptyState from '@/components/shared/EmptyState'
@@ -11,11 +11,19 @@ type ViewMode = 'week' | 'day'
 
 export default function SchedulePage() {
   const router = useRouter()
-  const jobs = useJobStore((state) =>
-    state.jobs.filter((job) => !job.archived && job.dueDate)
-  )
+  const allJobs = useJobStore((state) => state.jobs)
 
+  const [mounted, setMounted] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('week')
+
+  // Prevent hydration mismatch by waiting for client-side mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const jobs = mounted
+    ? allJobs.filter((job) => !job.archived && job.dueDate)
+    : []
 
   const handleJobClick = (job: Job) => {
     router.push(`/jobs?id=${job.id}`)

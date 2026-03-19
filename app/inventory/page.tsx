@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { InventoryItem, useInventoryStore } from '@/store/inventoryStore'
 import EmptyState from '@/components/shared/EmptyState'
 import ItemFormModal from '@/components/inventory/ItemFormModal'
@@ -8,14 +8,22 @@ import AdjustmentLog from '@/components/inventory/AdjustmentLog'
 import QuickAdjustModal from '@/components/inventory/QuickAdjustModal'
 
 export default function InventoryPage() {
-  const items = useInventoryStore((state) => state.items)
+  const allItems = useInventoryStore((state) => state.items)
   const adjustStock = useInventoryStore((state) => state.adjustStock)
 
+  const [mounted, setMounted] = useState(false)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isLogOpen, setIsLogOpen] = useState(false)
   const [isAdjustOpen, setIsAdjustOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
   const [adjustDelta, setAdjustDelta] = useState(1)
+
+  // Prevent hydration mismatch by waiting for client-side mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const items = mounted ? allItems : []
 
   const handleQuickAdjust = (item: InventoryItem, delta: number) => {
     setSelectedItem(item)

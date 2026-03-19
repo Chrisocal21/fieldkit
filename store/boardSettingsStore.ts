@@ -20,10 +20,11 @@ interface BoardSettingsState {
 }
 
 const defaultColumns: BoardColumn[] = [
-  { id: nanoid(), label: 'Quoted', status: 'Quoted', order: 0 },
-  { id: nanoid(), label: 'Scheduled', status: 'Scheduled', order: 1 },
-  { id: nanoid(), label: 'In Progress', status: 'In Progress', order: 2 },
-  { id: nanoid(), label: 'Completed', status: 'Completed', order: 3 },
+  { id: nanoid(), label: 'Draft', status: 'Draft', order: 0 },
+  { id: nanoid(), label: 'Quoted', status: 'Quoted', order: 1 },
+  { id: nanoid(), label: 'Scheduled', status: 'Scheduled', order: 2 },
+  { id: nanoid(), label: 'In Progress', status: 'In Progress', order: 3 },
+  { id: nanoid(), label: 'Completed', status: 'Completed', order: 4 },
 ]
 
 export const useBoardSettingsStore = create<BoardSettingsState>()(

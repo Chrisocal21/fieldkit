@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Job, JobStatus, useJobStore } from '@/store/jobStore'
 import { useTeamStore } from '@/store/teamStore'
 import StatusBadge from '@/components/shared/StatusBadge'
+import { JobQuotesTab } from './JobQuotesTab'
 
 interface JobDrawerProps {
   job: Job | null
@@ -11,12 +12,15 @@ interface JobDrawerProps {
   onClose: () => void
 }
 
+type TabType = 'details' | 'quotes' | 'notes'
+
 export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
   const updateJob = useJobStore((state) => state.updateJob)
   const archiveJob = useJobStore((state) => state.archiveJob)
   const members = useTeamStore((state) => state.members)
 
   const [isEditing, setIsEditing] = useState(false)
+  const [activeTab, setActiveTab] = useState<TabType>('details')
   const [formData, setFormData] = useState<Partial<Job>>({})
 
   useEffect(() => {
@@ -24,12 +28,17 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
       setFormData({
         title: job.title,
         clientName: job.clientName,
+        clientEmail: job.clientEmail,
+        clientPhone: job.clientPhone,
+        siteAddress: job.siteAddress,
         description: job.description,
         status: job.status,
         assigneeId: job.assigneeId,
+        startDate: job.startDate,
         dueDate: job.dueDate,
         notes: job.notes,
       })
+      setActiveTab('details')
     }
   }, [job])
 
@@ -93,127 +102,267 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
                 </div>
               </div>
 
+              {/* Tabs */}
+              <div className="border-b border-gray-200 dark:border-gray-700">
+                <nav className="flex -mb-px px-4 sm:px-6">
+                  <button
+                    onClick={() => setActiveTab('details')}
+                    className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                      activeTab === 'details'
+                        ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                    }`}
+                  >
+                    Details
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('quotes')}
+                    className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                      activeTab === 'quotes'
+                        ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                    }`}
+                  >
+                    Quotes
+                    {job.quotes && job.quotes.length > 0 && (
+                      <span className="ml-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs">
+                        {job.quotes.length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('notes')}
+                    className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                      activeTab === 'notes'
+                        ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                    }`}
+                  >
+                    Notes
+                  </button>
+                </nav>
+              </div>
+
               {/* Content */}
-              <div className="flex-1 px-4 py-6 sm:px-6">
-                <div className="space-y-6">
-                  {/* Status */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Status
-                    </label>
-                    {isEditing ? (
-                      <select
-                        value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value as JobStatus })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      >
-                        <option value="Quoted">Quoted</option>
-                        <option value="Scheduled">Scheduled</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
-                    ) : (
-                      <StatusBadge status={job.status} />
-                    )}
-                  </div>
+              <div className="flex-1 px-4 py-6 sm:px-6 overflow-y-auto">
+                {/* Details Tab */}
+                {activeTab === 'details' && (
+                  <div className="space-y-6">
+                    {/* Status */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Status
+                      </label>
+                      {isEditing ? (
+                        <select
+                          value={formData.status}
+                          onChange={(e) => setFormData({ ...formData, status: e.target.value as JobStatus })}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        >
+                          <option value="Draft">Draft</option>
+                          <option value="Quoted">Quoted</option>
+                          <option value="Scheduled">Scheduled</option>
+                          <option value="In Progress">In Progress</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                      ) : (
+                        <StatusBadge status={job.status} />
+                      )}
+                    </div>
 
-                  {/* Client */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Client
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={formData.clientName}
-                        onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    ) : (
-                      <p className="text-gray-900 dark:text-white">{job.clientName}</p>
-                    )}
-                  </div>
+                    {/* Client Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Client
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={formData.clientName}
+                          onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        />
+                      ) : (
+                        <p className="text-gray-900 dark:text-white">{job.clientName}</p>
+                      )}
+                    </div>
 
-                  {/* Description */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Description
-                    </label>
-                    {isEditing ? (
-                      <textarea
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    ) : (
-                      <p className="text-gray-600 dark:text-gray-300">
-                        {job.description || 'No description'}
+                    {/* Client Email & Phone */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Email
+                        </label>
+                        {isEditing ? (
+                          <input
+                            type="email"
+                            value={formData.clientEmail || ''}
+                            onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          />
+                        ) : (
+                          <p className="text-gray-900 dark:text-white text-sm">
+                            {job.clientEmail || '—'}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Phone
+                        </label>
+                        {isEditing ? (
+                          <input
+                            type="tel"
+                            value={formData.clientPhone || ''}
+                            onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          />
+                        ) : (
+                          <p className="text-gray-900 dark:text-white text-sm">
+                            {job.clientPhone || '—'}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Site Address */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Site/Job Address
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={formData.siteAddress || ''}
+                          onChange={(e) => setFormData({ ...formData, siteAddress: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        />
+                      ) : (
+                        <p className="text-gray-900 dark:text-white">
+                          {job.siteAddress || '—'}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Description
+                      </label>
+                      {isEditing ? (
+                        <textarea
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        />
+                      ) : (
+                        <p className="text-gray-600 dark:text-gray-300">
+                          {job.description || 'No description'}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Assignee */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Assigned To
+                      </label>
+                      {isEditing ? (
+                        <select
+                          value={formData.assigneeId || ''}
+                          onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value || undefined })}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        >
+                          <option value="">Unassigned</option>
+                          {members.map((member) => (
+                            <option key={member.id} value={member.id}>
+                              {member.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <p className="text-gray-900 dark:text-white">
+                          {members.find(m => m.id === job.assigneeId)?.name || 'Unassigned'}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Start & Due Dates */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Start Date
+                        </label>
+                        {isEditing ? (
+                          <input
+                            type="date"
+                            value={formData.startDate ? new Date(formData.startDate).toISOString().split('T')[0] : ''}
+                            onChange={(e) => setFormData({ 
+                              ...formData, 
+                              startDate: e.target.value ? new Date(e.target.value).getTime() : undefined 
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          />
+                        ) : (
+                          <p className="text-gray-900 dark:text-white text-sm">
+                            {job.startDate ? new Date(job.startDate).toLocaleDateString() : '—'}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Due Date
+                        </label>
+                        {isEditing ? (
+                          <input
+                            type="date"
+                            value={formData.dueDate ? new Date(formData.dueDate).toISOString().split('T')[0] : ''}
+                            onChange={(e) => setFormData({ 
+                              ...formData, 
+                              dueDate: e.target.value ? new Date(e.target.value).getTime() : undefined 
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          />
+                        ) : (
+                          <p className="text-gray-900 dark:text-white text-sm">
+                            {job.dueDate ? new Date(job.dueDate).toLocaleDateString() : '—'}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Metadata */}
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Created: {new Date(job.createdAt).toLocaleDateString()}
                       </p>
-                    )}
-                  </div>
-
-                  {/* Assignee */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Assigned To
-                    </label>
-                    {isEditing ? (
-                      <select
-                        value={formData.assigneeId || ''}
-                        onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value || undefined })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      >
-                        <option value="">Unassigned</option>
-                        {members.map((member) => (
-                          <option key={member.id} value={member.id}>
-                            {member.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <p className="text-gray-900 dark:text-white">
-                        {assignee ? assignee.name : 'Unassigned'}
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Updated: {new Date(job.updatedAt).toLocaleDateString()}
                       </p>
-                    )}
+                    </div>
                   </div>
+                )}
 
-                  {/* Due Date */}
+                {/* Quotes Tab */}
+                {activeTab === 'quotes' && (
+                  <JobQuotesTab job={job} />
+                )}
+
+                {/* Notes Tab */}
+                {activeTab === 'notes' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Due Date
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="date"
-                        value={formData.dueDate ? new Date(formData.dueDate).toISOString().split('T')[0] : ''}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          dueDate: e.target.value ? new Date(e.target.value).getTime() : undefined 
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    ) : (
-                      <p className="text-gray-900 dark:text-white">
-                        {job.dueDate
-                          ? new Date(job.dueDate).toLocaleDateString()
-                          : 'No due date'}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Notes */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Notes
+                      Job Notes
                     </label>
                     {isEditing ? (
                       <textarea
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                        rows={4}
+                        rows={12}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        placeholder="Site access codes, special instructions, material notes, etc."
                       />
                     ) : (
                       <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
@@ -221,17 +370,7 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
                       </p>
                     )}
                   </div>
-
-                  {/* Metadata */}
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Created: {new Date(job.createdAt).toLocaleDateString()}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Updated: {new Date(job.updatedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Footer Actions */}
@@ -244,9 +383,13 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
                         setFormData({
                           title: job.title,
                           clientName: job.clientName,
+                          clientEmail: job.clientEmail,
+                          clientPhone: job.clientPhone,
+                          siteAddress: job.siteAddress,
                           description: job.description,
                           status: job.status,
                           assigneeId: job.assigneeId,
+                          startDate: job.startDate,
                           dueDate: job.dueDate,
                           notes: job.notes,
                         })

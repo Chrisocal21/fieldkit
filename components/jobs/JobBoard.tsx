@@ -16,6 +16,8 @@ export default function JobBoard({ onJobClick }: JobBoardProps) {
   const members = useTeamStore((state) => state.members)
   const columns = useBoardSettingsStore((state) => state.columns)
   const [showSettings, setShowSettings] = useState(false)
+  const [draggedJob, setDraggedJob] = useState<Job | null>(null)
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
 
   const getJobsByStatus = (status: string) => {
     return jobs.filter((job) => job.status === status)
@@ -23,6 +25,39 @@ export default function JobBoard({ onJobClick }: JobBoardProps) {
 
   const handleStatusChange = (job: Job, newStatus: string) => {
     updateJob(job.id, { status: newStatus as JobStatus })
+  }
+
+  const handleDragStart = (e: React.DragEvent, job: Job) => {
+    setDraggedJob(job)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/html', e.currentTarget.innerHTML)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedJob(null)
+    setDragOverColumn(null)
+  }
+
+  const handleDragOver = (e: React.DragEvent, columnStatus: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverColumn(columnStatus)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only reset if we're leaving the column entirely
+    if (e.currentTarget === e.target) {
+      setDragOverColumn(null)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent, newStatus: string) => {
+    e.preventDefault()
+    if (draggedJob && draggedJob.status !== newStatus) {
+      handleStatusChange(draggedJob, newStatus)
+    }
+    setDraggedJob(null)
+    setDragOverColumn(null)
   }
 
   return (
@@ -34,7 +69,12 @@ export default function JobBoard({ onJobClick }: JobBoardProps) {
         return (
           <div
             key={column.id}
-            className="flex-shrink-0 w-72 bg-gray-50 dark:bg-gray-900 rounded-lg p-3 flex flex-col h-full"
+            className={`flex-shrink-0 w-72 bg-gray-50 dark:bg-gray-900 rounded-lg p-3 flex flex-col h-full transition-colors ${
+              dragOverColumn === column.status ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
+            }`}
+            onDragOver={(e) => handleDragOver(e, column.status)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, column.status)}
           >
             <div className="flex items-center justify-between mb-3 flex-shrink-0">
               <h3 className="font-medium text-sm text-gray-900 dark:text-white">
@@ -52,8 +92,13 @@ export default function JobBoard({ onJobClick }: JobBoardProps) {
                 return (
                   <div
                     key={job.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, job)}
+                    onDragEnd={handleDragEnd}
                     onClick={() => onJobClick(job)}
-                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2.5 cursor-pointer hover:shadow-md transition-shadow"
+                    className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2.5 cursor-move hover:shadow-md transition-shadow ${
+                      draggedJob?.id === job.id ? 'opacity-50' : ''
+                    }`}
                   >
                     <div className="mb-2">
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">

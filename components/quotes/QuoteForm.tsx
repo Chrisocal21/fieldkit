@@ -1,36 +1,80 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { nanoid } from 'nanoid'
-import { Quote, QuoteLineItem, useQuoteStore } from '@/store/quoteStore'
+import { Quote, QuoteLineItem } from '@/store/quoteStore'
+import { useJobStore } from '@/store/jobStore'
 import QuoteLineItems from './QuoteLineItems'
 
 interface QuoteFormProps {
+  jobId: string  // Required - quotes belong to a job
   quote?: Quote
   isOpen: boolean
   onClose: () => void
-  onSave?: (quote: Quote) => void
 }
 
-export default function QuoteForm({ quote, isOpen, onClose, onSave }: QuoteFormProps) {
-  const addQuote = useQuoteStore((state) => state.addQuote)
-  const updateQuote = useQuoteStore((state) => state.updateQuote)
+export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormProps) {
+  const { jobs, addQuoteToJob, updateJobQuote } = useJobStore()
+  
+  // Get the job to pre-fill client information
+  const job = jobs.find(j => j.id === jobId)
 
   const [formData, setFormData] = useState({
-    clientName: quote?.clientName || '',
-    clientEmail: quote?.clientEmail || '',
-    clientPhone: quote?.clientPhone || '',
-    notes: quote?.notes || '',
-    taxRate: quote?.taxRate || 0,
-    expiryDate: quote?.expiryDate
-      ? new Date(quote.expiryDate).toISOString().split('T')[0]
-      : '',
-    status: quote?.status || ('Draft' as const),
+    clientName: '',
+    clientEmail: '',
+    clientPhone: '',
+    notes: '',
+    taxRate: 0,
+    expiryDate: '',
+    status: 'Draft' as const,
   })
 
-  const [lineItems, setLineItems] = useState<QuoteLineItem[]>(
-    quote?.lineItems || []
-  )
+  const [lineItems, setLineItems] = useState<QuoteLineItem[]>([])
+
+  // Reset form when modal opens or quote changes
+  useEffect(() => {
+    if (isOpen) {
+      if (quote) {
+        // Editing existing quote
+        setFormData({
+          clientName: quote.clientName || '',
+          clientEmail: quote.clientEmail || '',
+          clientPhone: quote.clientPhone || '',
+          notes: quote.notes || '',
+          taxRate: (quote.taxRate || 0) * 100, // Convert decimal to percentage
+          expiryDate: quote.expiryDate
+            ? new Date(quote.expiryDate).toISOString().split('T')[0]
+            : '',
+          status: quote.status || 'Draft',
+        })
+        setLineItems(quote.lineItems || [])
+      } else if (job) {
+        // Creating new quote - pre-fill from job
+        setFormData({
+          clientName: job.clientName || '',
+          clientEmail: job.clientEmail || '',
+          clientPhone: job.clientPhone || '',
+          notes: '',
+          taxRate: 0,
+          expiryDate: '',
+          status: 'Draft',
+        })
+        setLineItems([])
+      } else {
+        // Fallback - empty form
+        setFormData({
+          clientName: '',
+          clientEmail: '',
+          clientPhone: '',
+          notes: '',
+          taxRate: 0,
+          expiryDate: '',
+          status: 'Draft',
+        })
+        setLineItems([])
+      }
+    }
+  }, [isOpen, quote, job])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,13 +93,11 @@ export default function QuoteForm({ quote, isOpen, onClose, onSave }: QuoteFormP
     }
 
     if (quote) {
-      updateQuote(quote.id, quoteData)
+      // Update existing quote
+      updateJobQuote(jobId, quote.id, quoteData)
     } else {
-      addQuote(quoteData)
-    }
-
-    if (onSave && quote) {
-      onSave({ ...quote, ...quoteData })
+      // Create new quote
+      addQuoteToJob(jobId, quoteData)
     }
 
     onClose()

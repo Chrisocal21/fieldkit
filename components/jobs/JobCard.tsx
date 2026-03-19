@@ -28,11 +28,17 @@ export default function JobCard({ job, onClick }: JobCardProps) {
         <StatusBadge status={job.status} className="ml-2 flex-shrink-0" />
       </div>
       
-      <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+      <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
         {job.clientName}
       </p>
       
-      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+      {job.siteAddress && (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 truncate">
+          📍 {job.siteAddress}
+        </p>
+      )}
+      
+      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-3">
         {assignee && <span className="truncate">{assignee.name}</span>}
         {job.dueDate && (
           <span className="ml-auto">

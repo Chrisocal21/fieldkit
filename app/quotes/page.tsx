@@ -1,36 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Quote, useQuoteStore } from '@/store/quoteStore'
 import { useJobStore } from '@/store/jobStore'
 import EmptyState from '@/components/shared/EmptyState'
 import QuoteForm from '@/components/quotes/QuoteForm'
 import QuotePreview from '@/components/quotes/QuotePreview'
+import StatusBadge from '@/components/shared/StatusBadge'
 import { generateQuotePDF } from '@/lib/pdf'
 
 export default function QuotesPage() {
   const router = useRouter()
-  const quotes = useQuoteStore((state) => state.quotes)
-  const addJob = useJobStore((state) => state.addJob)
+  const { getAllQuotes } = useQuoteStore()
+  const jobs = useJobStore((state) => state.jobs)
 
+  const [mounted, setMounted] = useState(false)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'preview'>('list')
 
-  const handleCreateJob = (quote: Quote) => {
-    if (confirm('Convert this quote to a job?')) {
-      addJob({
-        title: `Quote #${quote.quoteNumber} - ${quote.clientName}`,
-        clientName: quote.clientName,
-        description: quote.lineItems.map((item) => item.description).join(', '),
-        status: 'Quoted',
-        quoteId: quote.id,
-        notes: quote.notes,
-      })
-      router.push('/jobs')
-    }
-  }
+  // Prevent hydration mismatch by waiting for client-side mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const quotes = mounted ? getAllQuotes() : []
+
+  // Filter out undefined/null values and legacy quotes that don't have jobId
+  const validQuotes = quotes.filter(q => q && q.jobId)
+  const legacyQuotes = quotes.filter(q => q && !q.jobId)
 
   const handleViewQuote = (quote: Quote) => {
     setSelectedQuote(quote)
@@ -39,6 +39,7 @@ export default function QuotesPage() {
 
   const handleEditQuote = (quote: Quote) => {
     setSelectedQuote(quote)
+    setSelectedJobId(quote.jobId)
     setIsFormOpen(true)
   }
 
@@ -52,6 +53,10 @@ export default function QuotesPage() {
     generateQuotePDF(quote)
   }
 
+  const handleViewJob = (jobId: string) => {
+    router.push(`/jobs?selected=${jobId}`)
+  }
+
   const handleBackToList = () => {
     setViewMode('list')
     setSelectedQuote(null)
@@ -59,50 +64,53 @@ export default function QuotesPage() {
 
   if (quotes.length === 0) {
     return (
-      <>
-        <EmptyState
-          title="No quotes yet"
-          description="Create your first quote to start estimating work for clients."
-          action={{
-            label: 'Create Quote',
-            onClick: () => setIsFormOpen(true),
-          }}
-        />
-        <QuoteForm
-          isOpen={isFormOpen}
-          onClose={() => {
-            setIsFormOpen(false)
-            setSelectedQuote(null)
-          }}
-        />
-      </>
+      <EmptyState
+        title="No quotes yet"
+        description="Create quotes from within jobs to start estimating work for clients."
+        action={{
+          label: 'Go to Jobs',
+          onClick: () => router.push('/jobs'),
+        }}
+      />
     )
   }
 
-  if (viewMode === 'preview' && selectedQuote) {
+  if (viewMode === 'preview' && selectedQuote && selectedQuote.jobId) {
+    const job = jobs.find(j => j.id === selectedQuote.jobId)
+    
     return (
       <div>
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
-          <button
-            onClick={handleBackToList}
-            className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-          >
-            <svg
-              className="w-4 h-4 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleBackToList}
+              className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back to Quotes
-          </button>
+              <svg
+                className="w-4 h-4 mr-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              Back to Quotes
+            </button>
+            {job && (
+              <button
+                onClick={() => handleViewJob(job.id)}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                View Job: {job.title}
+              </button>
+            )}
+          </div>
 
           <div className="flex items-center gap-2">
             <button
@@ -149,16 +157,24 @@ export default function QuotesPage() {
               </svg>
               PDF
             </button>
-            <button
-              onClick={() => handleCreateJob(selectedQuote)}
-              className="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
-            >
-              Convert to Job
-            </button>
           </div>
         </div>
 
         <QuotePreview quote={selectedQuote} />
+
+        {/* Quote Form Modal */}
+        {selectedJobId && (
+          <QuoteForm
+            jobId={selectedJobId}
+            quote={selectedQuote || undefined}
+            isOpen={isFormOpen}
+            onClose={() => {
+              setIsFormOpen(false)
+              setSelectedQuote(null)
+              setSelectedJobId(null)
+            }}
+          />
+        )}
       </div>
     )
   }
@@ -166,30 +182,60 @@ export default function QuotesPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quotes</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Create clean, shareable quotes for your clients
-          </p>
-        </div>
-        <button
-          onClick={() => {
-            setSelectedQuote(null)
-            setIsFormOpen(true)
-          }}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-        >
-          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          New Quote
-        </button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quotes</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          View all quotes across your jobs
+        </p>
       </div>
 
+      {/* Legacy Quotes Warning */}
+      {legacyQuotes.length > 0 && (
+        <div className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <div className="flex items-start">
+            <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                {legacyQuotes.length} old quote{legacyQuotes.length !== 1 ? 's' : ''} need{legacyQuotes.length === 1 ? 's' : ''} migration
+              </h3>
+              <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+                These quotes were created before the Jobs-First update. They're not visible here. Create new quotes from within jobs instead.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Empty State for Valid Quotes */}
+      {validQuotes.length === 0 && legacyQuotes.length === 0 && (
+        <EmptyState
+          title="No quotes yet"
+          description="Create quotes from within jobs to start estimating work for clients."
+          action={{
+            label: 'Go to Jobs',
+            onClick: () => router.push('/jobs'),
+          }}
+        />
+      )}
+
+      {validQuotes.length === 0 && legacyQuotes.length > 0 && (
+        <EmptyState
+          title="No active quotes"
+          description="Your old quotes are incompatible with the new Jobs-First architecture. Create new quotes from within jobs."
+          action={{
+            label: 'Go to Jobs',
+            onClick: () => router.push('/jobs'),
+          }}
+        />
+      )}
+
       {/* Quotes Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {quotes.map((quote) => {
+      {validQuotes.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {validQuotes.map((quote) => {
+            const job = jobs.find(j => j.id === quote.jobId)
           const subtotal = quote.lineItems.reduce(
             (sum, item) => sum + item.quantity * item.unitPrice,
             0
@@ -203,27 +249,23 @@ export default function QuotesPage() {
               className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-3">
-                <div>
+                <div className="flex-1">
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     #{quote.quoteNumber}
                   </p>
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white mt-1">
                     {quote.clientName}
                   </h3>
+                  {job && (
+                    <button
+                      onClick={() => handleViewJob(job.id)}
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1"
+                    >
+                      Job: {job.title}
+                    </button>
+                  )}
                 </div>
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    quote.status === 'Accepted'
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                      : quote.status === 'Declined'
-                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                      : quote.status === 'Sent'
-                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                      : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  {quote.status}
-                </span>
+                <StatusBadge status={quote.status} />
               </div>
 
               <p className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -243,6 +285,20 @@ export default function QuotesPage() {
                   View
                 </button>
                 <button
+                  onClick={() => handleEditQuote(quote)}
+                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  title="Edit Quote"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </button>
+                <button
                   onClick={() => handleDownloadPDF(quote)}
                   className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                   title="Download PDF"
@@ -256,35 +312,26 @@ export default function QuotesPage() {
                     />
                   </svg>
                 </button>
-                <button
-                  onClick={() => handleCreateJob(quote)}
-                  className="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700"
-                  title="Convert to Job"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                </button>
               </div>
             </div>
           )
         })}
-      </div>
+        </div>
+      )}
 
       {/* Modals */}
-      <QuoteForm
-        quote={selectedQuote || undefined}
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false)
-          setSelectedQuote(null)
-        }}
-      />
+      {selectedQuote && selectedJobId && (
+        <QuoteForm
+          jobId={selectedJobId}
+          quote={selectedQuote || undefined}
+          isOpen={isFormOpen}
+          onClose={() => {
+            setIsFormOpen(false)
+            setSelectedQuote(null)
+            setSelectedJobId(null)
+          }}
+        />
+      )}
     </div>
   )
 }

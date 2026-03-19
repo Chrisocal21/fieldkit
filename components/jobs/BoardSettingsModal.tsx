@@ -13,9 +13,12 @@ export default function BoardSettingsModal({ isOpen, onClose }: BoardSettingsMod
   const addColumn = useBoardSettingsStore((state) => state.addColumn)
   const updateColumn = useBoardSettingsStore((state) => state.updateColumn)
   const deleteColumn = useBoardSettingsStore((state) => state.deleteColumn)
+  const reorderColumns = useBoardSettingsStore((state) => state.reorderColumns)
 
   const [newColumnLabel, setNewColumnLabel] = useState('')
   const [editingColumn, setEditingColumn] = useState<BoardColumn | null>(null)
+  const [draggedColumn, setDraggedColumn] = useState<BoardColumn | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   const handleAddColumn = () => {
     if (newColumnLabel.trim()) {
@@ -33,6 +36,40 @@ export default function BoardSettingsModal({ isOpen, onClose }: BoardSettingsMod
     if (confirm('Delete this column? Jobs in this column will need to be reassigned.')) {
       deleteColumn(id)
     }
+  }
+
+  const handleDragStart = (e: React.DragEvent, column: BoardColumn) => {
+    setDraggedColumn(column)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragEnd = () => {
+    setDraggedColumn(null)
+    setDragOverIndex(null)
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverIndex(index)
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    if (!draggedColumn) return
+
+    const sortedColumns = [...columns].sort((a, b) => a.order - b.order)
+    const draggedIndex = sortedColumns.findIndex((col) => col.id === draggedColumn.id)
+
+    if (draggedIndex !== dropIndex) {
+      const reordered = [...sortedColumns]
+      reordered.splice(draggedIndex, 1)
+      reordered.splice(dropIndex, 0, draggedColumn)
+      reorderColumns(reordered)
+    }
+
+    setDraggedColumn(null)
+    setDragOverIndex(null)
   }
 
   if (!isOpen) return null
@@ -96,10 +133,21 @@ export default function BoardSettingsModal({ isOpen, onClose }: BoardSettingsMod
                 Current Columns ({columns.length})
               </label>
               <div className="space-y-2">
-                {columns.sort((a, b) => a.order - b.order).map((column) => (
+                {columns.sort((a, b) => a.order - b.order).map((column, index) => (
                   <div
                     key={column.id}
-                    className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3 flex items-center gap-3"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, column)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                    className={`bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3 flex items-center gap-3 transition-all ${
+                      draggedColumn?.id === column.id ? 'opacity-50' : ''
+                    } ${
+                      dragOverIndex === index && draggedColumn?.id !== column.id
+                        ? 'border-blue-500 border-2'
+                        : ''
+                    }`}
                   >
                     {/* Drag Handle */}
                     <div className="text-gray-400 cursor-move">

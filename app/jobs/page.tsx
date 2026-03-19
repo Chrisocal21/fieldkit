@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Job, useJobStore } from '@/store/jobStore'
 import EmptyState from '@/components/shared/EmptyState'
 import JobBoard from '@/components/jobs/JobBoard'
@@ -11,11 +11,19 @@ import JobDrawer from '@/components/jobs/JobDrawer'
 type ViewMode = 'list' | 'board'
 
 export default function JobsPage() {
-  const jobs = useJobStore((state) => state.jobs.filter((job) => !job.archived))
+  const allJobs = useJobStore((state) => state.jobs)
   
+  const [mounted, setMounted] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('board')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
+
+  // Prevent hydration mismatch by waiting for client-side mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const jobs = mounted ? allJobs.filter((job) => !job.archived) : []
 
   const handleJobClick = (job: Job) => {
     setSelectedJob(job)

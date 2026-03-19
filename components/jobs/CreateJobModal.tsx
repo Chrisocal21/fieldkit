@@ -16,9 +16,13 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
   const [formData, setFormData] = useState({
     title: '',
     clientName: '',
+    clientEmail: '',
+    clientPhone: '',
+    siteAddress: '',
     description: '',
-    status: 'Quoted' as JobStatus,
+    status: 'Draft' as JobStatus,
     assigneeId: '',
+    startDate: '',
     dueDate: '',
     notes: '',
   })
@@ -29,9 +33,13 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
     addJob({
       title: formData.title,
       clientName: formData.clientName,
+      clientEmail: formData.clientEmail || undefined,
+      clientPhone: formData.clientPhone || undefined,
+      siteAddress: formData.siteAddress || undefined,
       description: formData.description,
       status: formData.status,
       assigneeId: formData.assigneeId || undefined,
+      startDate: formData.startDate ? new Date(formData.startDate).getTime() : undefined,
       dueDate: formData.dueDate ? new Date(formData.dueDate).getTime() : undefined,
       notes: formData.notes,
     })
@@ -40,9 +48,13 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
     setFormData({
       title: '',
       clientName: '',
+      clientEmail: '',
+      clientPhone: '',
+      siteAddress: '',
       description: '',
-      status: 'Quoted',
+      status: 'Draft',
       assigneeId: '',
+      startDate: '',
       dueDate: '',
       notes: '',
     })
@@ -98,6 +110,47 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Client Email
+                </label>
+                <input
+                  type="email"
+                  value={formData.clientEmail}
+                  onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="client@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Client Phone
+                </label>
+                <input
+                  type="tel"
+                  value={formData.clientPhone}
+                  onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Site/Job Address
+              </label>
+              <input
+                type="text"
+                value={formData.siteAddress}
+                onChange={(e) => setFormData({ ...formData, siteAddress: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="123 Main St, City, ST 12345"
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Description
@@ -121,6 +174,7 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as JobStatus })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
+                  <option value="Draft">Draft</option>
                   <option value="Quoted">Quoted</option>
                   <option value="Scheduled">Scheduled</option>
                   <option value="In Progress">In Progress</option>
@@ -148,16 +202,31 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Due Date
-              </label>
-              <input
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Start Date
+                  <span className="text-xs text-gray-500 ml-1">(for multi-day jobs)</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
             </div>
 
             <div>
