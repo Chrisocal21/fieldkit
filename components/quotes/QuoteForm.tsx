@@ -26,7 +26,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
     notes: '',
     taxRate: 0,
     expiryDate: '',
-    status: 'Draft' as const,
+    status: 'Draft' as 'Draft' | 'Sent' | 'Accepted' | 'Declined' | 'Revised',
   })
 
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>([])
