@@ -51,16 +51,16 @@ export const useQuoteStore = create<QuoteState>()(
         // Import jobStore dynamically to avoid circular dependency
         const { useJobStore } = require('./jobStore')
         const jobs = useJobStore.getState().jobs
-        return jobs.flatMap(job => job.quotes || []).filter(Boolean)
+        return jobs.flatMap((job: any) => job.quotes || []).filter(Boolean)
       },
       
       getQuoteById: (id) => {
         // Search through all jobs' quotes
         const { useJobStore } = require('./jobStore')
         const jobs = useJobStore.getState().jobs
-        for (const job of jobs) {
+        for (const job of jobs as any[]) {
           if (!job.quotes) continue
-          const quote = job.quotes.find(q => q.id === id)
+          const quote = job.quotes.find((q: any) => q.id === id)
           if (quote) return quote
         }
         return undefined
@@ -77,9 +77,9 @@ export const useQuoteStore = create<QuoteState>()(
         const jobs = useJobStore.getState().jobs
         
         // Find which job contains this quote
-        for (const job of jobs) {
+        for (const job of jobs as any[]) {
           if (!job.quotes) continue
-          const quote = job.quotes.find(q => q.id === id)
+          const quote = job.quotes.find((q: any) => q.id === id)
           if (quote) {
             useJobStore.getState().updateJobQuote(job.id, id, updates)
             break
