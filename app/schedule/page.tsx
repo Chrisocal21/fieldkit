@@ -6,15 +6,16 @@ import { Job, useJobStore } from '@/store/jobStore'
 import EmptyState from '@/components/shared/EmptyState'
 import WeekView from '@/components/schedule/WeekView'
 import DayView from '@/components/schedule/DayView'
+import MonthView from '@/components/schedule/MonthView'
 
-type ViewMode = 'week' | 'day'
+type ViewMode = 'month' | 'week' | 'day'
 
 export default function SchedulePage() {
   const router = useRouter()
   const allJobs = useJobStore((state) => state.jobs)
 
   const [mounted, setMounted] = useState(false)
-  const [viewMode, setViewMode] = useState<ViewMode>('week')
+  const [viewMode, setViewMode] = useState<ViewMode>('month')
 
   // Prevent hydration mismatch by waiting for client-side mount
   useEffect(() => {
@@ -56,9 +57,9 @@ export default function SchedulePage() {
         {/* View Toggle */}
         <div className="inline-flex rounded-md shadow-sm" role="group">
           <button
-            onClick={() => setViewMode('week')}
+            onClick={() => setViewMode('month')}
             className={`px-4 py-2 text-sm font-medium border rounded-l-md ${
-              viewMode === 'week'
+              viewMode === 'month'
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
@@ -76,11 +77,34 @@ export default function SchedulePage() {
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
+            Month
+          </button>
+          <button
+            onClick={() => setViewMode('week')}
+            className={`px-4 py-2 text-sm font-medium border-t border-b ${
+              viewMode === 'week'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            <svg
+              className="w-4 h-4 inline mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
             Week
           </button>
           <button
             onClick={() => setViewMode('day')}
-            className={`px-4 py-2 text-sm font-medium border-t border-b border-r rounded-r-md ${
+            className={`px-4 py-2 text-sm font-medium border rounded-r-md ${
               viewMode === 'day'
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -105,7 +129,9 @@ export default function SchedulePage() {
       </div>
 
       {/* View Content */}
-      {viewMode === 'week' ? (
+      {viewMode === 'month' ? (
+        <MonthView jobs={jobs} onJobClick={handleJobClick} />
+      ) : viewMode === 'week' ? (
         <WeekView onJobClick={handleJobClick} />
       ) : (
         <DayView onJobClick={handleJobClick} />

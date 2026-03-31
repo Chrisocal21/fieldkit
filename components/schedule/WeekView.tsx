@@ -27,6 +27,7 @@ export default function WeekView({ onJobClick }: WeekViewProps) {
   })
 
   const [draggedJob, setDraggedJob] = useState<Job | null>(null)
+  const [dragOverDate, setDragOverDate] = useState<Date | null>(null)
 
   // Number of weeks to display
   const weeksToShow = 4
@@ -80,11 +81,29 @@ export default function WeekView({ onJobClick }: WeekViewProps) {
   const handleDragStart = (e: React.DragEvent, job: Job) => {
     setDraggedJob(job)
     e.dataTransfer.effectAllowed = 'move'
+    // Add ghost image styling
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.5'
+    }
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragEnd = (e: React.DragEvent) => {
+    setDraggedJob(null)
+    setDragOverDate(null)
+    // Reset opacity
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1'
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent, date: Date) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
+    setDragOverDate(date)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverDate(null)
   }
 
   const handleDrop = (e: React.DragEvent, date: Date) => {
@@ -99,6 +118,7 @@ export default function WeekView({ onJobClick }: WeekViewProps) {
       }
       updateJob(draggedJob.id, { dueDate: newDueDate.getTime() })
       setDraggedJob(null)
+      setDragOverDate(null)
     }
   }
 
@@ -159,14 +179,21 @@ export default function WeekView({ onJobClick }: WeekViewProps) {
               {weekDays.map((date, idx) => {
                 const dayJobs = getJobsForDate(date)
                 const today = isToday(date)
+                const isDragOver = dragOverDate && 
+                  dragOverDate.getDate() === date.getDate() &&
+                  dragOverDate.getMonth() === date.getMonth() &&
+                  dragOverDate.getFullYear() === date.getFullYear()
 
                 return (
                   <div
                     key={idx}
-                    onDragOver={handleDragOver}
+                    onDragOver={(e) => handleDragOver(e, date)}
+                    onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, date)}
-                    className={`min-h-[120px] border rounded-lg p-2 ${
-                      today
+                    className={`min-h-[120px] border rounded-lg p-2 transition-all ${
+                      isDragOver
+                        ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-500 dark:border-blue-400 border-2 scale-105 shadow-lg'
+                        : today
                         ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
                         : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                     }`}
@@ -193,13 +220,18 @@ export default function WeekView({ onJobClick }: WeekViewProps) {
                     <div className="space-y-1.5">
                       {dayJobs.map((job) => {
                         const assignee = members.find((m) => m.id === job.assigneeId)
+                        const isDragging = draggedJob?.id === job.id
+                        
                         return (
                           <div
                             key={job.id}
                             draggable
                             onDragStart={(e) => handleDragStart(e, job)}
+                            onDragEnd={handleDragEnd}
                             onClick={() => onJobClick?.(job)}
-                            className={`p-2 rounded text-xs cursor-move hover:shadow-md transition-shadow ${
+                            className={`p-2 rounded text-xs cursor-move hover:shadow-md transition-all ${
+                              isDragging ? 'opacity-50' : ''
+                            } ${
                               job.status === 'Quoted'
                                 ? 'bg-gray-100 dark:bg-gray-700 border-l-2 border-gray-400'
                                 : job.status === 'Scheduled'

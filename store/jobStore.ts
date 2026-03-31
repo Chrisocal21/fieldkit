@@ -8,6 +8,8 @@ export type JobStatus = 'Draft' | 'Quoted' | 'Scheduled' | 'In Progress' | 'Comp
 export interface Job {
   id: string
   title: string
+  clientId?: string  // Primary reference to Client (Phase 7)
+  // Legacy fields - kept for backward compatibility
   clientName: string
   clientEmail?: string
   clientPhone?: string
@@ -30,6 +32,7 @@ interface JobState {
   updateJob: (id: string, updates: Partial<Job>) => void
   archiveJob: (id: string) => void
   getJobById: (id: string) => Job | undefined
+  getJobsByClientId: (clientId: string) => Job[]
   // Quote management within jobs
   addQuoteToJob: (jobId: string, quoteData: Omit<Quote, 'id' | 'quoteNumber' | 'jobId' | 'createdAt' | 'updatedAt'>) => void
   updateJobQuote: (jobId: string, quoteId: string, updates: Partial<Quote>) => void
@@ -205,6 +208,10 @@ export const useJobStore = create<JobState>()(
       getJobById: (id) => {
         return get().jobs.find((job) => job.id === id)
       },
+
+      getJobsByClientId: (clientId) => {
+        return get().jobs.filter((job) => job.clientId === clientId && !job.archived)
+      },
       
       // Quote management within jobs
       addQuoteToJob: (jobId, quoteData) => {
@@ -316,7 +323,7 @@ export const useJobStore = create<JobState>()(
     }),
     {
       name: 'fieldkit-jobs',
-      version: 1,
+      version: 2,
       migrate: (persistedState: any, version: number) => {
         // Ensure all jobs have a quotes array (added in Phase 6.5)
         if (persistedState && persistedState.jobs) {
@@ -324,6 +331,32 @@ export const useJobStore = create<JobState>()(
             ...job,
             quotes: job.quotes || [], // Initialize quotes array if missing
           }))
+
+          // Link jobs with clients (added in Phase 7)
+          // Try to get clients from localStorage to link them
+          try {
+            const clientsData = localStorage.getItem('fieldkit-clients')
+            if (clientsData) {
+              const clientsState = JSON.parse(clientsData)
+              const clients = clientsState?.state?.clients || []
+
+              // Link each job to its client if not already linked
+              persistedState.jobs = persistedState.jobs.map((job: any) => {
+                if (!job.clientId && job.clientName) {
+                  // Find matching client by name
+                  const matchingClient = clients.find(
+                    (c: any) => c.name.toLowerCase().trim() === job.clientName.toLowerCase().trim()
+                  )
+                  if (matchingClient) {
+                    return { ...job, clientId: matchingClient.id }
+                  }
+                }
+                return job
+              })
+            }
+          } catch (error) {
+            console.error('Failed to link jobs with clients:', error)
+          }
         }
         return persistedState
       },

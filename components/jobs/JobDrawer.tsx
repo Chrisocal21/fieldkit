@@ -3,8 +3,15 @@
 import { useState, useEffect } from 'react'
 import { Job, JobStatus, useJobStore } from '@/store/jobStore'
 import { useTeamStore } from '@/store/teamStore'
+import { useInvoiceStore } from '@/store/invoiceStore'
+import { useMaterialCostStore } from '@/store/materialCostStore'
+import { useExpenseStore } from '@/store/expenseStore'
 import StatusBadge from '@/components/shared/StatusBadge'
 import { JobQuotesTab } from './JobQuotesTab'
+import TimeLog from './TimeLog'
+import InvoicesTab from './InvoicesTab'
+import MaterialsTab from './MaterialsTab'
+import ExpensesTab from './ExpensesTab'
 
 interface JobDrawerProps {
   job: Job | null
@@ -12,12 +19,15 @@ interface JobDrawerProps {
   onClose: () => void
 }
 
-type TabType = 'details' | 'quotes' | 'notes'
+type TabType = 'details' | 'quotes' | 'invoices' | 'materials' | 'expenses' | 'time' | 'notes'
 
 export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
   const updateJob = useJobStore((state) => state.updateJob)
   const archiveJob = useJobStore((state) => state.archiveJob)
   const members = useTeamStore((state) => state.members)
+  const getInvoicesByJobId = useInvoiceStore((state) => state.getInvoicesByJobId)
+  const getJobMaterialsByJobId = useMaterialCostStore((state) => state.getJobMaterialsByJobId)
+  const getExpensesByJobId = useExpenseStore((state) => state.getExpensesByJobId)
 
   const [isEditing, setIsEditing] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('details')
@@ -68,8 +78,8 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
         />
 
         {/* Drawer */}
-        <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
-          <div className="w-screen max-w-md">
+        <div className="fixed inset-y-0 right-0 flex max-w-full pl-4 sm:pl-10">
+          <div className="w-screen max-w-full sm:max-w-md lg:max-w-lg">
             <div className="flex h-full flex-col overflow-y-scroll bg-white dark:bg-gray-800 shadow-xl">
               {/* Header */}
               <div className="px-4 py-6 sm:px-6 border-b border-gray-200 dark:border-gray-700">
@@ -103,11 +113,11 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
               </div>
 
               {/* Tabs */}
-              <div className="border-b border-gray-200 dark:border-gray-700">
-                <nav className="flex -mb-px px-4 sm:px-6">
+              <div className="border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+                <nav className="flex -mb-px px-4 sm:px-6 min-w-max sm:min-w-0">
                   <button
                     onClick={() => setActiveTab('details')}
-                    className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                    className={`py-3 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                       activeTab === 'details'
                         ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
                         : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
@@ -117,7 +127,7 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
                   </button>
                   <button
                     onClick={() => setActiveTab('quotes')}
-                    className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                    className={`py-3 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                       activeTab === 'quotes'
                         ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
                         : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
@@ -131,8 +141,63 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
                     )}
                   </button>
                   <button
+                    onClick={() => setActiveTab('invoices')}
+                    className={`py-3 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === 'invoices'
+                        ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                    }`}
+                  >
+                    Invoices
+                    {job && getInvoicesByJobId(job.id).length > 0 && (
+                      <span className="ml-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs">
+                        {getInvoicesByJobId(job.id).length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('materials')}
+                    className={`py-3 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === 'materials'
+                        ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                    }`}
+                  >
+                    Materials
+                    {job && getJobMaterialsByJobId(job.id).length > 0 && (
+                      <span className="ml-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs">
+                        {getJobMaterialsByJobId(job.id).length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('expenses')}
+                    className={`py-3 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === 'expenses'
+                        ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                    }`}
+                  >
+                    Expenses
+                    {job && getExpensesByJobId(job.id).length > 0 && (
+                      <span className="ml-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs">
+                        {getExpensesByJobId(job.id).length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('time')}
+                    className={`py-3 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === 'time'
+                        ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                    }`}
+                  >
+                    Time
+                  </button>
+                  <button
                     onClick={() => setActiveTab('notes')}
-                    className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                    className={`py-3 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                       activeTab === 'notes'
                         ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
                         : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
@@ -276,16 +341,31 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         >
                           <option value="">Unassigned</option>
-                          {members.map((member) => (
+                          {members.filter(m => m.active).map((member) => (
                             <option key={member.id} value={member.id}>
-                              {member.name}
+                              {member.name} ({member.role})
                             </option>
                           ))}
                         </select>
                       ) : (
-                        <p className="text-gray-900 dark:text-white">
-                          {members.find(m => m.id === job.assigneeId)?.name || 'Unassigned'}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          {assignee ? (
+                            <>
+                              <div
+                                className="w-3 h-3 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: assignee.color }}
+                              />
+                              <span className="text-gray-900 dark:text-white">
+                                {assignee.name}
+                              </span>
+                              <span className="text-sm text-gray-500 dark:text-gray-400">
+                                ({assignee.role})
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-gray-500 dark:text-gray-400">Unassigned</span>
+                          )}
+                        </div>
                       )}
                     </div>
 
@@ -348,6 +428,26 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
                 {/* Quotes Tab */}
                 {activeTab === 'quotes' && (
                   <JobQuotesTab job={job} />
+                )}
+
+                {/* Invoices Tab */}
+                {activeTab === 'invoices' && (
+                  <InvoicesTab jobId={job.id} />
+                )}
+
+                {/* Materials Tab */}
+                {activeTab === 'materials' && (
+                  <MaterialsTab jobId={job.id} />
+                )}
+
+                {/* Expenses Tab */}
+                {activeTab === 'expenses' && (
+                  <ExpensesTab jobId={job.id} />
+                )}
+
+                {/* Time Tab */}
+                {activeTab === 'time' && (
+                  <TimeLog jobId={job.id} />
                 )}
 
                 {/* Notes Tab */}

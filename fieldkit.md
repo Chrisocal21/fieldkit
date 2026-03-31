@@ -865,6 +865,190 @@ These features enhance the shareability and professional presentation of quotes 
 
 ---
 
+## 9.5 Potential Future Enhancements
+
+These features would extend FIELDKIT's capabilities beyond core operations. They're not required for MVP but represent natural next steps based on user workflows.
+
+### Priority: High
+
+#### Invoicing & Payment Tracking
+**Status:** 🚧 IN PROGRESS  
+Complete the revenue cycle after quote acceptance.
+
+- Invoice generation from accepted quotes
+- Payment status tracking: Unpaid, Partially Paid, Paid, Overdue
+- Payment history log per job
+- Outstanding balance tracking
+- Overdue invoice alerts on dashboard
+- Payment method tracking (check, cash, transfer, credit card)
+- Invoice numbering separate from quote numbers
+- **Database additions needed:**
+  ```sql
+  CREATE TABLE invoices (
+    id TEXT PRIMARY KEY,
+    invoice_number INTEGER UNIQUE,
+    job_id TEXT NOT NULL,
+    quote_id TEXT,
+    amount_due REAL NOT NULL,
+    amount_paid REAL DEFAULT 0,
+    status TEXT DEFAULT 'Unpaid',  -- Unpaid, Partial, Paid, Overdue
+    due_date INTEGER,
+    issued_at INTEGER,
+    FOREIGN KEY (job_id) REFERENCES jobs(id),
+    FOREIGN KEY (quote_id) REFERENCES quotes(id)
+  );
+  
+  CREATE TABLE payments (
+    id TEXT PRIMARY KEY,
+    invoice_id TEXT NOT NULL,
+    amount REAL NOT NULL,
+    payment_method TEXT,
+    payment_date INTEGER,
+    notes TEXT,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(id)
+  );
+  ```
+
+#### Material Cost Tracking
+**Status:** 🚧 IN PROGRESS  
+Track actual material expenses per job for accurate profit calculations.
+
+- Link inventory items to specific jobs
+- Record quantity used + cost at time of use
+- Compare estimated (quote) vs actual material costs
+- Budget tracking: Did the job go over/under?
+- True profit = Revenue - (Labor + Material Costs + Expenses)
+- Material cost vs quote analysis per job
+- **Database additions needed:**
+  ```sql
+  CREATE TABLE job_materials (
+    id TEXT PRIMARY KEY,
+    job_id TEXT NOT NULL,
+    inventory_item_id TEXT,
+    description TEXT NOT NULL,      -- for items not in inventory
+    quantity REAL NOT NULL,
+    unit_cost REAL NOT NULL,
+    total_cost REAL NOT NULL,
+    used_at INTEGER,
+    FOREIGN KEY (job_id) REFERENCES jobs(id),
+    FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id)
+  );
+  ```
+
+#### Expenses
+Track non-inventory costs per job and general business expenses.
+
+- Job-specific expenses: permits, subcontractors, equipment rental, disposal fees
+- General overhead expenses: insurance, tools, vehicle maintenance
+- Attach receipts/notes to expenses
+- Expense categories for reporting
+- Include expenses in job profitability calculations
+- **Database additions needed:**
+  ```sql
+  CREATE TABLE expenses (
+    id TEXT PRIMARY KEY,
+    job_id TEXT,                    -- NULL for general overhead
+    category TEXT NOT NULL,
+    description TEXT NOT NULL,
+    amount REAL NOT NULL,
+    expense_date INTEGER,
+    notes TEXT,
+    FOREIGN KEY (job_id) REFERENCES jobs(id)
+  );
+  ```
+
+### Priority: Medium
+
+#### Photo & File Attachments
+Attach before/after photos and documents to jobs.
+
+- Before/after photo gallery per job
+- Upload files: contracts, permits, drawings, receipts
+- Attach visual mockups to quotes
+- Photo storage via Cloudflare R2
+- Max file size limits (5MB per photo, 10MB per document)
+- Thumbnail generation for photos
+- Grid view for photo galleries
+
+#### Global Search
+Quick navigation across all modules.
+
+- Search jobs, clients, quotes, inventory, team members
+- Fuzzy matching on job title, client name, ID numbers
+- Keyboard shortcut: Cmd/Ctrl+K
+- Recent searches
+- Filter by module type
+- Jump directly to search results
+
+#### Job Templates
+Speed up quote creation for common services.
+
+- Save job types as templates (e.g., "Standard Room Paint")
+- Pre-fill quote line items from template
+- Template categories
+- Clone template to create new job with pre-filled quote
+- Edit template line items
+- Use cases: Standard install jobs, common service calls, package deals
+
+#### Reports & Analytics
+Business intelligence beyond the dashboard.
+
+- Revenue by month/quarter/year
+- Profit margins over time
+- Top performing services
+- Client lifetime value rankings
+- Labor efficiency: hours logged vs estimated
+- Material waste analysis
+- Tax reporting helpers (year-end summaries)
+- Export reports to CSV/PDF
+- Date range filtering
+
+### Priority: Low (Nice to Have)
+
+#### Notifications & Reminders
+Proactive alerts for important events.
+
+- Upcoming job due dates (24hr, 3-day, 1-week)
+- Quote follow-ups for "Sent" quotes without response
+- Low inventory alerts (enhanced beyond current visual badges)
+- Overdue invoices
+- Quote expiry warnings
+- Browser notifications (PWA)
+- Optional SMS integration (future paid feature?)
+
+#### Recurring Jobs
+Automate maintenance contracts and repeat services.
+
+- Define job recurrence: daily, weekly, monthly, quarterly, annually
+- Auto-create jobs on schedule
+- Recurring invoice generation
+- Client subscription tracking
+- Pause/resume recurring jobs
+- Use cases: Monthly maintenance, seasonal services, contracts
+
+#### Activity Log & Audit Trail
+Track all changes for accountability and client communication history.
+
+- Who changed what and when on jobs
+- Status change history
+- Quote revisions tracking
+- Client communication log (calls, texts, emails)
+- Notes with timestamps and author
+- Filter by team member or date range
+- Useful for: Multi-person teams, client disputes, quality control
+
+#### Cliente Portal (Self-Service)
+Allow clients to view job status and approve quotes.
+
+- Unique client login per client
+- View assigned jobs and their status
+- See and approve quotes (e-signature)
+- Upload photos/files to jobs
+- Communication thread with business
+- Out of scope for v1 - would require authentication system
+
+---
+
 ## 10. Out of Scope (v1)
 
 - User authentication / accounts

@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { JobStatus, useJobStore } from '@/store/jobStore'
+import { useClientStore } from '@/store/clientStore'
 import { useTeamStore } from '@/store/teamStore'
+import ClientSelector from '@/components/shared/ClientSelector'
 
 interface CreateJobModalProps {
   isOpen: boolean
@@ -11,13 +13,13 @@ interface CreateJobModalProps {
 
 export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
   const addJob = useJobStore((state) => state.addJob)
-  const members = useTeamStore((state) => state.members)
+  const { getClientById } = useClientStore()
+  const { getActiveMembers } = useTeamStore()
+  const activeMembers = getActiveMembers()
 
   const [formData, setFormData] = useState({
     title: '',
-    clientName: '',
-    clientEmail: '',
-    clientPhone: '',
+    clientId: '',
     siteAddress: '',
     description: '',
     status: 'Draft' as JobStatus,
@@ -30,11 +32,16 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Get client info to populate legacy fields
+    const client = formData.clientId ? getClientById(formData.clientId) : undefined
+    
     addJob({
       title: formData.title,
-      clientName: formData.clientName,
-      clientEmail: formData.clientEmail || undefined,
-      clientPhone: formData.clientPhone || undefined,
+      clientId: formData.clientId || undefined,
+      // Populate legacy fields from client for backward compatibility
+      clientName: client?.name || '',
+      clientEmail: client?.email || undefined,
+      clientPhone: client?.phone || undefined,
       siteAddress: formData.siteAddress || undefined,
       description: formData.description,
       status: formData.status,
@@ -47,9 +54,7 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
     // Reset form
     setFormData({
       title: '',
-      clientName: '',
-      clientEmail: '',
-      clientPhone: '',
+      clientId: '',
       siteAddress: '',
       description: '',
       status: 'Draft',
@@ -96,47 +101,11 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Client Name *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.clientName}
-                onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Client or company name"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Client Email
-                </label>
-                <input
-                  type="email"
-                  value={formData.clientEmail}
-                  onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="client@example.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Client Phone
-                </label>
-                <input
-                  type="tel"
-                  value={formData.clientPhone}
-                  onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-            </div>
+            {/* Client Selector */}
+            <ClientSelector
+              selectedClientId={formData.clientId}
+              onSelectClient={(clientId) => setFormData({ ...formData, clientId })}
+            />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -193,9 +162,9 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="">Unassigned</option>
-                  {members.map((member) => (
+                  {activeMembers.map((member) => (
                     <option key={member.id} value={member.id}>
-                      {member.name}
+                      {member.name} ({member.role})
                     </option>
                   ))}
                 </select>

@@ -4,6 +4,7 @@ import Sidebar from '@/components/shared/Sidebar'
 import BottomNav from '@/components/shared/BottomNav'
 import ServiceWorkerRegistration from '@/components/shared/ServiceWorkerRegistration'
 import InstallPrompt from '@/components/shared/InstallPrompt'
+import GlobalSearch from '@/components/shared/GlobalSearch'
 
 export const metadata: Metadata = {
   title: 'FIELDKIT',
@@ -35,6 +36,7 @@ export default function RootLayout({
       <body>
         <ServiceWorkerRegistration />
         <InstallPrompt />
+        <GlobalSearch />
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
           <Sidebar />
           <main className="lg:pl-64 pb-16 lg:pb-0">
