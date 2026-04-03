@@ -5,7 +5,7 @@ import { useSettingsStore, Theme } from '@/store/settingsStore'
 import QRCodeGeneratorModal from './QRCodeGeneratorModal'
 import ShortURLGeneratorModal from './ShortURLGeneratorModal'
 import BusinessCardGeneratorModal from './BusinessCardGeneratorModal'
-import BrandingPresetsModal from './BrandingPresetsModal'
+import BrandingModal from '../branding/BrandingModal'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -199,7 +199,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       <QRCodeGeneratorModal isOpen={showQRCode} onClose={() => setShowQRCode(false)} />
       <ShortURLGeneratorModal isOpen={showShortURL} onClose={() => setShowShortURL(false)} />
       <BusinessCardGeneratorModal isOpen={showBusinessCard} onClose={() => setShowBusinessCard(false)} />
-      <BrandingPresetsModal isOpen={showBranding} onClose={() => setShowBranding(false)} />
+      <BrandingModal isOpen={showBranding} onClose={() => setShowBranding(false)} />
     </>
   )
 }
