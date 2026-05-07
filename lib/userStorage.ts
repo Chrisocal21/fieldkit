@@ -26,7 +26,9 @@ function scopedKey(name: string): string {
   return _userId ? `${name}__${_userId}` : name
 }
 
-export const userScopedStorage = {
+import { type StateStorage } from 'zustand/middleware'
+
+export const userScopedStorage: StateStorage = {
   getItem: (name: string): string | null => {
     if (typeof window === 'undefined') return null
     return localStorage.getItem(scopedKey(name))
