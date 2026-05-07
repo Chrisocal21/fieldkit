@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { userScopedStorage } from '@/lib/userStorage'
 import { nanoid } from 'nanoid'
 import { JobStatus } from './jobStore'
 
@@ -66,6 +67,7 @@ export const useBoardSettingsStore = create<BoardSettingsState>()(
     }),
     {
       name: 'fieldkit-board-settings',
+      storage: userScopedStorage,
     }
   )
 )

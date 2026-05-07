@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
+import { userScopedStorage } from '@/lib/userStorage'
+import api from '@/lib/api'
 
 export interface TimeEntry {
   id: string
@@ -45,6 +47,7 @@ export const useTimeEntryStore = create<TimeEntryState>()(
         set((state) => ({
           entries: [...state.entries, newEntry],
         }))
+        api.timeEntries.create(newEntry)
         return id
       },
 
@@ -56,12 +59,14 @@ export const useTimeEntryStore = create<TimeEntryState>()(
               : entry
           ),
         }))
+        api.timeEntries.update(id, { ...updates, updatedAt: Date.now() })
       },
 
       deleteEntry: (id) => {
         set((state) => ({
           entries: state.entries.filter((entry) => entry.id !== id),
         }))
+        api.timeEntries.delete(id)
       },
 
       getEntryById: (id) => {
@@ -110,6 +115,7 @@ export const useTimeEntryStore = create<TimeEntryState>()(
     }),
     {
       name: 'fieldkit-time-entries',
+      storage: userScopedStorage,
       version: 1,
     }
   )

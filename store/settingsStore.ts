@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { userScopedStorage } from '@/lib/userStorage'
 
 export type Theme = 'light' | 'dark' | 'system'
 
@@ -19,6 +20,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'fieldkit-settings',
+      storage: userScopedStorage,
       onRehydrateStorage: () => (state) => {
         if (state) {
           applyTheme(state.theme)

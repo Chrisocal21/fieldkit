@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
+import { userScopedStorage } from '@/lib/userStorage'
+import api from '@/lib/api'
 
 export interface InventoryItem {
   id: string
@@ -31,46 +33,10 @@ interface InventoryState {
   getItemById: (id: string) => InventoryItem | undefined
 }
 
-const mockItems: InventoryItem[] = [
-  {
-    id: nanoid(),
-    name: 'Walnut Wood Sheets',
-    category: 'Wood',
-    unit: 'sheets',
-    currentStock: 15,
-    lowStockThreshold: 5,
-    notes: '12" x 24" standard size',
-    createdAt: Date.now() - 86400000 * 30,
-    updatedAt: Date.now(),
-  },
-  {
-    id: nanoid(),
-    name: 'Acrylic Clear 1/4"',
-    category: 'Acrylic',
-    unit: 'sheets',
-    currentStock: 3,
-    lowStockThreshold: 5,
-    notes: 'Reorder needed',
-    createdAt: Date.now() - 86400000 * 20,
-    updatedAt: Date.now(),
-  },
-  {
-    id: nanoid(),
-    name: 'Laser Cutting Gas',
-    category: 'Consumables',
-    unit: 'oz',
-    currentStock: 250,
-    lowStockThreshold: 100,
-    notes: 'Monthly usage ~300oz',
-    createdAt: Date.now() - 86400000 * 60,
-    updatedAt: Date.now(),
-  },
-]
-
 export const useInventoryStore = create<InventoryState>()(
   persist(
     (set, get) => ({
-      items: mockItems,
+      items: [],
       adjustments: [],
       
       addItem: (itemData) => {
@@ -81,6 +47,7 @@ export const useInventoryStore = create<InventoryState>()(
           updatedAt: Date.now(),
         }
         set((state) => ({ items: [...state.items, newItem] }))
+        api.inventory.create(newItem)
       },
       
       updateItem: (id, updates) => {
@@ -89,6 +56,7 @@ export const useInventoryStore = create<InventoryState>()(
             item.id === id ? { ...item, ...updates, updatedAt: Date.now() } : item
           ),
         }))
+        api.inventory.update(id, { ...updates, updatedAt: Date.now() })
       },
       
       adjustStock: (itemId, delta, reason) => {
@@ -108,6 +76,7 @@ export const useInventoryStore = create<InventoryState>()(
           ),
           adjustments: [...state.adjustments, adjustment],
         }))
+        api.inventory.adjust(itemId, delta, reason)
       },
       
       getItemById: (id) => {
@@ -116,6 +85,7 @@ export const useInventoryStore = create<InventoryState>()(
     }),
     {
       name: 'fieldkit-inventory',
+      storage: userScopedStorage,
     }
   )
 )

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { userScopedStorage } from '@/lib/userStorage'
 import { nanoid } from 'nanoid'
 
 export interface QuoteLineItem {
@@ -38,13 +39,10 @@ interface QuoteState {
   updateQuote: (id: string, updates: Partial<Quote>) => void  // Syncs with jobStore
 }
 
-// No mock quotes - quotes now live within jobs
-const mockQuotes: Quote[] = []
-
 export const useQuoteStore = create<QuoteState>()(
   persist(
     (set, get) => ({
-      quotes: mockQuotes,  // Legacy storage
+      quotes: [],  // Legacy storage
       
       // Get all quotes from all jobs (for /quotes overview page)
       getAllQuotes: () => {
@@ -89,6 +87,7 @@ export const useQuoteStore = create<QuoteState>()(
     }),
     {
       name: 'fieldkit-quotes',
+      storage: userScopedStorage,
     }
   )
 )

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
+import { userScopedStorage } from '@/lib/userStorage'
 
 export interface BusinessCardProfile {
   id: string
@@ -61,6 +62,7 @@ export const useBusinessCardStore = create<BusinessCardState>()(
     }),
     {
       name: 'fieldkit-business-cards',
+      storage: userScopedStorage,
     }
   )
 )

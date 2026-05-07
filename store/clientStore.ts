@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
+import { userScopedStorage } from '@/lib/userStorage'
+import api from '@/lib/api'
 
 export interface Client {
   id: string
@@ -24,40 +26,10 @@ interface ClientState {
   migrateFromJobs: () => void  // Manual migration trigger
 }
 
-// Mock data - will be populated by migration from existing jobs
-const mockClients: Client[] = []
-
-// Helper function to extract clients from jobs
-const extractClientsFromJobs = (jobs: any[]): Client[] => {
-  const clientMap = new Map<string, Client>()
-  
-  jobs.forEach((job: any) => {
-    if (job.clientName && job.clientName.trim()) {
-      const key = job.clientName.toLowerCase().trim()
-      
-      if (!clientMap.has(key)) {
-        clientMap.set(key, {
-          id: nanoid(),
-          name: job.clientName,
-          email: job.clientEmail || undefined,
-          phone: job.clientPhone || undefined,
-          address: job.siteAddress || undefined,
-          notes: undefined,
-          tags: [],
-          createdAt: job.createdAt || Date.now(),
-          updatedAt: Date.now(),
-        })
-      }
-    }
-  })
-  
-  return Array.from(clientMap.values())
-}
-
 export const useClientStore = create<ClientState>()(
   persist(
     (set, get) => ({
-      clients: mockClients,
+      clients: [],
 
       addClient: (clientData) => {
         const newClient: Client = {
@@ -67,6 +39,7 @@ export const useClientStore = create<ClientState>()(
           updatedAt: Date.now(),
         }
         set((state) => ({ clients: [...state.clients, newClient] }))
+        api.clients.create(newClient)
         return newClient.id
       },
 
@@ -76,12 +49,14 @@ export const useClientStore = create<ClientState>()(
             client.id === id ? { ...client, ...updates, updatedAt: Date.now() } : client
           ),
         }))
+        api.clients.update(id, { ...updates, updatedAt: Date.now() })
       },
 
       deleteClient: (id) => {
         set((state) => ({
           clients: state.clients.filter((client) => client.id !== id),
         }))
+        api.clients.delete(id)
       },
 
       getClientById: (id) => {
@@ -102,63 +77,12 @@ export const useClientStore = create<ClientState>()(
       },
 
       migrateFromJobs: () => {
-        // Only migrate if we have no clients yet
-        if (get().clients.length > 0) return
-
-        try {
-          // Try to get jobs from localStorage first
-          const jobsData = localStorage.getItem('fieldkit-jobs')
-          if (jobsData) {
-            const jobsState = JSON.parse(jobsData)
-            const jobs = jobsState?.state?.jobs || []
-            
-            if (jobs.length > 0) {
-              const extractedClients = extractClientsFromJobs(jobs)
-              set({ clients: extractedClients })
-              console.log(`Migrated ${extractedClients.length} clients from jobs`)
-              return
-            }
-          }
-
-          // Fallback: Try to import jobStore directly
-          const { useJobStore } = require('./jobStore')
-          const jobs = useJobStore.getState().jobs
-          
-          if (jobs && jobs.length > 0) {
-            const extractedClients = extractClientsFromJobs(jobs)
-            set({ clients: extractedClients })
-            console.log(`Migrated ${extractedClients.length} clients from jobStore`)
-          }
-        } catch (error) {
-          console.error('Failed to migrate clients:', error)
-        }
+        // No-op: migration from legacy data no longer needed
       },
     }),
     {
       name: 'fieldkit-clients',
-      version: 1,
-      migrate: (persistedState: any, version: number) => {
-        // Auto-migrate clients from jobs if clients list is empty
-        if (persistedState && (!persistedState.clients || persistedState.clients.length === 0)) {
-          try {
-            // Try to get jobs from localStorage
-            const jobsData = localStorage.getItem('fieldkit-jobs')
-            if (jobsData) {
-              const jobsState = JSON.parse(jobsData)
-              const jobs = jobsState?.state?.jobs || []
-              
-              if (jobs.length > 0) {
-                persistedState.clients = extractClientsFromJobs(jobs)
-                console.log(`Migrated ${persistedState.clients.length} clients from jobs`)
-              }
-            }
-          } catch (error) {
-            console.error('Failed to migrate clients from jobs:', error)
-            persistedState.clients = []
-          }
-        }
-        return persistedState
-      },
+      storage: userScopedStorage,
     }
   )
 )

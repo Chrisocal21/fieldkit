@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
+import { userScopedStorage } from '@/lib/userStorage'
+import api from '@/lib/api'
 
 export type InvoiceStatus = 'Unpaid' | 'Partial' | 'Paid' | 'Overdue'
 export type PaymentMethod = 'Cash' | 'Check' | 'Credit Card' | 'Bank Transfer' | 'Other'
@@ -52,39 +54,11 @@ interface InvoiceState {
   getTotalOutstanding: () => number
 }
 
-// Mock invoices for development
-const mockInvoices: Invoice[] = [
-  {
-    id: 'INV-0001',
-    invoiceNumber: 1001,
-    jobId: 'JOB-0001',
-    quoteId: 'QUOTE-0001',
-    amountDue: 435.00,
-    amountPaid: 200.00,
-    status: 'Partial',
-    dueDate: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 days from now
-    issuedAt: Date.now() - (2 * 24 * 60 * 60 * 1000), // 2 days ago
-    payments: [
-      {
-        id: 'PAY-0001',
-        invoiceId: 'INV-0001',
-        amount: 200.00,
-        paymentMethod: 'Check',
-        paymentDate: Date.now() - (1 * 24 * 60 * 60 * 1000), // 1 day ago
-        notes: 'Deposit payment'
-      }
-    ],
-    notes: 'Wedding signs project - balance due on completion',
-    createdAt: Date.now() - (2 * 24 * 60 * 60 * 1000),
-    updatedAt: Date.now() - (1 * 24 * 60 * 60 * 1000)
-  }
-]
-
 export const useInvoiceStore = create<InvoiceState>()(
   persist(
     (set, get) => ({
-      invoices: mockInvoices,
-      nextInvoiceNumber: 1002,
+      invoices: [],
+      nextInvoiceNumber: 1001,
 
       createInvoice: (invoiceData) => {
         const state = get()
@@ -108,7 +82,7 @@ export const useInvoiceStore = create<InvoiceState>()(
           invoices: [...state.invoices, invoice],
           nextInvoiceNumber: state.nextInvoiceNumber + 1
         })
-
+        api.invoices.create(invoice)
         return invoice
       },
 
@@ -120,8 +94,7 @@ export const useInvoiceStore = create<InvoiceState>()(
               : invoice
           )
         }))
-        
-        // Update status after changes
+        api.invoices.update(id, { ...updates, updatedAt: Date.now() })
         if (!updates.status) {
           get().updateInvoiceStatus(id)
         }
@@ -131,6 +104,7 @@ export const useInvoiceStore = create<InvoiceState>()(
         set((state) => ({
           invoices: state.invoices.filter((invoice) => invoice.id !== id)
         }))
+        api.invoices.delete(id)
       },
 
       getInvoiceById: (id) => {
@@ -162,8 +136,7 @@ export const useInvoiceStore = create<InvoiceState>()(
             return invoice
           })
         }))
-
-        // Update status after payment
+        api.invoices.addPayment(invoiceId, payment)
         get().updateInvoiceStatus(invoiceId)
       },
 
@@ -174,7 +147,6 @@ export const useInvoiceStore = create<InvoiceState>()(
               const deletedPayment = invoice.payments.find(p => p.id === paymentId)
               const newPayments = invoice.payments.filter((p) => p.id !== paymentId)
               const newAmountPaid = invoice.amountPaid - (deletedPayment?.amount || 0)
-              
               return {
                 ...invoice,
                 payments: newPayments,
@@ -185,8 +157,7 @@ export const useInvoiceStore = create<InvoiceState>()(
             return invoice
           })
         }))
-
-        // Update status after payment deletion
+        api.invoices.deletePayment(paymentId)
         get().updateInvoiceStatus(invoiceId)
       },
 
@@ -238,6 +209,7 @@ export const useInvoiceStore = create<InvoiceState>()(
     }),
     {
       name: 'fieldkit-invoices',
+      storage: userScopedStorage,
       version: 1
     }
   )

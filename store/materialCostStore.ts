@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
+import { userScopedStorage } from '@/lib/userStorage'
+import api from '@/lib/api'
 
 export interface JobMaterial {
   id: string
@@ -32,46 +34,10 @@ interface MaterialCostState {
   linkToInventoryItem: (materialId: string, inventoryItemId: string) => void
 }
 
-// Mock data for development
-const mockJobMaterials: JobMaterial[] = [
-  {
-    id: 'MAT-0001',
-    jobId: 'JOB-0001',
-    inventoryItemId: undefined,
-    description: 'Walnut wood boards (3x)',
-    quantity: 3,
-    unitCost: 45.00,
-    totalCost: 135.00,
-    usedAt: Date.now() - (2 * 24 * 60 * 60 * 1000),
-    notes: 'Premium walnut for wedding signs'
-  },
-  {
-    id: 'MAT-0002',
-    jobId: 'JOB-0001',
-    inventoryItemId: undefined,
-    description: 'Wood stain (walnut finish)',
-    quantity: 1,
-    unitCost: 18.50,
-    totalCost: 18.50,
-    usedAt: Date.now() - (2 * 24 * 60 * 60 * 1000),
-    notes: 'Minwax stain'
-  },
-  {
-    id: 'MAT-0003',
-    jobId: 'JOB-0001',
-    inventoryItemId: undefined,
-    description: 'Polyurethane finish',
-    quantity: 1,
-    unitCost: 22.00,
-    totalCost: 22.00,
-    usedAt: Date.now() - (1 * 24 * 60 * 60 * 1000)
-  }
-]
-
 export const useMaterialCostStore = create<MaterialCostState>()(
   persist(
     (set, get) => ({
-      jobMaterials: mockJobMaterials,
+      jobMaterials: [],
 
       addJobMaterial: (materialData) => {
         const totalCost = materialData.quantity * materialData.unitCost
@@ -81,10 +47,10 @@ export const useMaterialCostStore = create<MaterialCostState>()(
           totalCost,
           usedAt: Date.now()
         }
-
         set((state) => ({
           jobMaterials: [...state.jobMaterials, material]
         }))
+        api.materials.create(material)
       },
 
       updateJobMaterial: (id, updates) => {
@@ -92,7 +58,6 @@ export const useMaterialCostStore = create<MaterialCostState>()(
           jobMaterials: state.jobMaterials.map((material) => {
             if (material.id === id) {
               const updatedMaterial = { ...material, ...updates }
-              // Recalculate total cost if quantity or unit cost changed
               if (updates.quantity !== undefined || updates.unitCost !== undefined) {
                 updatedMaterial.totalCost = updatedMaterial.quantity * updatedMaterial.unitCost
               }
@@ -101,12 +66,14 @@ export const useMaterialCostStore = create<MaterialCostState>()(
             return material
           })
         }))
+        api.materials.update(id, updates)
       },
 
       deleteJobMaterial: (id) => {
         set((state) => ({
           jobMaterials: state.jobMaterials.filter((material) => material.id !== id)
         }))
+        api.materials.delete(id)
       },
 
       getJobMaterialById: (id) => {
@@ -142,6 +109,7 @@ export const useMaterialCostStore = create<MaterialCostState>()(
     }),
     {
       name: 'fieldkit-material-costs',
+      storage: userScopedStorage,
       version: 1
     }
   )

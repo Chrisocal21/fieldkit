@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
+import { userScopedStorage } from '@/lib/userStorage'
+import api from '@/lib/api'
 
 export interface TeamMember {
   id: string
@@ -64,6 +66,7 @@ export const useTeamStore = create<TeamState>()(
         set((state) => ({
           members: [...state.members, newMember],
         }))
+        api.team.create(newMember)
         return id
       },
 
@@ -75,22 +78,27 @@ export const useTeamStore = create<TeamState>()(
               : member
           ),
         }))
+        api.team.update(id, { ...updates, updatedAt: Date.now() })
       },
 
       deleteMember: (id) => {
         set((state) => ({
           members: state.members.filter((member) => member.id !== id),
         }))
+        api.team.delete(id)
       },
 
       toggleActive: (id) => {
+        const member = get().members.find(m => m.id === id)
+        const newActive = !(member?.active ?? true)
         set((state) => ({
           members: state.members.map((member) =>
             member.id === id
-              ? { ...member, active: !member.active, updatedAt: Date.now() }
+              ? { ...member, active: newActive, updatedAt: Date.now() }
               : member
           ),
         }))
+        api.team.update(id, { active: newActive, updatedAt: Date.now() })
       },
 
       getMemberById: (id) => {
@@ -116,6 +124,7 @@ export const useTeamStore = create<TeamState>()(
     }),
     {
       name: 'fieldkit-team-storage',
+      storage: userScopedStorage,
       version: 2,
     }
   )

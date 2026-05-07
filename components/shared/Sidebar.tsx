@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { UserButton } from '@clerk/nextjs'
 import SettingsModal from './SettingsModal'
 
 const navItems = [
@@ -137,8 +138,11 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Settings Button at Bottom */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+        {/* Bottom: User + Settings */}
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800 space-y-1">
+          <div className="flex items-center px-3 py-2">
+            <UserButton afterSignOutUrl="/sign-in" />
+          </div>
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="flex items-center w-full px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"

@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
 import { Quote } from './quoteStore'
+import { userScopedStorage, getCurrentUserId } from '@/lib/userStorage'
+import api from '@/lib/api'
 
 export type JobStatus = 'Draft' | 'Quoted' | 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled'
 
@@ -41,141 +43,10 @@ interface JobState {
   getJobQuotes: (jobId: string) => Quote[]
 }
 
-// Mock data
-const mockJobs: Job[] = [
-  {
-    id: 'JOB-0001',
-    title: 'Custom laser engraving - wedding signs',
-    clientName: 'Sarah Johnson',
-    clientEmail: 'sarah@example.com',
-    clientPhone: '(555) 123-4567',
-    siteAddress: '123 Venue Street, City, ST 12345',
-    description: '3 wooden welcome signs with custom text',
-    status: 'In Progress',
-    assigneeId: 'TEAM-001',
-    startDate: Date.now() - 86400000,
-    dueDate: Date.now() + 86400000 * 2, // 2 days from now
-    notes: 'Client wants walnut finish',
-    quotes: [
-      {
-        id: 'QUOTE-0001',
-        quoteNumber: 1001,
-        jobId: 'JOB-0001',
-        clientName: 'Sarah Johnson',
-        clientEmail: 'sarah@example.com',
-        clientPhone: '(555) 123-4567',
-        notes: 'Wedding signs, walnut finish',
-        taxRate: 0.08,
-        status: 'Accepted',
-        lineItems: [
-          {
-            id: 'LINE-0001',
-            quoteId: 'QUOTE-0001',
-            description: 'Walnut wood boards (3)',
-            quantity: 3,
-            unitPrice: 45.00,
-            type: 'material',
-            sortOrder: 0,
-          },
-          {
-            id: 'LINE-0002',
-            quoteId: 'QUOTE-0001',
-            description: 'Laser engraving & finishing',
-            quantity: 3,
-            unitPrice: 75.00,
-            type: 'labor',
-            sortOrder: 1,
-          },
-        ],
-        createdAt: Date.now() - 86400000 * 3,
-        updatedAt: Date.now() - 86400000 * 2,
-      },
-    ],
-    archived: false,
-    createdAt: Date.now() - 86400000 * 3,
-    updatedAt: Date.now(),
-  },
-  {
-    id: 'JOB-0002',
-    title: 'Print shop order - business cards',
-    clientName: 'Mike\'s Auto Repair',
-    clientEmail: 'mike@autoshop.com',
-    clientPhone: '(555) 987-6543',
-    description: '500 business cards, full color, glossy finish',
-    status: 'Scheduled',
-    assigneeId: 'TEAM-002',
-    startDate: Date.now() + 86400000 * 3,
-    dueDate: Date.now() + 86400000 * 5,
-    notes: 'Rush order - need by Friday',
-    quotes: [],
-    archived: false,
-    createdAt: Date.now() - 86400000 * 2,
-    updatedAt: Date.now(),
-  },
-  {
-    id: 'JOB-0003',
-    title: 'Acrylic signage',
-    clientName: 'Downtown Coffee Co.',
-    clientEmail: 'info@downtowncoffee.com',
-    siteAddress: '456 Main St, City, ST 12345',
-    description: 'Large outdoor sign with LED backlighting',
-    status: 'Quoted',
-    dueDate: Date.now() + 86400000 * 10,
-    notes: 'Waiting on client approval',
-    quotes: [
-      {
-        id: 'QUOTE-0002',
-        quoteNumber: 1002,
-        jobId: 'JOB-0003',
-        clientName: 'Downtown Coffee Co.',
-        clientEmail: 'info@downtowncoffee.com',
-        notes: 'LED backlighting, weatherproof materials',
-        taxRate: 0.08,
-        expiryDate: Date.now() + 86400000 * 7, // Expires in 7 days
-        status: 'Sent',
-        lineItems: [
-          {
-            id: 'LINE-0003',
-            quoteId: 'QUOTE-0002',
-            description: 'Acrylic sheet (24" x 36")',
-            quantity: 1,
-            unitPrice: 150.00,
-            type: 'material',
-            sortOrder: 0,
-          },
-          {
-            id: 'LINE-0004',
-            quoteId: 'QUOTE-0002',
-            description: 'LED strip lighting kit',
-            quantity: 1,
-            unitPrice: 85.00,
-            type: 'material',
-            sortOrder: 1,
-          },
-          {
-            id: 'LINE-0005',
-            quoteId: 'QUOTE-0002',
-            description: 'Design, fabrication & installation',
-            quantity: 8,
-            unitPrice: 75.00,
-            type: 'labor',
-            sortOrder: 2,
-          },
-        ],
-        createdAt: Date.now() - 86400000,
-        updatedAt: Date.now() - 86400000,
-      },
-    ],
-    archived: false,
-    createdAt: Date.now() - 86400000,
-    updatedAt: Date.now(),
-  },
-]
-
 export const useJobStore = create<JobState>()(
   persist(
     (set, get) => ({
-      jobs: mockJobs,
+      jobs: [],
       
       addJob: (jobData) => {
         const newJob: Job = {
@@ -187,6 +58,7 @@ export const useJobStore = create<JobState>()(
           updatedAt: Date.now(),
         }
         set((state) => ({ jobs: [...state.jobs, newJob] }))
+        api.jobs.create(newJob)
       },
       
       updateJob: (id, updates) => {
@@ -195,6 +67,7 @@ export const useJobStore = create<JobState>()(
             job.id === id ? { ...job, ...updates, updatedAt: Date.now() } : job
           ),
         }))
+        api.jobs.update(id, { ...updates, updatedAt: Date.now() })
       },
       
       archiveJob: (id) => {
@@ -203,6 +76,7 @@ export const useJobStore = create<JobState>()(
             job.id === id ? { ...job, archived: true, updatedAt: Date.now() } : job
           ),
         }))
+        api.jobs.archive(id)
       },
       
       getJobById: (id) => {
@@ -215,19 +89,16 @@ export const useJobStore = create<JobState>()(
       
       // Quote management within jobs
       addQuoteToJob: (jobId, quoteData) => {
+        let newQuote: Quote | null = null
         set((state) => ({
           jobs: state.jobs.map((job) => {
             if (job.id === jobId) {
-              // Ensure quotes array exists
               const jobQuotes = job.quotes || []
-              
-              // Get highest quote number across all jobs
               const allQuotes = state.jobs.flatMap(j => j.quotes || [])
               const maxQuoteNumber = allQuotes.length > 0 
                 ? Math.max(...allQuotes.map(q => q.quoteNumber)) 
                 : 1000
-              
-              const newQuote: Quote = {
+              newQuote = {
                 ...quoteData,
                 id: nanoid(),
                 jobId: jobId,
@@ -235,17 +106,17 @@ export const useJobStore = create<JobState>()(
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
               }
-              
               return {
                 ...job,
                 quotes: [...jobQuotes, newQuote],
-                status: job.status === 'Draft' ? 'Quoted' : job.status,  // Auto-update to Quoted if Draft
+                status: job.status === 'Draft' ? 'Quoted' : job.status,
                 updatedAt: Date.now(),
               }
             }
             return job
           }),
         }))
+        if (newQuote) api.jobs.addQuote(jobId, newQuote)
       },
       
       updateJobQuote: (jobId, quoteId, updates) => {
@@ -265,29 +136,20 @@ export const useJobStore = create<JobState>()(
             return job
           }),
         }))
+        api.quotes.update(quoteId, { ...updates, updatedAt: Date.now() })
       },
       
       acceptJobQuote: (jobId, quoteId) => {
         set((state) => ({
           jobs: state.jobs.map((job) => {
             if (job.id === jobId && job.quotes) {
-              // Check if there's already an accepted quote
-              const hasAcceptedQuote = job.quotes.some(
-                q => q.id !== quoteId && q.status === 'Accepted'
-              )
-              
-              if (hasAcceptedQuote) {
-                console.warn('Job already has an accepted quote. Declining other quotes.')
-              }
-              
               return {
                 ...job,
-                status: 'Scheduled',  // Auto-update job status when quote is accepted
+                status: 'Scheduled',
                 quotes: job.quotes.map((quote) => {
                   if (quote.id === quoteId) {
                     return { ...quote, status: 'Accepted' as const, updatedAt: Date.now() }
                   }
-                  // Auto-decline other quotes when one is accepted
                   if (quote.status !== 'Declined') {
                     return { ...quote, status: 'Declined' as const, updatedAt: Date.now() }
                   }
@@ -299,6 +161,8 @@ export const useJobStore = create<JobState>()(
             return job
           }),
         }))
+        api.quotes.update(quoteId, { status: 'Accepted' })
+        api.jobs.update(jobId, { status: 'Scheduled' })
       },
       
       deleteJobQuote: (jobId, quoteId) => {
@@ -314,6 +178,7 @@ export const useJobStore = create<JobState>()(
             return job
           }),
         }))
+        api.quotes.delete(quoteId)
       },
       
       getJobQuotes: (jobId) => {
@@ -323,6 +188,7 @@ export const useJobStore = create<JobState>()(
     }),
     {
       name: 'fieldkit-jobs',
+      storage: userScopedStorage,
       version: 2,
       migrate: (persistedState: any, version: number) => {
         // Ensure all jobs have a quotes array (added in Phase 6.5)
@@ -335,7 +201,7 @@ export const useJobStore = create<JobState>()(
           // Link jobs with clients (added in Phase 7)
           // Try to get clients from localStorage to link them
           try {
-            const clientsData = localStorage.getItem('fieldkit-clients')
+            const clientsData = localStorage.getItem(`fieldkit-clients__${getCurrentUserId() ?? ''}`)
             if (clientsData) {
               const clientsState = JSON.parse(clientsData)
               const clients = clientsState?.state?.clients || []

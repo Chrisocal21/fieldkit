@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
+import { userScopedStorage } from '@/lib/userStorage'
 
 export type DocumentLayoutType = 'classic' | 'modern' | 'minimal' | 'bold'
 
@@ -312,7 +313,8 @@ export const useBrandingStore = create<BrandingState>()(
       }
     }),
     {
-      name: 'fieldkit-branding'
+      name: 'fieldkit-branding',
+      storage: userScopedStorage,
     }
   )
 )

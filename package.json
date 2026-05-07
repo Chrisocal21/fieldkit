@@ -6,9 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "worker:dev": "wrangler dev worker/index.ts",
+    "worker:deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create fieldkit-db",
+    "db:migrate": "wrangler d1 execute fieldkit-db --file=worker/schema.sql",
+    "db:migrate:remote": "wrangler d1 execute fieldkit-db --remote --file=worker/schema.sql"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.39.3",
     "@types/qrcode": "^1.5.6",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.0",
@@ -28,6 +34,7 @@
     "eslint-config-next": "^14.2.0",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "wrangler": "^4.88.0"
   }
 }

@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
+import { userScopedStorage } from '@/lib/userStorage'
+import api from '@/lib/api'
 
 export type ExpenseCategory = 
   | 'Permits' 
@@ -44,46 +46,10 @@ interface ExpenseState {
   getExpensesByDateRange: (start: number, end: number) => Expense[]
 }
 
-// Mock data for development
-const mockExpenses: Expense[] = [
-  {
-    id: 'EXP-0001',
-    jobId: 'JOB-0001',
-    category: 'Permits',
-    description: 'Building permit for custom signage',
-    amount: 75.00,
-    expenseDate: Date.now() - (5 * 24 * 60 * 60 * 1000),
-    notes: 'Permit #12345',
-    createdAt: Date.now() - (5 * 24 * 60 * 60 * 1000),
-    updatedAt: Date.now() - (5 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: 'EXP-0002',
-    jobId: undefined,
-    category: 'Insurance',
-    description: 'Monthly liability insurance',
-    amount: 250.00,
-    expenseDate: Date.now() - (10 * 24 * 60 * 60 * 1000),
-    notes: 'General overhead',
-    createdAt: Date.now() - (10 * 24 * 60 * 60 * 1000),
-    updatedAt: Date.now() - (10 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: 'EXP-0003',
-    jobId: undefined,
-    category: 'Tools',
-    description: 'New router bits set',
-    amount: 89.99,
-    expenseDate: Date.now() - (15 * 24 * 60 * 60 * 1000),
-    createdAt: Date.now() - (15 * 24 * 60 * 60 * 1000),
-    updatedAt: Date.now() - (15 * 24 * 60 * 60 * 1000)
-  }
-]
-
 export const useExpenseStore = create<ExpenseState>()(
   persist(
     (set, get) => ({
-      expenses: mockExpenses,
+      expenses: [],
 
       addExpense: (expenseData) => {
         const expense: Expense = {
@@ -92,10 +58,10 @@ export const useExpenseStore = create<ExpenseState>()(
           createdAt: Date.now(),
           updatedAt: Date.now()
         }
-
         set((state) => ({
           expenses: [...state.expenses, expense]
         }))
+        api.expenses.create(expense)
       },
 
       updateExpense: (id, updates) => {
@@ -106,12 +72,14 @@ export const useExpenseStore = create<ExpenseState>()(
               : expense
           )
         }))
+        api.expenses.update(id, { ...updates, updatedAt: Date.now() })
       },
 
       deleteExpense: (id) => {
         set((state) => ({
           expenses: state.expenses.filter((expense) => expense.id !== id)
         }))
+        api.expenses.delete(id)
       },
 
       getExpenseById: (id) => {
@@ -160,6 +128,7 @@ export const useExpenseStore = create<ExpenseState>()(
     }),
     {
       name: 'fieldkit-expenses',
+      storage: userScopedStorage,
       version: 1
     }
   )

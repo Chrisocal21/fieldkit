@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { ClerkProvider } from '@clerk/nextjs'
 import Sidebar from '@/components/shared/Sidebar'
 import BottomNav from '@/components/shared/BottomNav'
 import ServiceWorkerRegistration from '@/components/shared/ServiceWorkerRegistration'
 import InstallPrompt from '@/components/shared/InstallPrompt'
 import GlobalSearch from '@/components/shared/GlobalSearch'
+import StoreRehydrator from '@/components/shared/StoreRehydrator'
 
 export const metadata: Metadata = {
   title: 'FIELDKIT',
@@ -32,21 +34,24 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body>
-        <ServiceWorkerRegistration />
-        <InstallPrompt />
-        <GlobalSearch />
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-          <Sidebar />
-          <main className="lg:pl-64 pb-16 lg:pb-0">
-            <div className="max-w-[1920px] mx-auto px-3 sm:px-4 lg:px-6 py-4">
-              {children}
-            </div>
-          </main>
-          <BottomNav />
-        </div>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body>
+          <ServiceWorkerRegistration />
+          <InstallPrompt />
+          <GlobalSearch />
+          <StoreRehydrator />
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+            <Sidebar />
+            <main className="lg:pl-64 pb-16 lg:pb-0">
+              <div className="max-w-[1920px] mx-auto px-3 sm:px-4 lg:px-6 py-4">
+                {children}
+              </div>
+            </main>
+            <BottomNav />
+          </div>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
