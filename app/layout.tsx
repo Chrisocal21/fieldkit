@@ -8,6 +8,9 @@ import InstallPrompt from '@/components/shared/InstallPrompt'
 import GlobalSearch from '@/components/shared/GlobalSearch'
 import StoreRehydrator from '@/components/shared/StoreRehydrator'
 
+// All pages use Clerk auth — never statically prerender
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'FIELDKIT',
   description: 'Free, lightweight operations tool for service businesses',
