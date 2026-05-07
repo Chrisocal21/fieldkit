@@ -12,6 +12,8 @@
  *  5. User signs out → setCurrentUserId(null) → rehydrate clears/resets stores
  */
 
+import { createJSONStorage } from 'zustand/middleware'
+
 let _userId: string | null = null
 
 export function setCurrentUserId(id: string | null) {
@@ -26,9 +28,7 @@ function scopedKey(name: string): string {
   return _userId ? `${name}__${_userId}` : name
 }
 
-import { type StateStorage } from 'zustand/middleware'
-
-export const userScopedStorage: StateStorage = {
+const rawStorage = {
   getItem: (name: string): string | null => {
     if (typeof window === 'undefined') return null
     return localStorage.getItem(scopedKey(name))
@@ -42,3 +42,6 @@ export const userScopedStorage: StateStorage = {
     localStorage.removeItem(scopedKey(name))
   },
 }
+
+export const userScopedStorage = createJSONStorage(() => rawStorage)
+
