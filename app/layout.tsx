@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   title: 'FIELDKIT',
   description: 'Free, lightweight operations tool for service businesses',
   manifest: '/manifest.json',
+  icons: { icon: '/logo.svg', apple: '/icon-192.png' },
   appleWebApp: {
     statusBarStyle: 'default',
     title: 'FIELDKIT',
