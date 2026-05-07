@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useSettingsStore, Theme } from '@/store/settingsStore'
 import QRCodeGeneratorModal from './QRCodeGeneratorModal'
 import ShortURLGeneratorModal from './ShortURLGeneratorModal'
 import BusinessCardGeneratorModal from './BusinessCardGeneratorModal'
-import BrandingModal from '../branding/BrandingModal'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -13,13 +13,13 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+  const router = useRouter()
   const theme = useSettingsStore((state) => state.theme)
   const setTheme = useSettingsStore((state) => state.setTheme)
   
   const [showQRCode, setShowQRCode] = useState(false)
   const [showShortURL, setShowShortURL] = useState(false)
   const [showBusinessCard, setShowBusinessCard] = useState(false)
-  const [showBranding, setShowBranding] = useState(false)
 
   if (!isOpen) return null
 
@@ -153,9 +153,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </span>
                 </button>
 
-                {/* Placeholder for 4th tool */}
+                {/* Branding Studio */}
                 <button
-                  onClick={() => setShowBranding(true)}
+                  onClick={() => {
+                    onClose()
+                    router.push('/branding')
+                  }}
                   className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:border-gray-300 dark:hover:border-gray-600 transition-all"
                 >
                   <svg className="w-8 h-8 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,7 +202,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       <QRCodeGeneratorModal isOpen={showQRCode} onClose={() => setShowQRCode(false)} />
       <ShortURLGeneratorModal isOpen={showShortURL} onClose={() => setShowShortURL(false)} />
       <BusinessCardGeneratorModal isOpen={showBusinessCard} onClose={() => setShowBusinessCard(false)} />
-      <BrandingModal isOpen={showBranding} onClose={() => setShowBranding(false)} />
     </>
   )
 }

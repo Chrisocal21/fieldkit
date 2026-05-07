@@ -1,0 +1,254 @@
+'use client'
+
+import { useState } from 'react'
+import { useBrandingStore } from '@/store/brandingStore'
+
+type FontFamily = 'Helvetica' | 'Times' | 'Courier' | 'Georgia' | 'Arial'
+
+export default function TypographyEditor() {
+  const { getDefaultPreset, updatePreset } = useBrandingStore()
+  const currentPreset = getDefaultPreset()
+  
+  const [fontFamily, setFontFamily] = useState<FontFamily>(currentPreset.fontFamily)
+  const [fontSize, setFontSize] = useState(currentPreset.fontSize)
+
+  const handleFontFamilyChange = (family: FontFamily) => {
+    setFontFamily(family)
+    updatePreset(currentPreset.id, { fontFamily: family })
+  }
+
+  const handleFontSizeChange = (key: keyof typeof fontSize, value: number) => {
+    const newFontSize = { ...fontSize, [key]: value }
+    setFontSize(newFontSize)
+    updatePreset(currentPreset.id, { fontSize: newFontSize })
+  }
+
+  const fontFamilies: { value: FontFamily; label: string; description: string; style: string }[] = [
+    { 
+      value: 'Helvetica', 
+      label: 'Helvetica', 
+      description: 'Clean, modern sans-serif',
+      style: 'font-sans'
+    },
+    { 
+      value: 'Arial', 
+      label: 'Arial', 
+      description: 'Classic, widely supported',
+      style: 'font-sans'
+    },
+    { 
+      value: 'Times', 
+      label: 'Times New Roman', 
+      description: 'Traditional serif',
+      style: 'font-serif'
+    },
+    { 
+      value: 'Georgia', 
+      label: 'Georgia', 
+      description: 'Elegant serif',
+      style: 'font-serif'
+    },
+    { 
+      value: 'Courier', 
+      label: 'Courier', 
+      description: 'Monospace, technical',
+      style: 'font-mono'
+    },
+  ]
+
+  const fontSizes = [
+    { key: 'title' as const, label: 'Title', description: 'Main document title', min: 18, max: 32 },
+    { key: 'heading' as const, label: 'Heading', description: 'Section headings', min: 10, max: 20 },
+    { key: 'body' as const, label: 'Body', description: 'Normal text', min: 8, max: 14 },
+    { key: 'small' as const, label: 'Small', description: 'Fine print', min: 6, max: 10 },
+  ]
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div>
+        <h3 className="text-xl font-semibold text-white mb-2">Typography Settings</h3>
+        <p className="text-slate-400 text-sm">
+          Customize fonts and sizes for your branded documents
+        </p>
+      </div>
+
+      {/* Font Family Selection */}
+      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-6">
+        <h4 className="text-lg font-semibold text-white mb-4">Font Family</h4>
+        <div className="space-y-2">
+          {fontFamilies.map((font) => (
+            <button
+              key={font.value}
+              onClick={() => handleFontFamilyChange(font.value)}
+              className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                fontFamily === font.value
+                  ? 'border-blue-600 bg-blue-500/10'
+                  : 'border-slate-700 hover:border-slate-600 hover:bg-slate-800/50'
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0">
+                  {fontFamily === font.value ? (
+                    <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full border-2 border-slate-600" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <div className={`text-lg font-medium text-white ${font.style}`}>
+                    {font.label}
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    {font.description}
+                  </div>
+                </div>
+              </div>
+              <div className={`text-2xl text-slate-400 ${font.style}`}>
+                Aa
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Font Size Scale */}
+      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-6">
+        <h4 className="text-lg font-semibold text-white mb-4">Font Size Scale</h4>
+        <div className="space-y-6">
+          {fontSizes.map((size) => (
+            <div key={size.key}>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <label className="text-sm font-medium text-slate-300">
+                    {size.label}
+                  </label>
+                  <p className="text-xs text-slate-500">{size.description}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-slate-400 text-sm font-mono">
+                    {fontSize[size.key]}pt
+                  </span>
+                  <input
+                    type="number"
+                    value={fontSize[size.key]}
+                    onChange={(e) => handleFontSizeChange(size.key, parseInt(e.target.value) || size.min)}
+                    min={size.min}
+                    max={size.max}
+                    className="w-16 px-2 py-1 bg-slate-800 border border-slate-700 rounded text-white text-sm text-center focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none"
+                  />
+                </div>
+              </div>
+              <input
+                type="range"
+                min={size.min}
+                max={size.max}
+                value={fontSize[size.key]}
+                onChange={(e) => handleFontSizeChange(size.key, parseInt(e.target.value))}
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Typography Preview */}
+      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-6">
+        <h4 className="text-lg font-semibold text-white mb-4">Typography Preview</h4>
+        <div className="bg-white p-8 rounded-lg space-y-6">
+          {/* Title Preview */}
+          <div>
+            <p className="text-xs text-slate-500 mb-1">Title ({fontSize.title}pt)</p>
+            <div
+              className={fontFamily === 'Helvetica' || fontFamily === 'Arial' ? 'font-sans' : fontFamily === 'Times' || fontFamily === 'Georgia' ? 'font-serif' : 'font-mono'}
+              style={{ fontSize: `${fontSize.title}pt`, color: currentPreset.colors.text, fontWeight: 'bold' }}
+            >
+              Professional Invoice
+            </div>
+          </div>
+
+          {/* Heading Preview */}
+          <div>
+            <p className="text-xs text-slate-500 mb-1">Heading ({fontSize.heading}pt)</p>
+            <div
+              className={fontFamily === 'Helvetica' || fontFamily === 'Arial' ? 'font-sans' : fontFamily === 'Times' || fontFamily === 'Georgia' ? 'font-serif' : 'font-mono'}
+              style={{ fontSize: `${fontSize.heading}pt`, color: currentPreset.colors.text, fontWeight: '600' }}
+            >
+              Client Information
+            </div>
+          </div>
+
+          {/* Body Preview */}
+          <div>
+            <p className="text-xs text-slate-500 mb-1">Body Text ({fontSize.body}pt)</p>
+            <div
+              className={fontFamily === 'Helvetica' || fontFamily === 'Arial' ? 'font-sans' : fontFamily === 'Times' || fontFamily === 'Georgia' ? 'font-serif' : 'font-mono'}
+              style={{ fontSize: `${fontSize.body}pt`, color: currentPreset.colors.text }}
+            >
+              This is how normal body text will appear in your documents. It should be easy to read and professional looking. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            </div>
+          </div>
+
+          {/* Small Preview */}
+          <div>
+            <p className="text-xs text-slate-500 mb-1">Small Text ({fontSize.small}pt)</p>
+            <div
+              className={fontFamily === 'Helvetica' || fontFamily === 'Arial' ? 'font-sans' : fontFamily === 'Times' || fontFamily === 'Georgia' ? 'font-serif' : 'font-mono'}
+              style={{ fontSize: `${fontSize.small}pt`, color: currentPreset.colors.textLight }}
+            >
+              Terms and conditions apply. Payment due within 30 days.
+            </div>
+          </div>
+
+          {/* Combined Example */}
+          <div className="border-t pt-6 mt-6" style={{ borderColor: currentPreset.colors.border }}>
+            <div
+              className={fontFamily === 'Helvetica' || fontFamily === 'Arial' ? 'font-sans' : fontFamily === 'Times' || fontFamily === 'Georgia' ? 'font-serif' : 'font-mono'}
+              style={{ fontSize: `${fontSize.title}pt`, color: currentPreset.colors.primary, fontWeight: 'bold' }}
+            >
+              {currentPreset.businessName || 'Your Business'}
+            </div>
+            <div
+              className={`mt-4 ${fontFamily === 'Helvetica' || fontFamily === 'Arial' ? 'font-sans' : fontFamily === 'Times' || fontFamily === 'Georgia' ? 'font-serif' : 'font-mono'}`}
+              style={{ fontSize: `${fontSize.heading}pt`, color: currentPreset.colors.text, fontWeight: '600' }}
+            >
+              Invoice #INV-001
+            </div>
+            <div
+              className={`mt-2 ${fontFamily === 'Helvetica' || fontFamily === 'Arial' ? 'font-sans' : fontFamily === 'Times' || fontFamily === 'Georgia' ? 'font-serif' : 'font-mono'}`}
+              style={{ fontSize: `${fontSize.body}pt`, color: currentPreset.colors.text }}
+            >
+              Date: April 2, 2026
+            </div>
+            <div
+              className={`mt-4 ${fontFamily === 'Helvetica' || fontFamily === 'Arial' ? 'font-sans' : fontFamily === 'Times' || fontFamily === 'Georgia' ? 'font-serif' : 'font-mono'}`}
+              style={{ fontSize: `${fontSize.small}pt`, color: currentPreset.colors.textLight }}
+            >
+              Thank you for your business!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tips */}
+      <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+        <div className="flex gap-3">
+          <div className="flex-shrink-0 text-xl">💡</div>
+          <div className="text-sm text-slate-300">
+            <p className="font-semibold text-white mb-1">Typography Tips</p>
+            <ul className="space-y-1 text-slate-400">
+              <li>• Use serif fonts (Times, Georgia) for traditional, formal documents</li>
+              <li>• Use sans-serif fonts (Helvetica, Arial) for modern, clean look</li>
+              <li>• Keep body text between 9-11pt for optimal readability</li>
+              <li>• Ensure good contrast between title and body text sizes</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

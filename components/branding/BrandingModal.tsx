@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import BrandIdentityEditor from './BrandIdentityEditor'
 import ColorPaletteEditor from './ColorPaletteEditor'
+import TypographyEditor from './TypographyEditor'
 import AssetGeneratorPanel from './AssetGeneratorPanel'
 import { useBrandingStore } from '@/store/brandingStore'
 
@@ -11,7 +12,7 @@ interface BrandingModalProps {
   onClose: () => void
 }
 
-type TabType = 'identity' | 'colors' | 'assets' | 'export'
+type TabType = 'identity' | 'colors' | 'typography' | 'assets' | 'export'
 
 export default function BrandingModal({ isOpen, onClose }: BrandingModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('identity')
@@ -23,8 +24,9 @@ export default function BrandingModal({ isOpen, onClose }: BrandingModalProps) {
 
   const tabs = [
     { id: 'identity' as TabType, label: 'Brand Identity', icon: '🎨' },
-    { id: 'colors' as TabType, label: 'Color Palette', icon: '🎨' },
-    { id: 'assets' as TabType, label: 'Generate Assets', icon: '✨' },
+    { id: 'colors' as TabType, label: 'Colors', icon: '🌈' },
+    { id: 'typography' as TabType, label: 'Typography', icon: '📝' },
+    { id: 'assets' as TabType, label: 'Assets', icon: '✨' },
     { id: 'export' as TabType, label: 'Export', icon: '📦' },
   ]
 
@@ -89,6 +91,7 @@ export default function BrandingModal({ isOpen, onClose }: BrandingModalProps) {
           {/* Content Area */}
           <div className="flex-1 overflow-y-auto p-6">
             {activeTab === 'identity' && <BrandIdentityEditor />}
+            {activeTab === 'typography' && <TypographyEditor />}
             {activeTab === 'colors' && <ColorPaletteEditor />}
             {activeTab === 'assets' && <AssetGeneratorPanel onClose={onClose} />}
             {activeTab === 'export' && (

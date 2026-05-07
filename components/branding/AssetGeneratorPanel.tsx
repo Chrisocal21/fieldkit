@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import BusinessCardGeneratorModal from '../shared/BusinessCardGeneratorModal'
 import QRCodeGeneratorModal from '../shared/QRCodeGeneratorModal'
+import EmailSignatureGenerator from './generators/EmailSignatureGenerator'
+import SocialMediaGenerator from './generators/SocialMediaGenerator'
+import LetterheadGenerator from './generators/LetterheadGenerator'
 
 interface AssetGeneratorPanelProps {
   onClose: () => void
@@ -11,6 +14,9 @@ interface AssetGeneratorPanelProps {
 export default function AssetGeneratorPanel({ onClose }: AssetGeneratorPanelProps) {
   const [showBusinessCard, setShowBusinessCard] = useState(false)
   const [showQRCode, setShowQRCode] = useState(false)
+  const [showEmailSignature, setShowEmailSignature] = useState(false)
+  const [showSocialMedia, setShowSocialMedia] = useState(false)
+  const [showLetterhead, setShowLetterhead] = useState(false)
 
   const generators = [
     {
@@ -34,24 +40,24 @@ export default function AssetGeneratorPanel({ onClose }: AssetGeneratorPanelProp
       name: 'Email Signature',
       description: 'HTML email signature for Gmail, Outlook',
       icon: '✉️',
-      available: false,
-      badge: 'Coming Soon'
+      available: true,
+      onClick: () => setShowEmailSignature(true)
     },
     {
       id: 'letterhead',
       name: 'Letterhead',
       description: 'Professional letterhead template',
       icon: '📄',
-      available: false,
-      badge: 'Coming Soon'
+      available: true,
+      onClick: () => setShowLetterhead(true)
     },
     {
       id: 'social-media',
       name: 'Social Media Graphics',
       description: 'Create covers for LinkedIn, Facebook, Twitter',
       icon: '🎨',
-      available: false,
-      badge: 'Coming Soon'
+      available: true,
+      onClick: () => setShowSocialMedia(true)
     },
     {
       id: 'invoice-header',
@@ -157,6 +163,18 @@ export default function AssetGeneratorPanel({ onClose }: AssetGeneratorPanelProp
       <QRCodeGeneratorModal
         isOpen={showQRCode}
         onClose={() => setShowQRCode(false)}
+      />
+      <EmailSignatureGenerator
+        isOpen={showEmailSignature}
+        onClose={() => setShowEmailSignature(false)}
+      />
+      <SocialMediaGenerator
+        isOpen={showSocialMedia}
+        onClose={() => setShowSocialMedia(false)}
+      />
+      <LetterheadGenerator
+        isOpen={showLetterhead}
+        onClose={() => setShowLetterhead(false)}
       />
     </>
   )

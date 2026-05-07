@@ -1,5 +1,5 @@
 # FIELDKIT — Master Handoff Document
-**Version:** 1.2 (Jobs-First Architecture Complete)  
+**Version:** 1.3 (Extended Modules + Branding Studio Complete)  
 **Status:** Frontend Complete — Ready for Backend Integration (Phase 7)  
 **Stack:** Next.js 14 · Cloudflare Workers + D1 + R2 · Tailwind CSS · Zustand · PWA  
 **Deployment:** Vercel (frontend) · Cloudflare (backend + DB + storage)
@@ -8,11 +8,20 @@
 
 ## 📊 Project Status
 
-**✅ Phases 1-6.5 Complete (Frontend + PWA + Architecture Refactor)**  
-All core UI modules are fully functional with the new Jobs-First architecture implemented. The app is a working PWA with localStorage persistence, ready for backend integration.
+**✅ Phases 1-6.9 Complete (Frontend + PWA + Architecture Refactor + Extended Modules)**  
+All core UI modules are fully functional. The Jobs-First architecture is complete, plus five additional modules have been built: Clients, Team, Invoicing, Branding Studio, and per-job tracking tabs (Invoices, Materials, Expenses, Time Log). The app is a working PWA with localStorage persistence, ready for backend integration.
 
 **✅ Jobs-First Architecture Implemented**  
 Jobs are now the primary entity with quotes nested inside them. This matches real-world trades workflows where you create a job first, then generate quotes within that job context.
+
+**✅ Extended Modules Implemented (Phases 6.6–6.9)**  
+- **Clients module** — Dedicated client management with migration from existing job data
+- **Team module** — Team member management with hourly rates and calendar color coding
+- **Invoicing** — Full invoice + payment tracking per job (via Invoices tab in Job Drawer)
+- **Material Costs** — Actual material expense tracking per job (via Materials tab)
+- **Expenses** — Job-specific and overhead expense tracking (via Expenses tab)
+- **Time Log** — Per-job time entry tracking linked to team members (via Time tab)
+- **Branding Studio** — Brand identity editor, color palette, typography, and asset generators (email signature, letterhead, social media graphics, business card, QR code)
 
 **⏳ Phase 7 Pending (Backend Integration)**  
 Implement Cloudflare D1 database, API routes, and connect frontend stores to real backend endpoints.
@@ -76,6 +85,10 @@ The central hub for all work. Jobs are created FIRST — then quotes/work orders
   - Accept/decline quotes (status tracking)
   - Download quote PDFs
   - Share quote links
+- **Invoices tab** — generate and track invoices + payments per job
+- **Materials tab** — log actual material costs per job (compare vs quoted)
+- **Expenses tab** — record job-specific expenses (permits, subcontractors, disposal, etc.)
+- **Time tab** — log time entries per team member per job
 - Mark complete with one tap
 - No delete — archive only
 - Perfect for tracking multi-day projects (e.g., 3-day flooring install, week-long renovation)
@@ -176,6 +189,71 @@ Track consumable materials and supplies. Lightweight — no barcodes, no warehou
 - **Flooring:** Track boxes of LVP/laminate, underlayment rolls, transition strips, adhesive
 - **Electrician:** Rolls of 12/2 and 14/2 wire, wire nuts, receptacles, switches, breakers
 - **HVAC:** Refrigerant (by type), filters (by size), condensate pumps, line sets
+
+---
+
+### 2.5 Clients
+Dedicated client management module. Clients are extracted/migrated from existing job data and can be independently managed.
+
+**Fields per client:**
+- Client name
+- Email
+- Phone
+- Address
+- Notes (freeform)
+- Tags (for categorization)
+
+**Features:**
+- Search clients by name, email, or phone
+- View all jobs associated with a client
+- Create/edit/delete clients
+- Auto-migration from existing job data on first load
+- Client drawer with full details and linked jobs
+
+---
+
+### 2.6 Team
+Manage team members for scheduling, assignment, and labor cost calculations.
+
+**Fields per team member:**
+- Name
+- Role (e.g., "Lead Plumber", "Electrician", "Helper")
+- Hourly rate (for labor cost calculations in Time Log)
+- Phone (optional)
+- Email (optional)
+- Color (for calendar/visual identification — auto-assigned from palette)
+- Active / Inactive toggle
+
+**Features:**
+- Add, edit, deactivate, or remove team members
+- Search members by name or role
+- Filter active vs all members
+- Hourly rate used by Time Log to calculate labor costs per job
+- Color coding flows through to schedule calendar
+
+---
+
+### 2.7 Branding Studio
+A full brand identity toolkit for generating professional business materials without a designer.
+
+**Foundation tools:**
+- **Brand Identity** — set business name, tagline, logo (upload), logo position, business contact info, and document footer text
+- **Color Palette** — define primary, secondary, text, background, border, and accent colors with hex picker
+- **Typography** — choose font family and set size scale (title, heading, body, small)
+- **Layout** — choose document layout type: Classic · Modern · Minimal · Bold
+
+**Asset generators:**
+- **Email Signature** — branded HTML email signature using brand identity
+- **Letterhead** — printable letterhead template using brand colors and logo
+- **Social Media Graphics** — post/banner graphics pre-styled with brand
+- **Business Card** — digital business card generator with theme options (light/dark/blue)
+- **QR Code** — generate QR codes for quotes, job links, or custom URLs
+- **Short URL** — create shortened URLs for sharing quotes and jobs
+
+**Branding Presets:**
+- Save named presets for different brands or clients
+- Switch between presets without losing other settings
+- Default preset applies to all PDF documents (quotes, invoices, letterhead)
 
 ---
 
@@ -289,6 +367,92 @@ CREATE TABLE inventory_adjustments (
   adjusted_at INTEGER,
   FOREIGN KEY (item_id) REFERENCES inventory_items(id)
 );
+
+-- Clients (managed independently; migrated from job data)
+CREATE TABLE clients (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  address TEXT,
+  notes TEXT,
+  tags TEXT,                     -- JSON array
+  created_at INTEGER,
+  updated_at INTEGER
+);
+
+-- Invoices (generated from accepted quotes)
+CREATE TABLE invoices (
+  id TEXT PRIMARY KEY,
+  invoice_number INTEGER UNIQUE,
+  job_id TEXT NOT NULL,
+  quote_id TEXT,
+  amount_due REAL NOT NULL,
+  amount_paid REAL DEFAULT 0,
+  status TEXT DEFAULT 'Unpaid',  -- Unpaid, Partial, Paid, Overdue
+  due_date INTEGER,
+  issued_at INTEGER,
+  notes TEXT,
+  created_at INTEGER,
+  updated_at INTEGER,
+  FOREIGN KEY (job_id) REFERENCES jobs(id),
+  FOREIGN KEY (quote_id) REFERENCES quotes(id)
+);
+
+-- Payments (linked to invoices)
+CREATE TABLE payments (
+  id TEXT PRIMARY KEY,
+  invoice_id TEXT NOT NULL,
+  amount REAL NOT NULL,
+  payment_method TEXT,           -- Cash, Check, Credit Card, Bank Transfer, Other
+  payment_date INTEGER,
+  notes TEXT,
+  FOREIGN KEY (invoice_id) REFERENCES invoices(id)
+);
+
+-- Job materials (actual costs vs quoted)
+CREATE TABLE job_materials (
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL,
+  inventory_item_id TEXT,        -- optional link to inventory
+  description TEXT NOT NULL,
+  quantity REAL NOT NULL,
+  unit_cost REAL NOT NULL,
+  total_cost REAL NOT NULL,
+  used_at INTEGER,
+  notes TEXT,
+  FOREIGN KEY (job_id) REFERENCES jobs(id),
+  FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id)
+);
+
+-- Expenses (job-specific or overhead)
+CREATE TABLE expenses (
+  id TEXT PRIMARY KEY,
+  job_id TEXT,                   -- NULL for general overhead
+  category TEXT NOT NULL,        -- Permits, Subcontractor, Equipment Rental, Disposal, Tools, Vehicle, Insurance, Utilities, Other
+  description TEXT NOT NULL,
+  amount REAL NOT NULL,
+  expense_date INTEGER,
+  notes TEXT,
+  created_at INTEGER,
+  updated_at INTEGER,
+  FOREIGN KEY (job_id) REFERENCES jobs(id)
+);
+
+-- Time entries (per job, per team member)
+CREATE TABLE time_entries (
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL,
+  team_member_id TEXT NOT NULL,
+  start_time INTEGER NOT NULL,
+  end_time INTEGER,              -- NULL if still running
+  duration INTEGER,              -- minutes
+  notes TEXT,
+  created_at INTEGER,
+  updated_at INTEGER,
+  FOREIGN KEY (job_id) REFERENCES jobs(id),
+  FOREIGN KEY (team_member_id) REFERENCES team_members(id)
+);
 ```
 
 ### 3.3 API Routes (Cloudflare Workers)
@@ -324,6 +488,36 @@ POST   /api/inventory/:id/adjust -- log stock adjustment
 
 GET    /api/schedule          -- return jobs with due_date in range (query: from, to)
                                -- includes start_date and due_date for multi-day job rendering
+
+GET    /api/clients            -- list clients
+POST   /api/clients            -- create client
+GET    /api/clients/:id        -- get single client
+PATCH  /api/clients/:id        -- update client
+DELETE /api/clients/:id        -- delete client
+GET    /api/clients/:id/jobs   -- list jobs for a client
+
+GET    /api/invoices           -- list all invoices (filter: status, job_id)
+POST   /api/invoices           -- create invoice
+GET    /api/invoices/:id       -- get invoice with payments
+PATCH  /api/invoices/:id       -- update invoice
+DELETE /api/invoices/:id       -- delete invoice
+POST   /api/invoices/:id/payments     -- record payment
+DELETE /api/invoices/:id/payments/:paymentId  -- remove payment
+
+GET    /api/jobs/:id/materials        -- list material costs for job
+POST   /api/jobs/:id/materials        -- add material cost
+PATCH  /api/jobs/:id/materials/:matId -- update material cost
+DELETE /api/jobs/:id/materials/:matId -- remove material cost
+
+GET    /api/expenses           -- list expenses (filter: job_id, category)
+POST   /api/expenses           -- create expense
+PATCH  /api/expenses/:id       -- update expense
+DELETE /api/expenses/:id       -- delete expense
+
+GET    /api/time-entries       -- list time entries (filter: job_id, member_id)
+POST   /api/time-entries       -- create time entry
+PATCH  /api/time-entries/:id   -- update time entry (stop timer, edit)
+DELETE /api/time-entries/:id   -- delete time entry
 ```
 
 ### 3.4 PWA Configuration
@@ -340,11 +534,16 @@ GET    /api/schedule          -- return jobs with due_date in range (query: from
 - **Mobile-first.** Every screen designed for 390px width first, then scaled up.
 - **No emojis.** SVG icons only (Heroicons or Lucide).
 - **Dark mode ready.** Use CSS variables / Tailwind dark: classes from the start.
-- **Navigation:** Bottom tab bar on mobile (Jobs · Quotes · Schedule · Inventory). Sidebar on desktop.
+- **Navigation:** Bottom tab bar on mobile (Jobs · Quotes · Schedule · Inventory). Sidebar on desktop includes all modules.
+  - **Sidebar (desktop):** Dashboard · Jobs · Clients · Team · Quotes · Schedule · Inventory · Branding Studio
+  - **Bottom nav (mobile):** Jobs · Quotes · Schedule · Inventory (primary 4)
   - **Jobs:** Primary module — create jobs, manage quotes within job detail
+  - **Clients:** Dedicated client management and history
+  - **Team:** Team member management for scheduling and labor tracking
   - **Quotes:** Overview of all quotes across all jobs (quick search/filter)
-  - **Schedule:** Calendar view of scheduled jobs
+  - **Schedule:** Calendar view of scheduled jobs (Week / Day / Month views)
   - **Inventory:** Material/supplies tracking
+  - **Branding Studio:** Brand identity toolkit and asset generators
 - **Loading states:** Skeleton loaders, not spinners.
 - **Empty states:** Every module has a clear empty state with a prompt to create the first item.
 - **Destructive actions:** Confirm before archive. No hard deletes exposed in UI.
@@ -372,58 +571,99 @@ fieldkit/
 │   ├── layout.tsx
 │   ├── page.tsx                  -- redirect to /jobs
 │   ├── jobs/
-│   │   ├── page.tsx              -- jobs board/list
-│   │   └── [id]/page.tsx         -- job detail with quotes tab
+│   │   └── page.tsx              -- jobs board/list (kanban + list view)
 │   ├── quotes/
 │   │   ├── page.tsx              -- all quotes overview (cross-job view)
 │   │   └── share/
 │   │       └── [id]/page.tsx     -- public shareable quote link
+│   ├── clients/
+│   │   └── page.tsx              -- client list + client drawer
+│   ├── team/
+│   │   └── page.tsx              -- team member management
 │   ├── schedule/
-│   │   └── page.tsx
+│   │   └── page.tsx              -- week/day/month calendar
 │   ├── inventory/
-│   │   └── page.tsx
-│   └── api/                      -- Next.js API routes (proxy to CF Workers or direct)
+│   │   └── page.tsx              -- inventory list + adjustment log
+│   └── branding/
+│       └── page.tsx              -- branding studio (identity, colors, typography, generators)
 ├── components/
 │   ├── jobs/
 │   │   ├── JobCard.tsx
 │   │   ├── JobBoard.tsx          -- kanban
 │   │   ├── JobList.tsx
-│   │   ├── JobDrawer.tsx         -- with tabs: Details, Quotes, Notes
-│   │   └── JobQuotesTab.tsx      -- manage quotes within job
+│   │   ├── JobDrawer.tsx         -- 7-tab drawer: Details | Quotes | Invoices | Materials | Expenses | Time | Notes
+│   │   ├── JobQuotesTab.tsx      -- quotes management within job
+│   │   ├── InvoicesTab.tsx       -- invoice + payment tracking within job
+│   │   ├── MaterialsTab.tsx      -- actual material costs within job
+│   │   ├── ExpensesTab.tsx       -- expense tracking within job
+│   │   ├── TimeLog.tsx           -- time entry log within job
+│   │   ├── CreateJobModal.tsx
+│   │   └── BoardSettingsModal.tsx
 │   ├── quotes/
 │   │   ├── QuoteForm.tsx         -- create/edit quote (requires jobId)
 │   │   ├── QuoteLineItems.tsx
 │   │   ├── QuotePreview.tsx
-│   │   └── QuoteCard.tsx         -- for quotes list view
+│   │   └── QuoteCard.tsx         -- compact quote card for list view
+│   ├── clients/
+│   │   └── ClientDrawer.tsx      -- client detail + linked jobs
 │   ├── schedule/
 │   │   ├── WeekView.tsx
-│   │   └── DayView.tsx
+│   │   ├── DayView.tsx
+│   │   └── MonthView.tsx
 │   ├── inventory/
-│   │   ├── InventoryList.tsx
-│   │   └── AdjustStock.tsx
+│   │   ├── ItemFormModal.tsx
+│   │   ├── QuickAdjustModal.tsx
+│   │   └── AdjustmentLog.tsx
+│   ├── branding/
+│   │   ├── BrandingModal.tsx
+│   │   ├── BrandIdentityEditor.tsx
+│   │   ├── ColorPaletteEditor.tsx
+│   │   ├── TypographyEditor.tsx
+│   │   ├── AssetGeneratorPanel.tsx
+│   │   └── generators/
+│   │       ├── EmailSignatureGenerator.tsx
+│   │       ├── LetterheadGenerator.tsx
+│   │       └── SocialMediaGenerator.tsx
 │   └── shared/
 │       ├── BottomNav.tsx
 │       ├── Sidebar.tsx
 │       ├── StatusBadge.tsx
 │       ├── EmptyState.tsx
-│       └── SkeletonLoader.tsx
+│       ├── SkeletonLoader.tsx
+│       ├── GlobalSearch.tsx
+│       ├── SettingsModal.tsx
+│       ├── InstallPrompt.tsx
+│       ├── ServiceWorkerRegistration.tsx
+│       ├── CollapsibleSection.tsx
+│       ├── ClientSelector.tsx
+│       ├── BrandingPresetsModal.tsx
+│       ├── BusinessCardGeneratorModal.tsx
+│       ├── QRCodeGeneratorModal.tsx
+│       └── ShortURLGeneratorModal.tsx
 ├── store/
-│   ├── jobStore.ts            -- includes quotes array in job object
-│   ├── quoteStore.ts          -- for cross-job quote queries
-│   ├── inventoryStore.ts
-│   └── scheduleStore.ts
+│   ├── jobStore.ts               -- jobs with embedded quotes array
+│   ├── quoteStore.ts             -- cross-job quote queries
+│   ├── clientStore.ts            -- client management + migration
+│   ├── teamStore.ts              -- team members + hourly rates
+│   ├── invoiceStore.ts           -- invoices + payments
+│   ├── materialCostStore.ts      -- actual material costs per job
+│   ├── expenseStore.ts           -- job and overhead expenses
+│   ├── timeEntryStore.ts         -- time logging per job/member
+│   ├── inventoryStore.ts         -- inventory items + adjustments
+│   ├── brandingStore.ts          -- brand identity + presets
+│   ├── businessCardStore.ts      -- business card profiles
+│   ├── settingsStore.ts          -- app settings + business profile
+│   └── boardSettingsStore.ts     -- kanban column configuration
 ├── lib/
-│   ├── api.ts                    -- fetch wrapper
-│   ├── db.ts                     -- D1 client (CF Workers)
-│   └── pdf.ts                    -- quote PDF generation
-├── workers/
-│   └── index.ts                  -- Cloudflare Worker entrypoint
+│   ├── pdf.ts                    -- quote PDF generation (client-side)
+│   └── validation.ts             -- shared form validation helpers
 ├── public/
 │   ├── manifest.json
-│   └── icons/
+│   ├── sw.js                     -- service worker
+│   └── logo.svg
 ├── tailwind.config.ts
-├── next.config.ts
-└── wrangler.toml
+├── next.config.js
+└── tsconfig.json
 ```
 
 ---
@@ -566,11 +806,57 @@ fieldkit/
 - [x] All TypeScript compilation checks pass
 - [x] StatusBadge updated to support both JobStatus and QuoteStatus
 
+### Phase 6.6 — Clients Module ✅ COMPLETE
+- [x] `store/clientStore.ts` — Client type, CRUD actions, search, `migrateFromJobs()` helper
+- [x] `app/clients/page.tsx` — Client list with search, create/edit modal, EmptyState
+- [x] `components/clients/ClientDrawer.tsx` — Client detail drawer with linked jobs
+- [x] Auto-migration: on first load with no clients, extract unique client records from existing job data
+- [x] `ClientSelector.tsx` shared component for use in job/quote forms
+
+### Phase 6.7 — Team Module ✅ COMPLETE
+- [x] `store/teamStore.ts` — TeamMember type with hourly rates and color coding, CRUD + toggle active
+- [x] `app/team/page.tsx` — Team list with search, create/edit modal, active/inactive filter, EmptyState
+- [x] Auto-assigns color from predefined palette when adding a new member
+- [x] Hourly rates feed into Time Log labor cost calculations
+
+### Phase 6.8 — Job Financial Tracking Tabs ✅ COMPLETE
+**Goal:** Add Invoices, Materials, Expenses, and Time Log tabs to the Job Drawer
+
+- [x] `store/invoiceStore.ts` — Invoice + Payment types, CRUD, payment operations, status auto-update, `getOverdueInvoices()`, `getTotalOutstanding()`
+- [x] `store/materialCostStore.ts` — JobMaterial type, CRUD, `calculateJobMaterialCost()`, inventory item linking
+- [x] `store/expenseStore.ts` — Expense type with categories, CRUD, job vs overhead split, `calculateJobExpenses()`
+- [x] `store/timeEntryStore.ts` — TimeEntry type, start/stop timer, `calculateJobTotalHours()`, `calculateJobLaborCost()`
+- [x] `components/jobs/InvoicesTab.tsx` — Invoice list + create invoice, payment recording, status badges
+- [x] `components/jobs/MaterialsTab.tsx` — Material cost log for job, add/edit/delete entries
+- [x] `components/jobs/ExpensesTab.tsx` — Expense log for job, categorized, add/edit/delete
+- [x] `components/jobs/TimeLog.tsx` — Time entry log, start/stop timer, team member assignment, hours summary
+- [x] JobDrawer updated to 7-tab layout: Details | Quotes | Invoices | Materials | Expenses | Time | Notes
+
+### Phase 6.9 — Branding Studio ✅ COMPLETE
+**Goal:** Build a comprehensive brand identity toolkit with asset generators
+
+- [x] `store/brandingStore.ts` — BrandingPreset type (logo, colors, typography, layout, business info, payment info), CRUD presets, default preset logic
+- [x] `store/businessCardStore.ts` — BusinessCardProfile type, CRUD profiles, theme options (light/dark/blue)
+- [x] `app/branding/page.tsx` — Branding Studio shell with sidebar navigation and tool panel
+- [x] `components/branding/BrandIdentityEditor.tsx` — Business info, logo upload, logo position, footer text
+- [x] `components/branding/ColorPaletteEditor.tsx` — Define primary, secondary, text, background, border, accent colors
+- [x] `components/branding/TypographyEditor.tsx` — Font family and size scale editor
+- [x] `components/branding/AssetGeneratorPanel.tsx` — Wrapper for all asset generators
+- [x] `components/branding/generators/EmailSignatureGenerator.tsx` — Branded email signature
+- [x] `components/branding/generators/LetterheadGenerator.tsx` — Printable letterhead template
+- [x] `components/branding/generators/SocialMediaGenerator.tsx` — Social media post/banner graphics
+- [x] `components/shared/BrandingPresetsModal.tsx` — Manage named brand presets
+- [x] `components/shared/BusinessCardGeneratorModal.tsx` — Digital business card generator
+- [x] `components/shared/QRCodeGeneratorModal.tsx` — QR code generator
+- [x] `components/shared/ShortURLGeneratorModal.tsx` — Short URL generator
+- [x] `components/shared/GlobalSearch.tsx` — Search across all modules (Cmd/Ctrl+K)
+- [x] Schedule MonthView added (`components/schedule/MonthView.tsx`)
+
 ### Phase 7 — Backend Integration ⏳ NOT STARTED
-- [ ] Cloudflare D1 setup + schema migration (use updated schema from section 3.2)
+- [ ] Cloudflare D1 setup + schema migration (use updated schema from section 3.2 — includes clients, invoices, payments, job_materials, expenses, time_entries tables)
 - [ ] Cloudflare Workers API with all routes implemented (use routes from section 3.3)
 - [ ] Create wrangler.toml with D1 and R2 bindings
-- [ ] Refactor Zustand stores to call real API endpoints
+- [ ] Refactor all Zustand stores to call real API endpoints (jobStore, quoteStore, clientStore, teamStore, invoiceStore, materialCostStore, expenseStore, timeEntryStore, inventoryStore)
 - [ ] Data migration from localStorage mock data to D1
 - [ ] Test all CRUD operations end-to-end
 
@@ -834,130 +1120,84 @@ This section provides a tactical, step-by-step guide to efficiently refactor the
 
 ---
 
-## 9. Bonus Features Implemented
+## 9. Extended Features Implemented
 
-Beyond the core v1 scope, the following utility features have been added:
+Beyond the original four-module v1 scope, the following features have been fully built and are part of the current frontend:
 
-### Business Card Generator
-- Component: `BusinessCardGeneratorModal.tsx`
+### Clients Module ✅
+- Component: `app/clients/page.tsx` + `components/clients/ClientDrawer.tsx`
+- Store: `clientStore.ts`
+- Dedicated client list with search, create/edit, and drawer view
+- Auto-migration from existing job data
+
+### Team Module ✅
+- Component: `app/team/page.tsx`
+- Store: `teamStore.ts`
+- Team member management with roles, hourly rates, color coding, and active/inactive toggle
+- Powers assignee dropdowns in jobs and schedule
+
+### Invoicing & Payment Tracking ✅
+- Component: `components/jobs/InvoicesTab.tsx` (within Job Drawer)
+- Store: `invoiceStore.ts`
+- Create invoices from accepted quotes, record payments, track status (Unpaid/Partial/Paid/Overdue)
+- Payment methods: Cash, Check, Credit Card, Bank Transfer, Other
+
+### Material Cost Tracking ✅
+- Component: `components/jobs/MaterialsTab.tsx` (within Job Drawer)
+- Store: `materialCostStore.ts`
+- Log actual material costs per job, optionally linked to inventory items
+- Compare actual vs quoted material costs for profitability analysis
+
+### Expense Tracking ✅
+- Component: `components/jobs/ExpensesTab.tsx` (within Job Drawer)
+- Store: `expenseStore.ts`
+- Track job-specific expenses (permits, subcontractors, equipment rental, disposal, etc.)
+- Also tracks general overhead expenses not tied to a specific job
+- Categories: Permits · Subcontractor · Equipment Rental · Disposal · Tools · Vehicle · Insurance · Utilities · Other
+
+### Time Log ✅
+- Component: `components/jobs/TimeLog.tsx` (within Job Drawer)
+- Store: `timeEntryStore.ts`
+- Start/stop timer per team member per job
+- Manual time entry with notes
+- Calculates total hours and labor cost (using team member's hourly rate)
+
+### Branding Studio ✅
+- Module: `app/branding/page.tsx`
+- Store: `brandingStore.ts`
+- Full brand identity editor (logo, colors, typography, layout, business info)
+- Asset generators: Email Signature · Letterhead · Social Media Graphics
+- Brand presets (save/switch between multiple brands)
+
+### Business Card Generator ✅
+- Component: `components/shared/BusinessCardGeneratorModal.tsx`
 - Store: `businessCardStore.ts`
-- Generate digital business cards with QR codes
-- Export as image for sharing
+- Digital business card profiles with theme options (light/dark/blue)
+- Multiple saved profiles
 
-### QR Code Generator
-- Component: `QRCodeGeneratorModal.tsx`
+### QR Code Generator ✅
+- Component: `components/shared/QRCodeGeneratorModal.tsx`
 - Generate QR codes for quotes, job links, or custom URLs
-- Quick-access utility in settings or tools menu
 
-### Short URL Generator
-- Component: `ShortURLGeneratorModal.tsx`
-- Create shortened URLs for sharing quotes and jobs
-- Useful for SMS and printed materials
+### Short URL Generator ✅
+- Component: `components/shared/ShortURLGeneratorModal.tsx`
+- Create shortened URLs for sharing quotes and jobs via SMS or print
 
-### Settings Modal
-- Component: `SettingsModal.tsx`
-- Store: `settingsStore.ts`
-- Centralized app configuration
-- Business profile settings
-- Theme preferences
+### Global Search ✅
+- Component: `components/shared/GlobalSearch.tsx`
+- Search across jobs, clients, quotes, and inventory
 
-These features enhance the shareability and professional presentation of quotes and business information without adding complexity to the core workflows.
+### Schedule Month View ✅
+- Component: `components/schedule/MonthView.tsx`
+- Month view added alongside existing Week and Day views
 
 ---
 
 ## 9.5 Potential Future Enhancements
 
-These features would extend FIELDKIT's capabilities beyond core operations. They're not required for MVP but represent natural next steps based on user workflows.
+These features would extend FIELDKIT's capabilities beyond the current frontend. They're not required for MVP but represent natural next steps.
 
 ### Priority: High
-
-#### Invoicing & Payment Tracking
-**Status:** 🚧 IN PROGRESS  
-Complete the revenue cycle after quote acceptance.
-
-- Invoice generation from accepted quotes
-- Payment status tracking: Unpaid, Partially Paid, Paid, Overdue
-- Payment history log per job
-- Outstanding balance tracking
-- Overdue invoice alerts on dashboard
-- Payment method tracking (check, cash, transfer, credit card)
-- Invoice numbering separate from quote numbers
-- **Database additions needed:**
-  ```sql
-  CREATE TABLE invoices (
-    id TEXT PRIMARY KEY,
-    invoice_number INTEGER UNIQUE,
-    job_id TEXT NOT NULL,
-    quote_id TEXT,
-    amount_due REAL NOT NULL,
-    amount_paid REAL DEFAULT 0,
-    status TEXT DEFAULT 'Unpaid',  -- Unpaid, Partial, Paid, Overdue
-    due_date INTEGER,
-    issued_at INTEGER,
-    FOREIGN KEY (job_id) REFERENCES jobs(id),
-    FOREIGN KEY (quote_id) REFERENCES quotes(id)
-  );
-  
-  CREATE TABLE payments (
-    id TEXT PRIMARY KEY,
-    invoice_id TEXT NOT NULL,
-    amount REAL NOT NULL,
-    payment_method TEXT,
-    payment_date INTEGER,
-    notes TEXT,
-    FOREIGN KEY (invoice_id) REFERENCES invoices(id)
-  );
-  ```
-
-#### Material Cost Tracking
-**Status:** 🚧 IN PROGRESS  
-Track actual material expenses per job for accurate profit calculations.
-
-- Link inventory items to specific jobs
-- Record quantity used + cost at time of use
-- Compare estimated (quote) vs actual material costs
-- Budget tracking: Did the job go over/under?
-- True profit = Revenue - (Labor + Material Costs + Expenses)
-- Material cost vs quote analysis per job
-- **Database additions needed:**
-  ```sql
-  CREATE TABLE job_materials (
-    id TEXT PRIMARY KEY,
-    job_id TEXT NOT NULL,
-    inventory_item_id TEXT,
-    description TEXT NOT NULL,      -- for items not in inventory
-    quantity REAL NOT NULL,
-    unit_cost REAL NOT NULL,
-    total_cost REAL NOT NULL,
-    used_at INTEGER,
-    FOREIGN KEY (job_id) REFERENCES jobs(id),
-    FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id)
-  );
-  ```
-
-#### Expenses
-Track non-inventory costs per job and general business expenses.
-
-- Job-specific expenses: permits, subcontractors, equipment rental, disposal fees
-- General overhead expenses: insurance, tools, vehicle maintenance
-- Attach receipts/notes to expenses
-- Expense categories for reporting
-- Include expenses in job profitability calculations
-- **Database additions needed:**
-  ```sql
-  CREATE TABLE expenses (
-    id TEXT PRIMARY KEY,
-    job_id TEXT,                    -- NULL for general overhead
-    category TEXT NOT NULL,
-    description TEXT NOT NULL,
-    amount REAL NOT NULL,
-    expense_date INTEGER,
-    notes TEXT,
-    FOREIGN KEY (job_id) REFERENCES jobs(id)
-  );
-  ```
-
-### Priority: Medium
 
 #### Photo & File Attachments
 Attach before/after photos and documents to jobs.
@@ -969,16 +1209,6 @@ Attach before/after photos and documents to jobs.
 - Max file size limits (5MB per photo, 10MB per document)
 - Thumbnail generation for photos
 - Grid view for photo galleries
-
-#### Global Search
-Quick navigation across all modules.
-
-- Search jobs, clients, quotes, inventory, team members
-- Fuzzy matching on job title, client name, ID numbers
-- Keyboard shortcut: Cmd/Ctrl+K
-- Recent searches
-- Filter by module type
-- Jump directly to search results
 
 #### Job Templates
 Speed up quote creation for common services.
@@ -994,7 +1224,7 @@ Speed up quote creation for common services.
 Business intelligence beyond the dashboard.
 
 - Revenue by month/quarter/year
-- Profit margins over time
+- Profit margins over time (revenue - materials - expenses - labor)
 - Top performing services
 - Client lifetime value rankings
 - Labor efficiency: hours logged vs estimated
@@ -1037,7 +1267,7 @@ Track all changes for accountability and client communication history.
 - Filter by team member or date range
 - Useful for: Multi-person teams, client disputes, quality control
 
-#### Cliente Portal (Self-Service)
+#### Client Portal (Self-Service)
 Allow clients to view job status and approve quotes.
 
 - Unique client login per client
@@ -1053,10 +1283,10 @@ Allow clients to view job status and approve quotes.
 
 - User authentication / accounts
 - Push notifications
-- Email sending
+- Email sending (outbound — no SMTP integration)
 - External calendar sync (Google Calendar, etc.)
-- Client portal
-- Payment processing
+- Client portal / client-facing login
+- Payment processing (invoices track payments manually — no Stripe/payment gateway)
 - Multi-tenant / team sharing via invite
 - Barcode / QR scanning for inventory
 - Photo attachments on jobs
@@ -1080,6 +1310,8 @@ Allow clients to view job status and approve quotes.
 >
 > This document is the single source of truth. Follow the data model, API routes, file structure, and build phases exactly as specified. Do not add features beyond what is described in v1 scope. Do not use emojis anywhere in the UI — SVG icons only (Heroicons or Lucide). Mobile-first on every component. Ask before making architectural decisions not covered in this document.
 >
+> **Current state (v1.3):** All frontend modules are complete — Jobs (with 7-tab drawer), Quotes, Clients, Team, Schedule (week/day/month), Inventory, and Branding Studio. Stores implemented: jobStore, quoteStore, clientStore, teamStore, invoiceStore, materialCostStore, expenseStore, timeEntryStore, inventoryStore, brandingStore, businessCardStore, settingsStore, boardSettingsStore. The app uses localStorage persistence via Zustand `persist` middleware. Phase 7 (Cloudflare D1 + Workers backend) has not started.
+>
 > **Target users:** Think construction trades workflows — multi-day jobs, site addresses, material tracking (paint, wire, pipe, flooring), crew scheduling, and quick itemized quotes (materials + labor). Every feature should work equally well for a one-person plumber or a three-person painting crew.
 >
-> **Build approach:** Frontend-first with mock data. Start with Phase 1: scaffold the Next.js project, configure Tailwind, set up Zustand stores with mock data and localStorage persistence, build the navigation shell (bottom nav + sidebar), and create shared components. Get the UI working visually with local state before connecting to D1 and Cloudflare Workers (Phase 7). Confirm completion of each phase before moving to the next.
+> **Build approach:** Frontend-first with mock data — COMPLETE. Next step is Phase 7: backend integration with Cloudflare D1 and Workers. Confirm completion of each phase before moving to the next.
