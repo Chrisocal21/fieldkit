@@ -67,9 +67,10 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
         >
           <div className="grid grid-cols-12 gap-2 mb-2">
             <div className="col-span-12 sm:col-span-5">
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Description</label>
               <input
                 type="text"
-                placeholder="Description"
+                placeholder="e.g. Labour, Materials..."
                 value={item.description}
                 onChange={(e) =>
                   updateLineItem(item.id, { description: e.target.value })
@@ -79,9 +80,10 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
             </div>
 
             <div className="col-span-4 sm:col-span-2">
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Qty</label>
               <input
                 type="number"
-                placeholder="Qty"
+                placeholder="1"
                 min="0"
                 step="0.01"
                 value={item.quantity}
@@ -93,9 +95,10 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
             </div>
 
             <div className="col-span-4 sm:col-span-2">
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Unit Price ($)</label>
               <input
                 type="number"
-                placeholder="Price"
+                placeholder="0.00"
                 min="0"
                 step="0.01"
                 value={item.unitPrice}
@@ -107,6 +110,7 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
             </div>
 
             <div className="col-span-4 sm:col-span-2">
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Type</label>
               <select
                 value={item.type}
                 onChange={(e) =>
