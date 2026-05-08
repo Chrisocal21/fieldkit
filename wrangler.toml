@@ -6,4 +6,4 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "fieldkit-db"
-database_id = "REPLACE_WITH_DATABASE_ID"
+database_id = "476cb614-63c0-44b3-968c-f45f73ff58d0"
