@@ -39,12 +39,6 @@ export function JobQuotesTab({ job }: JobQuotesTabProps) {
     }
   }
 
-  const handleAcceptQuote = (quoteId: string) => {
-    if (confirm('Accept this quote? This will update the job status to "Scheduled".')) {
-      acceptJobQuote(job.id, quoteId)
-    }
-  }
-
   return (
     <div className="space-y-4">
       {quotes.length === 0 ? (
