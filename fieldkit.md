@@ -1,30 +1,41 @@
 # FIELDKIT — Master Handoff Document
-**Version:** 1.3 (Extended Modules + Branding Studio Complete)  
-**Status:** Frontend Complete — Ready for Backend Integration (Phase 7)  
-**Stack:** Next.js 14 · Cloudflare Workers + D1 + R2 · Tailwind CSS · Zustand · PWA  
-**Deployment:** Vercel (frontend) · Cloudflare (backend + DB + storage)
+**Version:** 2.0 (Production-Ready — Backend Live)  
+**Status:** ~90% Complete — Backend integrated, deployed on Vercel + Cloudflare, preparing for testers  
+**Stack:** Next.js 14 · Cloudflare Workers + D1 · Tailwind CSS · Zustand · Clerk Auth · PWA  
+**Deployment:** Vercel (frontend) · Cloudflare Workers + D1 (backend + DB)
 
 ---
 
 ## 📊 Project Status
 
-**✅ Phases 1-6.9 Complete (Frontend + PWA + Architecture Refactor + Extended Modules)**  
-All core UI modules are fully functional. The Jobs-First architecture is complete, plus five additional modules have been built: Clients, Team, Invoicing, Branding Studio, and per-job tracking tabs (Invoices, Materials, Expenses, Time Log). The app is a working PWA with localStorage persistence, ready for backend integration.
+### Overall: ~90% Complete
 
-**✅ Jobs-First Architecture Implemented**  
-Jobs are now the primary entity with quotes nested inside them. This matches real-world trades workflows where you create a job first, then generate quotes within that job context.
+| Area | Status | % |
+|---|---|---|
+| Jobs module (kanban, drawer, CRUD) | ✅ Complete | 100% |
+| Quotes (nested in jobs, send/draft, share link, PDF) | ✅ Complete | 100% |
+| Quote line items (discount + deposit types, totals) | ✅ Complete | 100% |
+| Invoicing (per-job, mark paid, view/copy/PDF) | ✅ Complete | 100% |
+| Materials tab (manual + auto-populated from quotes) | ✅ Complete | 100% |
+| Inventory (personal stock, auto-deduct on job use) | ✅ Complete | 100% |
+| Expenses tab | ✅ Complete | 100% |
+| Time Log tab | ✅ Complete | 100% |
+| Clients module (multi-property support) | ✅ Complete | 100% |
+| Team module | ✅ Complete | 100% |
+| Schedule (week/day/month views) | ✅ Complete | 100% |
+| Branding Studio (identity, palette, asset generators) | ✅ Complete | 100% |
+| Backend (Cloudflare Workers + D1) | ✅ Complete | 100% |
+| Auth (Clerk — dev keys) | ⏳ Needs prod keys | 80% |
+| PWA (service worker, installable) | ✅ Complete | 100% |
+| Clerk production instance | ❌ Blocked (domain UI bug) | 0% |
 
-**✅ Extended Modules Implemented (Phases 6.6–6.9)**  
-- **Clients module** — Dedicated client management with migration from existing job data
-- **Team module** — Team member management with hourly rates and calendar color coding
-- **Invoicing** — Full invoice + payment tracking per job (via Invoices tab in Job Drawer)
-- **Material Costs** — Actual material expense tracking per job (via Materials tab)
-- **Expenses** — Job-specific and overhead expense tracking (via Expenses tab)
-- **Time Log** — Per-job time entry tracking linked to team members (via Time tab)
-- **Branding Studio** — Brand identity editor, color palette, typography, and asset generators (email signature, letterhead, social media graphics, business card, QR code)
+---
 
-**⏳ Phase 7 Pending (Backend Integration)**  
-Implement Cloudflare D1 database, API routes, and connect frontend stores to real backend endpoints.
+## 🧠 One-Paragraph Description
+
+FIELDKIT is a free, mobile-first operations platform built for solo tradespeople and small service crews — think plumbers, painters, electricians, flooring contractors, and HVAC techs. It replaces the patchwork of spreadsheets, text messages, and paper invoices with one tool that handles the full job lifecycle: create a job, build a quote with line items (including discounts and deposits), send a shareable quote link to the client, convert it to an invoice, track payments, log materials used and pull from personal inventory, record expenses and time, and schedule the work on a visual calendar — all from a phone. It's not a CRM, it's not a project manager, it's the bare minimum a field service business needs to look professional and stay organized without paying $80/month for software that's overkill.
+
+---
 
 ---
 
