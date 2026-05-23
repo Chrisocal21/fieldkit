@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS clients (
   address TEXT,
   notes TEXT,
   tags TEXT NOT NULL DEFAULT '[]',
+  properties TEXT NOT NULL DEFAULT '[]',
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );

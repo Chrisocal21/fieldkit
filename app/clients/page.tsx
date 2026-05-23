@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Client, useClientStore } from '@/store/clientStore'
+import { nanoid } from 'nanoid'
+import { Client, ClientProperty, useClientStore } from '@/store/clientStore'
 import { useJobStore } from '@/store/jobStore'
 import EmptyState from '@/components/shared/EmptyState'
 import ClientDrawer from '@/components/clients/ClientDrawer'
@@ -39,6 +40,7 @@ export default function ClientsPage() {
     phone: '',
     address: '',
     notes: '',
+    properties: [] as ClientProperty[],
   })
 
   const handleCreateClient = (e: React.FormEvent) => {
@@ -51,10 +53,11 @@ export default function ClientsPage() {
       phone: formData.phone || undefined,
       address: formData.address || undefined,
       notes: formData.notes || undefined,
+      properties: formData.properties,
       tags: [],
     })
 
-    setFormData({ name: '', email: '', phone: '', address: '', notes: '' })
+    setFormData({ name: '', email: '', phone: '', address: '', notes: '', properties: [] })
     setIsCreateModalOpen(false)
   }
 
@@ -68,6 +71,7 @@ export default function ClientsPage() {
       phone: formData.phone || undefined,
       address: formData.address || undefined,
       notes: formData.notes || undefined,
+      properties: formData.properties,
     })
 
     setIsEditMode(false)
@@ -84,6 +88,7 @@ export default function ClientsPage() {
       phone: client.phone || '',
       address: client.address || '',
       notes: client.notes || '',
+      properties: client.properties || [],
     })
     setIsEditMode(true)
   }
@@ -117,6 +122,27 @@ export default function ClientsPage() {
     // TODO: Open job creation modal with client pre-selected
     setIsDrawerOpen(false)
     // This can be enhanced later to pre-select the client in CreateJobModal
+  }
+
+  const addProperty = () => {
+    setFormData(prev => ({
+      ...prev,
+      properties: [...prev.properties, { id: nanoid(), label: '', address: '' }],
+    }))
+  }
+
+  const updateProperty = (id: string, field: 'label' | 'address', value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      properties: prev.properties.map(p => p.id === id ? { ...p, [field]: value } : p),
+    }))
+  }
+
+  const removeProperty = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      properties: prev.properties.filter(p => p.id !== id),
+    }))
   }
 
   if (!mounted) {
@@ -208,7 +234,7 @@ export default function ClientsPage() {
                     type="button"
                     onClick={() => {
                       setIsCreateModalOpen(false)
-                      setFormData({ name: '', email: '', phone: '', address: '', notes: '' })
+                      setFormData({ name: '', email: '', phone: '', address: '', notes: '', properties: [] })
                     }}
                     className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
@@ -410,6 +436,56 @@ export default function ClientsPage() {
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 />
               </div>
+              {/* Properties / Job Sites */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Properties / Job Sites
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addProperty}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    + Add property
+                  </button>
+                </div>
+                {formData.properties.length > 0 ? (
+                  <div className="space-y-2">
+                    {formData.properties.map((prop) => (
+                      <div key={prop.id} className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          value={prop.label}
+                          onChange={(e) => updateProperty(prop.id, 'label', e.target.value)}
+                          placeholder="Label (e.g. Home)"
+                          className="w-28 flex-shrink-0 px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        />
+                        <input
+                          type="text"
+                          value={prop.address}
+                          onChange={(e) => updateProperty(prop.id, 'address', e.target.value)}
+                          placeholder="Address"
+                          className="flex-1 px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeProperty(prop.id)}
+                          className="p-1 text-gray-400 hover:text-red-500"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    Add multiple job-site addresses for this client
+                  </p>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Notes
@@ -434,7 +510,7 @@ export default function ClientsPage() {
                     setIsCreateModalOpen(false)
                     setIsEditMode(false)
                     setSelectedClient(null)
-                    setFormData({ name: '', email: '', phone: '', address: '', notes: '' })
+                    setFormData({ name: '', email: '', phone: '', address: '', notes: '', properties: [] })
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
                 >

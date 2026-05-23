@@ -17,12 +17,17 @@ export default function QuotePreview({ quote, presetId }: QuotePreviewProps) {
   
   const preset = getPresetById(selectedPresetId) || getDefaultPreset()
   
-  const subtotal = quote.lineItems.reduce(
-    (sum, item) => sum + item.quantity * item.unitPrice,
-    0
-  )
-  const tax = subtotal * quote.taxRate
-  const total = subtotal + tax
+  const regularItems = quote.lineItems.filter(i => i.type !== 'discount' && i.type !== 'deposit')
+  const discountItems = quote.lineItems.filter(i => i.type === 'discount')
+  const depositItems = quote.lineItems.filter(i => i.type === 'deposit')
+  const subtotal = regularItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)
+  const discountTotal = discountItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0)
+  const depositTotal = depositItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0)
+  const taxableAmount = Math.max(0, subtotal - discountTotal)
+  const tax = taxableAmount * quote.taxRate
+  const roundingAdjustment = quote.roundingAdjustment ?? 0
+  const total = taxableAmount + tax + roundingAdjustment
+  const amountDue = total - depositTotal
 
   return (
     <div className="space-y-4">
@@ -268,11 +273,11 @@ export default function QuotePreview({ quote, presetId }: QuotePreviewProps) {
               </tr>
             </thead>
             <tbody>
-              {quote.lineItems.map((item, index) => (
+              {quote.lineItems.filter(i => i.type !== 'discount' && i.type !== 'deposit').map((item, index, arr) => (
                 <tr
                   key={item.id}
                   style={{
-                    borderBottomWidth: preset.showBorders && index !== quote.lineItems.length - 1 ? '1px' : '0',
+                    borderBottomWidth: preset.showBorders && index !== arr.length - 1 ? '1px' : '0',
                     borderColor: preset.colors.border,
                   }}
                 >
@@ -346,6 +351,12 @@ export default function QuotePreview({ quote, presetId }: QuotePreviewProps) {
                 ${subtotal.toFixed(2)}
               </span>
             </div>
+            {discountTotal > 0 && (
+              <div className="flex justify-between">
+                <span style={{ fontSize: `${preset.fontSize.body}px`, color: '#d97706' }}>Discount:</span>
+                <span className="font-medium" style={{ fontSize: `${preset.fontSize.body}px`, color: '#d97706' }}>−${discountTotal.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span
                 style={{
@@ -365,6 +376,27 @@ export default function QuotePreview({ quote, presetId }: QuotePreviewProps) {
                 ${tax.toFixed(2)}
               </span>
             </div>
+            {roundingAdjustment > 0 && (
+              <div className="flex justify-between">
+                <span
+                  style={{
+                    fontSize: `${preset.fontSize.body}px`,
+                    color: preset.colors.textLight,
+                  }}
+                >
+                  Rounding:
+                </span>
+                <span
+                  className="font-medium"
+                  style={{
+                    fontSize: `${preset.fontSize.body}px`,
+                    color: preset.colors.text,
+                  }}
+                >
+                  +${roundingAdjustment.toFixed(2)}
+                </span>
+              </div>
+            )}
             <div
               className="flex justify-between font-bold pt-2"
               style={{
@@ -389,6 +421,24 @@ export default function QuotePreview({ quote, presetId }: QuotePreviewProps) {
                 ${total.toFixed(2)}
               </span>
             </div>
+            {depositTotal > 0 && (
+              <>
+                <div className="flex justify-between">
+                  <span style={{ fontSize: `${preset.fontSize.body}px`, color: '#16a34a' }}>Deposit received:</span>
+                  <span className="font-medium" style={{ fontSize: `${preset.fontSize.body}px`, color: '#16a34a' }}>−${depositTotal.toFixed(2)}</span>
+                </div>
+                <div
+                  className="flex justify-between font-bold pt-2"
+                  style={{
+                    borderTopWidth: preset.showBorders ? '2px' : '0',
+                    borderColor: preset.colors.border,
+                  }}
+                >
+                  <span style={{ fontSize: `${preset.fontSize.heading}px`, color: preset.accentColor }}>AMOUNT DUE:</span>
+                  <span style={{ fontSize: `${preset.fontSize.heading}px`, color: preset.accentColor }}>${amountDue.toFixed(2)}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

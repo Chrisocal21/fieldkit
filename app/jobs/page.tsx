@@ -12,11 +12,15 @@ type ViewMode = 'list' | 'board'
 
 export default function JobsPage() {
   const allJobs = useJobStore((state) => state.jobs)
+  const getJobById = useJobStore((state) => state.getJobById)
   
   const [mounted, setMounted] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('board')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null)
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
+
+  // Always derive from live store so mutations (quotes, etc.) reflect instantly
+  const selectedJob = selectedJobId ? (getJobById(selectedJobId) ?? null) : null
 
   // Prevent hydration mismatch by waiting for client-side mount
   useEffect(() => {
@@ -26,7 +30,7 @@ export default function JobsPage() {
   const jobs = mounted ? allJobs.filter((job) => !job.archived) : []
 
   const handleJobClick = (job: Job) => {
-    setSelectedJob(job)
+    setSelectedJobId(job.id)
   }
 
   if (jobs.length === 0) {
@@ -116,8 +120,8 @@ export default function JobsPage() {
       />
       <JobDrawer
         job={selectedJob}
-        isOpen={!!selectedJob}
-        onClose={() => setSelectedJob(null)}
+        isOpen={!!selectedJobId}
+        onClose={() => setSelectedJobId(null)}
       />
     </div>
   )

@@ -6,6 +6,14 @@ import { Quote, QuoteLineItem } from '@/store/quoteStore'
 import { useJobStore } from '@/store/jobStore'
 import QuoteLineItems from './QuoteLineItems'
 
+// Rounds up to the nearest sensible clean number
+function getRoundTarget(amount: number): number {
+  if (amount < 100) return Math.ceil(amount / 5) * 5
+  if (amount < 500) return Math.ceil(amount / 10) * 10
+  if (amount < 2000) return Math.ceil(amount / 50) * 50
+  return Math.ceil(amount / 100) * 100
+}
+
 interface QuoteFormProps {
   jobId: string  // Required - quotes belong to a job
   quote?: Quote
@@ -25,6 +33,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
     clientPhone: '',
     notes: '',
     taxRate: 0,
+    roundingAdjustment: 0,
     expiryDate: '',
     status: 'Draft' as 'Draft' | 'Sent' | 'Accepted' | 'Declined' | 'Revised',
   })
@@ -41,7 +50,8 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
           clientEmail: quote.clientEmail || '',
           clientPhone: quote.clientPhone || '',
           notes: quote.notes || '',
-          taxRate: (quote.taxRate || 0) * 100, // Convert decimal to percentage
+          taxRate: (quote.taxRate || 0) * 100,
+          roundingAdjustment: quote.roundingAdjustment || 0,
           expiryDate: quote.expiryDate
             ? new Date(quote.expiryDate).toISOString().split('T')[0]
             : '',
@@ -56,6 +66,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
           clientPhone: job.clientPhone || '',
           notes: '',
           taxRate: 0,
+          roundingAdjustment: 0,
           expiryDate: '',
           status: 'Draft',
         })
@@ -68,6 +79,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
           clientPhone: '',
           notes: '',
           taxRate: 0,
+          roundingAdjustment: 0,
           expiryDate: '',
           status: 'Draft',
         })
@@ -76,27 +88,26 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
     }
   }, [isOpen, quote, job])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const submitQuote = (status: Quote['status']) => {
+    if (!formData.clientName.trim()) return
 
     const quoteData = {
       clientName: formData.clientName,
       clientEmail: formData.clientEmail || undefined,
       clientPhone: formData.clientPhone || undefined,
       notes: formData.notes,
-      taxRate: formData.taxRate / 100, // Convert percentage to decimal
+      taxRate: formData.taxRate / 100,
+      roundingAdjustment: formData.roundingAdjustment,
       expiryDate: formData.expiryDate
         ? new Date(formData.expiryDate).getTime()
         : undefined,
-      status: formData.status,
+      status,
       lineItems: lineItems,
     }
 
     if (quote) {
-      // Update existing quote
       updateJobQuote(jobId, quote.id, quoteData)
     } else {
-      // Create new quote
       addQuoteToJob(jobId, quoteData)
     }
 
@@ -105,12 +116,27 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
 
   if (!isOpen) return null
 
-  const subtotal = lineItems.reduce(
-    (sum, item) => sum + item.quantity * item.unitPrice,
-    0
-  )
-  const tax = subtotal * (formData.taxRate / 100)
-  const total = subtotal + tax
+  const regularItems = lineItems.filter(i => i.type !== 'discount' && i.type !== 'deposit')
+  const discountItems = lineItems.filter(i => i.type === 'discount')
+  const depositItems = lineItems.filter(i => i.type === 'deposit')
+  const subtotal = regularItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0)
+  const discountTotal = discountItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0)
+  const depositTotal = depositItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0)
+  const taxableAmount = Math.max(0, subtotal - discountTotal)
+  const tax = taxableAmount * (formData.taxRate / 100)
+  const baseTotal = taxableAmount + tax
+  const roundTarget = getRoundTarget(baseTotal)
+  const roundingDiff = parseFloat((roundTarget - baseTotal).toFixed(2))
+  const total = baseTotal + formData.roundingAdjustment
+  const amountDue = total - depositTotal
+
+  const handleRoundUp = () => {
+    setFormData(prev => ({ ...prev, roundingAdjustment: roundingDiff }))
+  }
+
+  const removeRounding = () => {
+    setFormData(prev => ({ ...prev, roundingAdjustment: 0 }))
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -129,7 +155,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
             </h3>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
             {/* Client Information */}
             <div className="space-y-4">
               <h4 className="text-sm font-medium text-gray-900 dark:text-white">
@@ -196,6 +222,12 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
                   ${subtotal.toFixed(2)}
                 </span>
               </div>
+              {discountTotal > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-amber-600 dark:text-amber-400">Discount:</span>
+                  <span className="font-medium text-amber-600 dark:text-amber-400">−${discountTotal.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm items-center">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600 dark:text-gray-400">Tax:</span>
@@ -209,6 +241,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
                       setFormData({
                         ...formData,
                         taxRate: parseFloat(e.target.value) || 0,
+                        roundingAdjustment: 0,
                       })
                     }
                     className="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -219,50 +252,74 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
                   ${tax.toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between text-base font-semibold pt-2 border-t border-gray-200 dark:border-gray-700">
-                <span className="text-gray-900 dark:text-white">Total:</span>
+              {formData.roundingAdjustment > 0 && (
+                <div className="flex justify-between text-sm items-center">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-gray-500 dark:text-gray-400">Rounding:</span>
+                    <button
+                      type="button"
+                      onClick={removeRounding}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      title="Remove rounding"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">
+                    +${formData.roundingAdjustment.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between text-base font-semibold pt-2 border-t border-gray-200 dark:border-gray-700 items-center">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-gray-900 dark:text-white">Total:</span>
+                  {roundingDiff > 0.01 && (
+                    <button
+                      type="button"
+                      onClick={handleRoundUp}
+                      title={`Round up total to $${roundTarget.toFixed(0)}`}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                      </svg>
+                      Round to ${roundTarget.toFixed(0)}
+                    </button>
+                  )}
+                </div>
                 <span className="text-gray-900 dark:text-white">
                   ${total.toFixed(2)}
                 </span>
               </div>
+              {depositTotal > 0 && (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-600 dark:text-green-400">Deposit received:</span>
+                    <span className="font-medium text-green-600 dark:text-green-400">−${depositTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <span className="text-gray-900 dark:text-white">Amount Due:</span>
+                    <span className="text-gray-900 dark:text-white">${amountDue.toFixed(2)}</span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Additional Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Expiry Date
-                </label>
-                <input
-                  type="date"
-                  value={formData.expiryDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, expiryDate: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Status
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      status: e.target.value as Quote['status'],
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="Draft">Draft</option>
-                  <option value="Sent">Sent</option>
-                  <option value="Accepted">Accepted</option>
-                  <option value="Declined">Declined</option>
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Expiry Date
+              </label>
+              <input
+                type="date"
+                value={formData.expiryDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, expiryDate: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
             </div>
 
             <div>
@@ -281,19 +338,27 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-2 pt-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Cancel
               </button>
               <button
-                type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                type="button"
+                onClick={() => submitQuote('Draft')}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
-                {quote ? 'Save Changes' : 'Create Quote'}
+                Save as Draft
+              </button>
+              <button
+                type="button"
+                onClick={() => submitQuote('Sent')}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+              >
+                {quote?.status === 'Sent' ? 'Update & Resend' : 'Send Quote'}
               </button>
             </div>
           </form>

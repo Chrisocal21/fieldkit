@@ -50,6 +50,15 @@ export const useMaterialCostStore = create<MaterialCostState>()(
         set((state) => ({
           jobMaterials: [...state.jobMaterials, material]
         }))
+        // Auto-deduct from personal inventory when linked
+        if (materialData.inventoryItemId) {
+          const { useInventoryStore } = require('./inventoryStore')
+          useInventoryStore.getState().adjustStock(
+            materialData.inventoryItemId,
+            -materialData.quantity,
+            `Used on job`
+          )
+        }
         api.materials.create(material)
       },
 
@@ -70,6 +79,16 @@ export const useMaterialCostStore = create<MaterialCostState>()(
       },
 
       deleteJobMaterial: (id) => {
+        const material = get().jobMaterials.find(m => m.id === id)
+        // Restore inventory stock when deleting a linked material
+        if (material?.inventoryItemId) {
+          const { useInventoryStore } = require('./inventoryStore')
+          useInventoryStore.getState().adjustStock(
+            material.inventoryItemId,
+            material.quantity,
+            `Material removed from job`
+          )
+        }
         set((state) => ({
           jobMaterials: state.jobMaterials.filter((material) => material.id !== id)
         }))

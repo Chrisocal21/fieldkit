@@ -4,12 +4,19 @@ import { nanoid } from 'nanoid'
 import { userScopedStorage } from '@/lib/userStorage'
 import api from '@/lib/api'
 
+export interface ClientProperty {
+  id: string
+  label: string   // e.g. 'Home', 'Office', 'Site A'
+  address: string
+}
+
 export interface Client {
   id: string
   name: string
   email?: string
   phone?: string
-  address?: string
+  address?: string        // Primary / billing address
+  properties?: ClientProperty[]  // Multiple job-site addresses
   notes?: string
   tags?: string[]
   createdAt: number

@@ -10,9 +10,8 @@ export default function ShareQuotePage() {
   const router = useRouter()
   const quoteId = params.id as string
   
-  const quote = useQuoteStore((state) =>
-    state.quotes.find((q) => q.id === quoteId)
-  )
+  const getQuoteById = useQuoteStore((state) => state.getQuoteById)
+  const quote = getQuoteById(quoteId)
 
   if (!quote) {
     return (

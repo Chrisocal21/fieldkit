@@ -165,6 +165,31 @@ export default function ClientDrawer({ client, isOpen, onClose, onEdit, onCreate
                 )}
               </div>
 
+              {/* Properties / Job Sites */}
+              {client.properties && client.properties.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
+                    Properties / Job Sites
+                  </h3>
+                  <div className="space-y-2">
+                    {client.properties.map((prop) => (
+                      <div key={prop.id} className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <div>
+                          {prop.label && (
+                            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{prop.label}</div>
+                          )}
+                          <div className="text-sm text-gray-700 dark:text-gray-300">{prop.address}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Notes */}
               {client.notes && (
                 <div className="space-y-2">

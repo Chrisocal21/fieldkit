@@ -7,10 +7,10 @@ interface QuoteCardProps {
   quote: Quote
   onEdit?: () => void
   onDelete?: () => void
-  onAccept?: () => void
+  onSend?: () => void
 }
 
-export function QuoteCard({ quote, onEdit, onDelete, onAccept }: QuoteCardProps) {
+export function QuoteCard({ quote, onEdit, onDelete, onSend }: QuoteCardProps) {
   // Calculate totals
   const subtotal = quote.lineItems.reduce((sum, item) => {
     return sum + item.quantity * item.unitPrice
@@ -84,12 +84,12 @@ export function QuoteCard({ quote, onEdit, onDelete, onAccept }: QuoteCardProps)
             Edit
           </button>
         )}
-        {onAccept && quote.status === 'Sent' && !isExpired && (
+        {onSend && quote.status === 'Draft' && (
           <button
-            onClick={onAccept}
-            className="flex-1 px-3 py-1.5 text-sm text-white bg-green-600 rounded hover:bg-green-700"
+            onClick={onSend}
+            className="flex-1 px-3 py-1.5 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
           >
-            Accept
+            Send
           </button>
         )}
         {onDelete && (

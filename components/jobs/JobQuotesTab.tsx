@@ -15,7 +15,7 @@ export function JobQuotesTab({ job }: JobQuotesTabProps) {
   const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false)
   const [editingQuote, setEditingQuote] = useState<Quote | undefined>()
   
-  const { deleteJobQuote, acceptJobQuote } = useJobStore()
+  const { deleteJobQuote, updateJobQuote } = useJobStore()
 
   const quotes = job.quotes || []
 
@@ -27,6 +27,10 @@ export function JobQuotesTab({ job }: JobQuotesTabProps) {
   const handleEditQuote = (quote: Quote) => {
     setEditingQuote(quote)
     setIsQuoteFormOpen(true)
+  }
+
+  const handleSendQuote = (quoteId: string) => {
+    updateJobQuote(job.id, quoteId, { status: 'Sent' })
   }
 
   const handleDeleteQuote = (quoteId: string) => {
@@ -92,7 +96,7 @@ export function JobQuotesTab({ job }: JobQuotesTabProps) {
                 quote={quote}
                 onEdit={() => handleEditQuote(quote)}
                 onDelete={() => handleDeleteQuote(quote.id)}
-                onAccept={() => handleAcceptQuote(quote.id)}
+                onSend={() => handleSendQuote(quote.id)}
               />
             ))}
           </div>

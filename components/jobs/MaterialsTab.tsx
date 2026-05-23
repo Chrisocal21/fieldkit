@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useMaterialCostStore, JobMaterial } from '@/store/materialCostStore'
 import { useInventoryStore } from '@/store/inventoryStore'
+import { useJobStore } from '@/store/jobStore'
 
 interface MaterialsTabProps {
   jobId: string
@@ -15,6 +16,16 @@ export default function MaterialsTab({ jobId }: MaterialsTabProps) {
   const deleteJobMaterial = useMaterialCostStore((state) => state.deleteJobMaterial)
   const updateJobMaterial = useMaterialCostStore((state) => state.updateJobMaterial)
   const inventoryItems = useInventoryStore((state) => state.items)
+  const job = useJobStore((state) => state.jobs.find(j => j.id === jobId))
+
+  // Material-type line items from sent/accepted quotes — read-only, from billing
+  const quoteMaterials = (job?.quotes || [])
+    .filter(q => q.status === 'Sent' || q.status === 'Accepted')
+    .flatMap(q =>
+      q.lineItems
+        .filter(li => li.type === 'material')
+        .map(li => ({ ...li, quoteNumber: q.quoteNumber, quoteId: q.id }))
+    )
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingMaterial, setEditingMaterial] = useState<JobMaterial | null>(null)
@@ -94,8 +105,30 @@ export default function MaterialsTab({ jobId }: MaterialsTabProps) {
         </div>
       </div>
 
-      {/* Materials List */}
-      {materials.length === 0 ? (
+      {/* Quote Materials — auto-populated from sent quotes */}
+      {quoteMaterials.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">From Quotes</p>
+          <div className="space-y-2">
+            {quoteMaterials.map((item) => (
+              <div key={item.id} className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/40 rounded-lg p-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white text-sm">{item.description}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {item.quantity} × ${item.unitPrice.toFixed(2)} = ${(item.quantity * item.unitPrice).toFixed(2)}
+                    </p>
+                  </div>
+                  <span className="text-xs text-blue-600 dark:text-blue-400 ml-2">Quote #{item.quoteNumber}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Manually Added Materials */}
+      {materials.length === 0 && quoteMaterials.length === 0 ? (
         <div className="text-center py-12">
           <svg className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -103,7 +136,7 @@ export default function MaterialsTab({ jobId }: MaterialsTabProps) {
           <p className="text-gray-600 dark:text-gray-400 mb-2">No materials recorded yet</p>
           <p className="text-sm text-gray-500 dark:text-gray-500">Track materials used to calculate accurate job costs</p>
         </div>
-      ) : (
+      ) : materials.length > 0 ? (
         <div className="space-y-2">
           {materials.map((material) => (
             <div
@@ -149,7 +182,7 @@ export default function MaterialsTab({ jobId }: MaterialsTabProps) {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Add/Edit Material Modal */}
       {showAddModal && (
@@ -209,7 +242,8 @@ export default function MaterialsTab({ jobId }: MaterialsTabProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Link to Inventory Item (optional)
+                  Link to Inventory Item
+                  <span className="ml-1 text-xs text-amber-600 dark:text-amber-400">(auto-deducts stock)</span>
                 </label>
                 <select
                   name="inventoryItemId"

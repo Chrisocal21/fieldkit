@@ -1,8 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useInvoiceStore, Invoice, Payment } from '@/store/invoiceStore'
+import { useInvoiceStore } from '@/store/invoiceStore'
 import { useJobStore } from '@/store/jobStore'
+import { Quote } from '@/store/quoteStore'
+import QuotePreview from '@/components/quotes/QuotePreview'
+import { generateQuotePDF } from '@/lib/pdf'
 
 interface InvoicesTabProps {
   jobId: string
@@ -10,307 +13,258 @@ interface InvoicesTabProps {
 
 export default function InvoicesTab({ jobId }: InvoicesTabProps) {
   const job = useJobStore((state) => state.jobs.find(j => j.id === jobId))
-  const invoices = useInvoiceStore((state) => state.getInvoicesByJobId(jobId))
-  const createInvoice = useInvoiceStore((state) => state.createInvoice)
-  const addPayment = useInvoiceStore((state) => state.addPayment)
-  const deletePayment = useInvoiceStore((state) => state.deletePayment)
-  const calculateBalance = useInvoiceStore((state) => state.calculateBalance)
-  
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
-  const [expandedInvoice, setExpandedInvoice] = useState<string | null>(null)
+  const invoices = useInvoiceStore((state) => state.invoices)
+  const { createInvoice, addPayment, deletePayment } = useInvoiceStore()
 
-  const handleCreateInvoice = () => {
-    // Get the accepted quote to create invoice from
-    const acceptedQuote = job?.quotes?.find(q => q.status === 'Accepted')
-    
-    if (!acceptedQuote) {
-      alert('Please accept a quote before creating an invoice')
-      return
+  // All sent quotes become invoice line items automatically
+  const sentQuotes = (job?.quotes || []).filter(
+    q => q.status === 'Sent' || q.status === 'Accepted'
+  )
+
+  const getQuoteTotal = (quote: Quote) => {
+    const regular = quote.lineItems.filter(i => i.type !== 'discount' && i.type !== 'deposit')
+    const discountAmt = quote.lineItems.filter(i => i.type === 'discount').reduce((s, i) => s + i.quantity * i.unitPrice, 0)
+    const depositAmt = quote.lineItems.filter(i => i.type === 'deposit').reduce((s, i) => s + i.quantity * i.unitPrice, 0)
+    const subtotal = regular.reduce((s, i) => s + i.quantity * i.unitPrice, 0)
+    const taxable = Math.max(0, subtotal - discountAmt)
+    const gross = taxable + taxable * (quote.taxRate || 0) + (quote.roundingAdjustment ?? 0)
+    return gross - depositAmt  // amount actually owed after deposit
+  }
+
+  const getInvoiceForQuote = (quoteId: string) =>
+    invoices.find(inv => inv.jobId === jobId && inv.quoteId === quoteId)
+
+  const isPaid = (quote: Quote) => {
+    const inv = getInvoiceForQuote(quote.id)
+    if (!inv) return false
+    return inv.amountPaid >= getQuoteTotal(quote) - 0.01
+  }
+
+  const handleMarkPaid = (quote: Quote) => {
+    const total = getQuoteTotal(quote)
+    let inv = getInvoiceForQuote(quote.id)
+    if (!inv) {
+      inv = createInvoice({
+        jobId,
+        quoteId: quote.id,
+        amountDue: total,
+        issuedAt: Date.now(),
+        notes: `Quote #${quote.quoteNumber}`,
+      })
     }
-
-    // Calculate quote total
-    const subtotal = acceptedQuote.lineItems?.reduce((sum, item) => 
-      sum + (item.quantity * item.unitPrice), 0) || 0
-    const tax = subtotal * (acceptedQuote.taxRate || 0)
-    const total = subtotal + tax
-
-    // Create invoice with 30-day due date
-    const dueDate = Date.now() + (30 * 24 * 60 * 60 * 1000)
-
-    createInvoice({
-      jobId,
-      quoteId: acceptedQuote.id,
-      amountDue: total,
-      dueDate,
-      issuedAt: Date.now(),
-      notes: `Invoice for ${job?.title || 'Job'}`
-    })
-
-    setShowCreateModal(false)
-  }
-
-  const handleAddPayment = (invoiceId: string) => {
-    setSelectedInvoice(invoices.find(inv => inv.id === invoiceId) || null)
-    setShowPaymentModal(true)
-  }
-
-  const handleRecordPayment = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!selectedInvoice) return
-
-    const formData = new FormData(e.currentTarget)
-    const amount = parseFloat(formData.get('amount') as string)
-    const paymentMethod = formData.get('paymentMethod') as any
-    const notes = formData.get('notes') as string
-
-    if (amount <= 0 || amount > calculateBalance(selectedInvoice.id)) {
-      alert('Payment amount must be between 0 and the remaining balance')
-      return
-    }
-
-    addPayment(selectedInvoice.id, {
-      amount,
-      paymentMethod,
-      paymentDate: Date.now(),
-      notes: notes || undefined
-    })
-
-    setShowPaymentModal(false)
-    setSelectedInvoice(null)
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Paid':
-        return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-      case 'Partial':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-      case 'Overdue':
-        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-      default:
-        return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+    const balance = total - (inv.amountPaid ?? 0)
+    if (balance > 0.005) {
+      addPayment(inv.id, {
+        amount: parseFloat(balance.toFixed(2)),
+        paymentMethod: 'Other',
+        paymentDate: Date.now(),
+        notes: 'Marked as paid',
+      })
     }
   }
 
-  const acceptedQuote = job?.quotes?.find(q => q.status === 'Accepted')
-  const canCreateInvoice = acceptedQuote && invoices.length === 0
+  const handleMarkUnpaid = (quote: Quote) => {
+    const inv = getInvoiceForQuote(quote.id)
+    if (inv && inv.payments.length > 0) {
+      inv.payments.forEach(p => deletePayment(inv.id, p.id))
+    }
+  }
+
+  const [previewQuote, setPreviewQuote] = useState<Quote | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  const handleCopyLink = (quote: Quote) => {
+    const url = `${window.location.origin}/quotes/share/${quote.id}`
+    navigator.clipboard.writeText(url)
+    setCopiedId(quote.id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  const totalBilled = sentQuotes.reduce((s, q) => s + getQuoteTotal(q), 0)
+  const totalPaid = sentQuotes
+    .filter(q => isPaid(q))
+    .reduce((s, q) => s + getQuoteTotal(q), 0)
+  const outstanding = totalBilled - totalPaid
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Invoices</h3>
-        {canCreateInvoice && (
-          <button
-            onClick={handleCreateInvoice}
-            className="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 text-white text-sm rounded-lg transition-colors"
-          >
-            Create Invoice
-          </button>
-        )}
-      </div>
+    <>
+      <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Invoices</h3>
 
-      {/* Invoice List */}
-      {invoices.length === 0 ? (
+      {sentQuotes.length === 0 ? (
         <div className="text-center py-12">
           <svg className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <p className="text-gray-600 dark:text-gray-400 mb-2">No invoices yet</p>
-          {!acceptedQuote && (
-            <p className="text-sm text-gray-500 dark:text-gray-500">Accept a quote to create an invoice</p>
-          )}
+          <p className="text-gray-600 dark:text-gray-400 mb-1">No invoices yet</p>
+          <p className="text-sm text-gray-500 dark:text-gray-500">
+            Send a quote to start invoicing
+          </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {invoices.map((invoice) => {
-            const balance = calculateBalance(invoice.id)
-            const isExpanded = expandedInvoice === invoice.id
-
-            return (
-              <div key={invoice.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
-                {/* Invoice Header */}
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        Invoice #{invoice.invoiceNumber}
-                      </p>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
-                        {invoice.status}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Issued {new Date(invoice.issuedAt).toLocaleDateString()}
-                      {invoice.dueDate && ` • Due ${new Date(invoice.dueDate).toLocaleDateString()}`}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setExpandedInvoice(isExpanded ? null : invoice.id)}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                  >
-                    <svg className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Invoice Summary */}
-                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+        <>
+          {/* Quote rows */}
+          <div className="space-y-2">
+            {sentQuotes.map(quote => {
+              const total = getQuoteTotal(quote)
+              const paid = isPaid(quote)
+              return (
+                <div
+                  key={quote.id}
+                  className={`flex items-center justify-between rounded-lg px-4 py-3 border transition-colors ${
+                    paid
+                      ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/40'
+                      : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600'
+                  }`}
+                >
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Amount Due</p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      ${invoice.amountDue.toFixed(2)}
+                    <p className={`font-medium text-sm ${paid ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'}`}>
+                      Quote #{quote.quoteNumber}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {new Date(quote.createdAt).toLocaleDateString()}
+                      {' · '}
+                      {quote.lineItems.length} item{quote.lineItems.length !== 1 ? 's' : ''}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Paid</p>
-                    <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                      ${invoice.amountPaid.toFixed(2)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Balance</p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      ${balance.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Expanded Details */}
-                {isExpanded && (
-                  <div className="pt-3 border-t border-gray-200 dark:border-gray-600 space-y-3">
-                    {/* Payments History */}
-                    {invoice.payments.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment History</p>
-                        <div className="space-y-2">
-                          {invoice.payments.map((payment) => (
-                            <div key={payment.id} className="flex items-center justify-between text-sm bg-white dark:bg-gray-700 rounded p-2">
-                              <div className="flex-1">
-                                <p className="text-gray-900 dark:text-white font-medium">${payment.amount.toFixed(2)}</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {payment.paymentMethod} • {new Date(payment.paymentDate).toLocaleDateString()}
-                                </p>
-                                {payment.notes && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{payment.notes}</p>
-                                )}
-                              </div>
-                              <button
-                                onClick={() => {
-                                  if (confirm('Delete this payment?')) {
-                                    deletePayment(invoice.id, payment.id)
-                                  }
-                                }}
-                                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    {balance > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className={`text-base font-semibold tabular-nums ${paid ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-900 dark:text-white'}`}>
+                      ${total.toFixed(2)}
+                    </span>
+                    {/* View */}
+                    <button
+                      onClick={() => setPreviewQuote(quote)}
+                      title="View invoice"
+                      className="p-1.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </button>
+                    {/* Copy link */}
+                    <button
+                      onClick={() => handleCopyLink(quote)}
+                      title="Copy shareable link"
+                      className="p-1.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      {copiedId === quote.id ? (
+                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </button>
+                    {/* Download PDF */}
+                    <button
+                      onClick={() => generateQuotePDF(quote)}
+                      title="Download PDF"
+                      className="p-1.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </button>
+                    {paid ? (
                       <button
-                        onClick={() => handleAddPayment(invoice.id)}
-                        className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+                        onClick={() => handleMarkUnpaid(quote)}
+                        title="Click to mark as unpaid"
+                        className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-red-100 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                       >
-                        Record Payment
+                        <svg className="w-3.5 h-3.5 group-hover:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <svg className="w-3.5 h-3.5 hidden group-hover:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <span className="group-hover:hidden">Paid</span>
+                        <span className="hidden group-hover:inline">Undo</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleMarkPaid(quote)}
+                        className="px-3 py-1.5 rounded-full text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                      >
+                        Mark Paid
                       </button>
                     )}
                   </div>
-                )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Summary — only shown when there are multiple quotes */}
+          {sentQuotes.length > 1 && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-1.5">
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                <span>Total Billed</span>
+                <span>${totalBilled.toFixed(2)}</span>
               </div>
-            )
-          })}
-        </div>
+              {totalPaid > 0 && (
+                <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                  <span>Paid</span>
+                  <span>−${totalPaid.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-base font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-1.5">
+                <span>Outstanding</span>
+                <span>${outstanding.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+        </>
       )}
+    </div>
 
-      {/* Payment Modal */}
-      {showPaymentModal && selectedInvoice && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Record Payment
-            </h3>
-            <form onSubmit={handleRecordPayment} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Amount *
-                </label>
-                <input
-                  type="number"
-                  name="amount"
-                  step="0.01"
-                  min="0.01"
-                  max={calculateBalance(selectedInvoice.id)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="0.00"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Balance: ${calculateBalance(selectedInvoice.id).toFixed(2)}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Payment Method *
-                </label>
-                <select
-                  name="paymentMethod"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="Cash">Cash</option>
-                  <option value="Check">Check</option>
-                  <option value="Credit Card">Credit Card</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Notes (optional)
-                </label>
-                <input
-                  type="text"
-                  name="notes"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Payment reference or notes"
-                />
-              </div>
-
-              <div className="flex gap-2 pt-2">
+      {/* Preview Modal */}
+      {previewQuote && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-xl w-full max-w-3xl my-8 shadow-2xl">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Invoice — Quote #{previewQuote.quoteNumber}
+              </h2>
+              <div className="flex items-center gap-2">
                 <button
-                  type="button"
-                  onClick={() => {
-                    setShowPaymentModal(false)
-                    setSelectedInvoice(null)
-                  }}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                  onClick={() => handleCopyLink(previewQuote)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
-                  Cancel
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  {copiedId === previewQuote.id ? 'Copied!' : 'Copy Link'}
                 </button>
                 <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
+                  onClick={() => generateQuotePDF(previewQuote)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
-                  Record Payment
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Download PDF
+                </button>
+                <button
+                  onClick={() => setPreviewQuote(null)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
-            </form>
+            </div>
+            {/* Preview content */}
+            <div className="p-6 overflow-y-auto max-h-[75vh]">
+              <QuotePreview quote={previewQuote} />
+            </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

@@ -43,13 +43,7 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Line Items
         </label>
-        <button
-          type="button"
-          onClick={addLineItem}
-          className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
-        >
-          + Add Line
-        </button>
+        <button type="button" onClick={addLineItem} className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400">+ Add Line</button>
       </div>
 
       {items.length === 0 && (
@@ -63,7 +57,13 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
       {items.map((item, index) => (
         <div
           key={item.id}
-          className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-900/50"
+          className={`border rounded-lg p-3 ${
+            item.type === 'discount'
+              ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-700/50'
+              : item.type === 'deposit'
+              ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-700/50'
+              : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'
+          }`}
         >
           <div className="grid grid-cols-12 gap-2 mb-2">
             <div className="col-span-12 sm:col-span-5">
@@ -115,7 +115,7 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
                 value={item.type}
                 onChange={(e) =>
                   updateLineItem(item.id, {
-                    type: e.target.value as 'material' | 'labor' | 'other',
+                    type: e.target.value as QuoteLineItem['type'],
                   })
                 }
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -123,6 +123,8 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
                 <option value="material">Material</option>
                 <option value="labor">Labor</option>
                 <option value="other">Other</option>
+                <option value="discount">Discount</option>
+                <option value="deposit">Deposit</option>
               </select>
             </div>
 
@@ -144,8 +146,14 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
             </div>
           </div>
 
-          <div className="text-right text-sm text-gray-600 dark:text-gray-400">
-            Total: ${calculateLineTotal(item).toFixed(2)}
+          <div className="text-right text-sm">
+            {item.type === 'discount' ? (
+              <span className="text-amber-600 dark:text-amber-400 font-medium">−${calculateLineTotal(item).toFixed(2)}</span>
+            ) : item.type === 'deposit' ? (
+              <span className="text-green-600 dark:text-green-400 font-medium">−${calculateLineTotal(item).toFixed(2)}</span>
+            ) : (
+              <span className="text-gray-600 dark:text-gray-400">${calculateLineTotal(item).toFixed(2)}</span>
+            )}
           </div>
         </div>
       ))}

@@ -29,6 +29,18 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
     notes: '',
   })
 
+  // Addresses available from the selected client's properties + primary address
+  const selectedClientData = formData.clientId ? getClientById(formData.clientId) : undefined
+  const clientAddresses: Array<{ label: string; address: string }> = [
+    ...(selectedClientData?.properties?.filter(p => p.address).map(p => ({
+      label: p.label ? `${p.label} — ${p.address}` : p.address,
+      address: p.address,
+    })) ?? []),
+    ...(selectedClientData?.address
+      ? [{ label: `Primary — ${selectedClientData.address}`, address: selectedClientData.address }]
+      : []),
+  ]
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -111,6 +123,20 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Site/Job Address
               </label>
+              {clientAddresses.length > 0 && (
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) setFormData({ ...formData, siteAddress: e.target.value })
+                  }}
+                  className="w-full px-3 py-2 mb-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                >
+                  <option value="">— Pick from client properties —</option>
+                  {clientAddresses.map((a, i) => (
+                    <option key={i} value={a.address}>{a.label}</option>
+                  ))}
+                </select>
+              )}
               <input
                 type="text"
                 value={formData.siteAddress}

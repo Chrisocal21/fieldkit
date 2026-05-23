@@ -204,12 +204,13 @@ export default {
       const body = await request.json() as any
       const id = body.id ?? nanoid()
       await env.DB.prepare(`
-        INSERT INTO clients (id, user_id, name, email, phone, address, notes, tags, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO clients (id, user_id, name, email, phone, address, notes, tags, properties, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         id, userId, body.name ?? '', body.email ?? null, body.phone ?? null,
         body.address ?? null, body.notes ?? null,
         JSON.stringify(body.tags ?? []),
+        JSON.stringify(body.properties ?? []),
         body.createdAt ?? Date.now(), body.updatedAt ?? Date.now()
       ).run()
       return json({ id })
@@ -222,12 +223,13 @@ export default {
       if (method === 'PUT' || method === 'PATCH') {
         const body = await request.json() as any
         await env.DB.prepare(`
-          UPDATE clients SET name=?, email=?, phone=?, address=?, notes=?, tags=?, updated_at=?
+          UPDATE clients SET name=?, email=?, phone=?, address=?, notes=?, tags=?, properties=?, updated_at=?
           WHERE id = ? AND user_id = ?
         `).bind(
           body.name ?? '', body.email ?? null, body.phone ?? null,
           body.address ?? null, body.notes ?? null,
           JSON.stringify(body.tags ?? []),
+          JSON.stringify(body.properties ?? []),
           Date.now(), clientId, userId
         ).run()
         return json({ ok: true })
@@ -858,6 +860,7 @@ function clientFromRow(r: any) {
     id: r.id, name: r.name, email: r.email, phone: r.phone,
     address: r.address, notes: r.notes,
     tags: JSON.parse(r.tags ?? '[]'),
+    properties: JSON.parse(r.properties ?? '[]'),
     createdAt: r.created_at, updatedAt: r.updated_at,
   }
 }

@@ -9,7 +9,7 @@ export interface QuoteLineItem {
   description: string
   quantity: number
   unitPrice: number
-  type: 'material' | 'labor' | 'other'
+  type: 'material' | 'labor' | 'other' | 'discount' | 'deposit'
   sortOrder: number
 }
 
@@ -22,6 +22,7 @@ export interface Quote {
   clientPhone?: string
   notes: string
   taxRate: number
+  roundingAdjustment?: number  // Post-tax rounding to reach a clean total
   expiryDate?: number
   status: 'Draft' | 'Sent' | 'Accepted' | 'Declined' | 'Revised'
   lineItems: QuoteLineItem[]
