@@ -27,11 +27,11 @@ const DEFAULT_WIDGETS: Record<WidgetId, boolean> = {
   jobStatus:      true,
   schedule:       true,
   recentActivity: true,
-  topClients:     true,
+  topClients:     false,
   lowStock:       true,
   invoices:       true,
   quotePipeline:  true,
-  team:           true,
+  team:           false,
 }
 
 interface DashboardState {

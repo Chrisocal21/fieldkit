@@ -189,32 +189,25 @@ export default function DashboardPage() {
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .slice(0, 5)
 
-  const STAT_CARDS: { label: string; value: number; sub: string; icon: string; accent?: 'rose' | 'emerald' }[] = [
-    { label: 'Quoted',        value: quotedRevenue,        sub: `${quotedJobs.length} jobs`,                                    icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-    { label: 'In Progress',   value: inProgressRevenue,    sub: `${scheduledJobs.length + inProgressJobs.length} jobs`,         icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { label: 'Completed',     value: completedRevenue,     sub: `${completedJobs.length} jobs`,                                  icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { label: 'Labor Cost',    value: totalLaborCost,       sub: 'Completed jobs',                                                icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { label: 'Material Cost', value: totalMaterialCost,    sub: 'Completed jobs',                                                icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-    { label: 'Expenses',      value: totalExpenses,        sub: 'Completed jobs',                                                icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
-    { label: 'Net Profit',    value: netProfit,            sub: `${completedRevenue > 0 ? ((netProfit / completedRevenue) * 100).toFixed(1) : '0'}% margin`, accent: netProfit >= 0 ? 'emerald' : 'rose', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
-    { label: 'Outstanding',   value: getTotalOutstanding(), sub: 'Unpaid invoices', accent: 'rose',                             icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-  ]
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+  const pipelineValue = quotedRevenue + inProgressRevenue
+  const unpaidInvoices = invoices.filter(inv => inv.status !== 'Paid')
 
   return (
     <>
     <div className="p-4 lg:p-6 max-w-7xl mx-auto">
 
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Here's what's happening with your business.
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{greeting}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{todayLabel}</p>
         </div>
         <button
           onClick={() => setCustomizeOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -223,93 +216,71 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* Revenue Cards — always visible */}
-      <div className="mb-6">
-        {/* Mobile: horizontal scroll */}
-        <div className="lg:hidden overflow-x-auto -mx-4 px-4 scrollbar-hide">
-          <div className="flex gap-3 pb-2 min-w-max">
-            {STAT_CARDS.map(card => (
-              <div key={card.label} className={`bg-white dark:bg-gray-800 border rounded-lg p-3 w-[140px] flex-shrink-0 ${
-                card.accent === 'rose' ? 'border-rose-200 dark:border-rose-800/50' :
-                card.accent === 'emerald' ? 'border-emerald-200 dark:border-emerald-800/50' :
-                'border-gray-200 dark:border-gray-700'
-              }`}>
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{card.label}</p>
-                  <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={card.icon} />
-                  </svg>
-                </div>
-                <p className={`text-xl font-bold ${
-                  card.accent === 'rose' ? 'text-rose-600 dark:text-rose-400' :
-                  card.accent === 'emerald' && netProfit < 0 ? 'text-rose-600 dark:text-rose-400' :
-                  card.accent === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' :
-                  'text-gray-900 dark:text-white'
-                }`}>
-                  {card.label === 'Net Profit' && netProfit < 0 ? '-' : ''}${Math.abs(card.value).toFixed(0)}
-                </p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{card.sub}</p>
-              </div>
-            ))}
-          </div>
+      {/* Hero: 3 key numbers */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <div
+          onClick={() => router.push('/jobs')}
+          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 cursor-pointer hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
+        >
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Active Jobs</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{activeJobs.length}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">{inProgressJobs.length} in progress</p>
         </div>
-        {/* Desktop: grid */}
-        <div className="hidden lg:grid grid-cols-2 xl:grid-cols-4 gap-4">
-          {STAT_CARDS.map(card => (
-            <div key={card.label} className={`bg-white dark:bg-gray-800 border rounded-lg p-4 hover:border-slate-400 dark:hover:border-slate-600 transition-colors ${
-              card.accent === 'rose' ? 'border-rose-200 dark:border-rose-800/50' :
-              card.accent === 'emerald' ? 'border-emerald-200 dark:border-emerald-800/50' :
-              'border-gray-200 dark:border-gray-700'
-            }`}>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{card.label}</p>
-                <svg className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={card.icon} />
-                </svg>
-              </div>
-              <p className={`text-2xl font-bold ${
-                card.accent === 'rose' ? 'text-rose-600 dark:text-rose-400' :
-                card.accent === 'emerald' && netProfit < 0 ? 'text-rose-600 dark:text-rose-400' :
-                card.accent === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' :
-                'text-gray-900 dark:text-white'
-              }`}>
-                {card.label === 'Net Profit' && netProfit < 0 ? '-' : ''}${Math.abs(card.value).toFixed(0)}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{card.sub}</p>
-            </div>
-          ))}
+        <div
+          onClick={() => router.push('/quotes')}
+          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 cursor-pointer hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
+        >
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Pipeline</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">${pipelineValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">{quotedJobs.length + scheduledJobs.length + inProgressJobs.length} jobs</p>
+        </div>
+        <div
+          onClick={() => router.push('/jobs')}
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 cursor-pointer transition-colors ${
+            getTotalOutstanding() > 0
+              ? 'border border-rose-200 dark:border-rose-800/50 hover:border-rose-400 dark:hover:border-rose-600'
+              : 'border border-gray-200 dark:border-gray-700 hover:border-slate-400 dark:hover:border-slate-500'
+          }`}
+        >
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Outstanding</p>
+          <p className={`text-3xl font-bold ${getTotalOutstanding() > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'}`}>
+            ${getTotalOutstanding().toLocaleString('en-US', { maximumFractionDigits: 0 })}
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
+            {unpaidInvoices.length} invoice{unpaidInvoices.length !== 1 ? 's' : ''}
+          </p>
         </div>
       </div>
 
       {/* Widget Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Left column */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-6">
+        <div className="lg:col-span-2 space-y-4">
 
           {/* Job Status */}
           {widgets.jobStatus && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Job Status</h2>
-                <button onClick={() => router.push('/jobs')} className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">View jobs</button>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-gray-900 dark:text-white">Jobs</h2>
+                <button onClick={() => router.push('/jobs')} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">View all</button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-5 gap-2">
                 {[
-                  { label: 'Draft',       count: draftJobs.length },
-                  { label: 'Quoted',      count: quotedJobs.length },
-                  { label: 'Scheduled',   count: scheduledJobs.length },
-                  { label: 'In Progress', count: inProgressJobs.length },
-                  { label: 'Completed',   count: completedJobs.length },
+                  { label: 'Draft',       count: draftJobs.length,      color: 'text-gray-500 dark:text-gray-400' },
+                  { label: 'Quoted',      count: quotedJobs.length,     color: 'text-amber-600 dark:text-amber-400' },
+                  { label: 'Scheduled',   count: scheduledJobs.length,  color: 'text-blue-600 dark:text-blue-400' },
+                  { label: 'In Progress', count: inProgressJobs.length, color: 'text-violet-600 dark:text-violet-400' },
+                  { label: 'Completed',   count: completedJobs.length,  color: 'text-emerald-600 dark:text-emerald-400' },
                 ].map(s => (
-                  <div
+                  <button
                     key={s.label}
                     onClick={() => router.push('/jobs')}
-                    className="bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3 cursor-pointer transition-colors text-center"
+                    className="flex flex-col items-center py-3 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   >
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{s.count}</p>
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
-                  </div>
+                    <p className={`text-xl font-bold ${s.color}`}>{s.count}</p>
+                    <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 mt-0.5 text-center leading-tight">{s.label}</p>
+                  </button>
                 ))}
               </div>
             </div>
@@ -317,24 +288,24 @@ export default function DashboardPage() {
 
           {/* Recent Activity */}
           {widgets.recentActivity && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h2>
-                <button onClick={() => router.push('/jobs')} className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">View all</button>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-gray-900 dark:text-white">Recent Activity</h2>
+                <button onClick={() => router.push('/jobs')} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">View all</button>
               </div>
               {recentJobs.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">No activity in the last 7 days</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">No activity in the last 7 days</p>
               ) : (
-                <div className="space-y-1">
+                <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
                   {recentJobs.map(job => (
                     <div
                       key={job.id}
                       onClick={() => router.push('/jobs')}
-                      className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg cursor-pointer transition-colors"
+                      className="flex items-center justify-between py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/30 -mx-1 px-1 rounded-lg cursor-pointer transition-colors"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 dark:text-white truncate">{job.title}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{job.clientName}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{job.title}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{job.clientName}</p>
                       </div>
                       <StatusBadge status={job.status} className="ml-3 flex-shrink-0" />
                     </div>
@@ -345,61 +316,56 @@ export default function DashboardPage() {
           )}
 
           {/* Quote Pipeline */}
-          {widgets.quotePipeline && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Quote Pipeline</h2>
-                <button onClick={() => router.push('/quotes')} className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">View all</button>
+          {widgets.quotePipeline && quotePipeline.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-gray-900 dark:text-white">Quote Pipeline</h2>
+                <button onClick={() => router.push('/quotes')} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">View all</button>
               </div>
-              {quotePipeline.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-6">No quotes yet</p>
-              ) : (
-                <div className="space-y-2">
-                  {quotePipeline.map(({ status, count, value }) => {
-                    const total = quotePipeline.reduce((s, g) => s + g.count, 0)
-                    return (
-                      <div key={status} className="flex items-center gap-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium w-20 justify-center flex-shrink-0 ${QUOTE_STATUS_COLORS[status]}`}>
-                          {status}
-                        </span>
-                        <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              status === 'Accepted' ? 'bg-emerald-500' :
-                              status === 'Sent'     ? 'bg-blue-500' :
-                              status === 'Declined' ? 'bg-red-400' :
-                              status === 'Revised'  ? 'bg-amber-500' :
-                              'bg-gray-400'
-                            }`}
-                            style={{ width: `${total ? (count / total) * 100 : 0}%` }}
-                          />
-                        </div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400 w-6 text-right flex-shrink-0">{count}</span>
-                        <span className="text-sm font-medium text-gray-900 dark:text-white w-20 text-right flex-shrink-0">${value.toFixed(0)}</span>
+              <div className="space-y-2">
+                {quotePipeline.map(({ status, count, value }) => {
+                  const total = quotePipeline.reduce((s, g) => s + g.count, 0)
+                  return (
+                    <div key={status} className="flex items-center gap-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium w-20 justify-center flex-shrink-0 ${QUOTE_STATUS_COLORS[status]}`}>
+                        {status}
+                      </span>
+                      <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            status === 'Accepted' ? 'bg-emerald-500' :
+                            status === 'Sent'     ? 'bg-blue-500' :
+                            status === 'Declined' ? 'bg-red-400' :
+                            status === 'Revised'  ? 'bg-amber-500' :
+                            'bg-gray-400'
+                          }`}
+                          style={{ width: `${total ? (count / total) * 100 : 0}%` }}
+                        />
                       </div>
-                    )
-                  })}
-                  <div className="pt-2 border-t border-gray-100 dark:border-gray-700 flex justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">Open pipeline</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      ${quotePipeline.filter(g => g.status === 'Draft' || g.status === 'Sent').reduce((s, g) => s + g.value, 0).toFixed(0)}
-                    </span>
-                  </div>
+                      <span className="text-xs text-gray-400 dark:text-gray-500 w-5 text-right flex-shrink-0">{count}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white w-20 text-right flex-shrink-0">${value.toFixed(0)}</span>
+                    </div>
+                  )
+                })}
+                <div className="pt-2 border-t border-gray-100 dark:border-gray-700/50 flex justify-between text-sm">
+                  <span className="text-gray-400 dark:text-gray-500">Open pipeline</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    ${quotePipeline.filter(g => g.status === 'Draft' || g.status === 'Sent').reduce((s, g) => s + g.value, 0).toFixed(0)}
+                  </span>
                 </div>
-              )}
+              </div>
             </div>
           )}
 
           {/* Outstanding Invoices */}
-          {widgets.invoices && invoices.filter(inv => inv.status !== 'Paid').length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          {widgets.invoices && unpaidInvoices.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Outstanding Invoices</h2>
-                <span className="text-xl font-bold text-gray-900 dark:text-white">${getTotalOutstanding().toFixed(0)}</span>
+                <h2 className="font-semibold text-gray-900 dark:text-white">Outstanding Invoices</h2>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">${getTotalOutstanding().toFixed(0)}</span>
               </div>
-              <div className="space-y-2">
-                {invoices
-                  .filter(inv => inv.status !== 'Paid')
+              <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                {unpaidInvoices
                   .sort((a, b) => {
                     if (a.status === 'Overdue' && b.status !== 'Overdue') return -1
                     if (a.status !== 'Overdue' && b.status === 'Overdue') return 1
@@ -414,54 +380,79 @@ export default function DashboardPage() {
                       <div
                         key={invoice.id}
                         onClick={() => invoice.jobId ? router.push(`/jobs?id=${invoice.jobId}`) : router.push('/jobs')}
-                        className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${
+                        className={`flex items-center justify-between py-2.5 -mx-1 px-1 rounded-lg cursor-pointer transition-colors ${
                           isOverdue
-                            ? 'bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20'
-                            : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ? 'hover:bg-rose-50 dark:hover:bg-rose-900/10'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/30'
                         }`}
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 dark:text-white text-sm truncate">INV-{invoice.invoiceNumber}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {job?.clientName || 'Unknown'} · Due {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'TBD'}
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">INV-{invoice.invoiceNumber}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
+                            {job?.clientName || 'Unknown'} · {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'No due date'}
                           </p>
                         </div>
-                        <div className="text-right ml-2 flex-shrink-0">
-                          <p className={`text-sm font-semibold ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
+                        <div className="text-right ml-3 flex-shrink-0">
+                          <p className={`text-sm font-semibold ${isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'}`}>
                             ${balance.toFixed(0)}
                           </p>
-                          {isOverdue && <span className="text-xs font-medium text-red-600 dark:text-red-400">OVERDUE</span>}
+                          {isOverdue && <p className="text-[10px] font-medium text-rose-500 uppercase tracking-wide">Overdue</p>}
                         </div>
                       </div>
                     )
                   })}
-                {invoices.filter(inv => inv.status !== 'Paid').length > 5 && (
-                  <button onClick={() => router.push('/jobs')} className="w-full text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-center py-1">
-                    +{invoices.filter(inv => inv.status !== 'Paid').length - 5} more
+                {unpaidInvoices.length > 5 && (
+                  <button onClick={() => router.push('/jobs')} className="w-full text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-center pt-2">
+                    +{unpaidInvoices.length - 5} more
                   </button>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Top Clients */}
+          {widgets.topClients && topClients.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-gray-900 dark:text-white">Top Clients</h2>
+                <button onClick={() => router.push('/clients')} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">View all</button>
+              </div>
+              <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                {topClients.map(({ client, revenue }) => (
+                  <div
+                    key={client!.id}
+                    onClick={() => router.push('/clients')}
+                    className="flex items-center justify-between py-2.5 -mx-1 px-1 hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg cursor-pointer transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{client!.name}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{client!.email || client!.phone || 'No contact info'}</p>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white ml-3 flex-shrink-0">${revenue.toFixed(0)}</p>
+                  </div>
+                ))}
               </div>
             </div>
           )}
         </div>
 
         {/* Right column */}
-        <div className="space-y-4 lg:space-y-6">
+        <div className="space-y-4">
 
           {/* Schedule with 7-day strip */}
           {widgets.schedule && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-800/50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-blue-200 dark:border-blue-800/50 p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Schedule</h2>
+                  <h2 className="font-semibold text-gray-900 dark:text-white">Schedule</h2>
                 </div>
-                <button onClick={() => router.push('/schedule')} className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">View all</button>
+                <button onClick={() => router.push('/schedule')} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">View all</button>
               </div>
               {/* 7-day strip */}
-              <div className="grid grid-cols-7 gap-1 mb-4">
+              <div className="grid grid-cols-7 gap-1 mb-3">
                 {calendarDays.map(({ date, count, isToday }) => (
                   <button
                     key={date.toISOString()}
@@ -484,9 +475,9 @@ export default function DashboardPage() {
               </div>
               {/* Upcoming jobs */}
               {upcomingThisWeek.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No jobs due this week</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No jobs due this week</p>
               ) : (
-                <div className="space-y-2">
+                <div className="divide-y divide-gray-100 dark:divide-blue-900/20">
                   {upcomingThisWeek.map(job => {
                     const daysUntil = Math.ceil(((job.dueDate ?? 0) - Date.now()) / (1000 * 60 * 60 * 24))
                     const dayLabel = daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : new Date(job.dueDate!).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
@@ -494,11 +485,11 @@ export default function DashboardPage() {
                       <div
                         key={job.id}
                         onClick={() => router.push('/jobs')}
-                        className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg cursor-pointer transition-colors"
+                        className="flex items-center justify-between py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900/10 -mx-1 px-1 rounded-lg cursor-pointer transition-colors"
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{job.title}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{job.clientName}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{job.title}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{job.clientName}</p>
                         </div>
                         <div className="text-right ml-2 flex-shrink-0">
                           <p className={`text-xs font-semibold ${
@@ -516,53 +507,28 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Top Clients */}
-          {widgets.topClients && topClients.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top Clients</h2>
-                <button onClick={() => router.push('/clients')} className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">View all</button>
-              </div>
-              <div className="space-y-2">
-                {topClients.map(({ client, revenue }) => (
-                  <div
-                    key={client!.id}
-                    onClick={() => router.push('/clients')}
-                    className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{client!.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{client!.email || client!.phone || 'No contact info'}</p>
-                    </div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white ml-3 flex-shrink-0">${revenue.toFixed(0)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Team Overview */}
           {widgets.team && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Team</h2>
-                <button onClick={() => router.push('/team')} className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Manage</button>
+                <h2 className="font-semibold text-gray-900 dark:text-white">Team</h2>
+                <button onClick={() => router.push('/team')} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Manage</button>
               </div>
               {teamWorkload.length === 0 ? (
                 <div className="text-center py-6">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">No active team members</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">No active team members</p>
                   <button onClick={() => router.push('/team')} className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">Add a member</button>
                 </div>
               ) : (
-                <div className="space-y-1">
+                <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
                   {teamWorkload.map(({ member, activeJobCount }) => (
-                    <div key={member.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors">
+                    <div key={member.id} className="flex items-center gap-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/30 -mx-1 px-1 rounded-lg transition-colors">
                       <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm font-semibold text-slate-600 dark:text-slate-300 flex-shrink-0">
                         {member.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{member.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{member.role || 'Team member'}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{member.name}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{member.role || 'Team member'}</p>
                       </div>
                       {activeJobCount > 0 ? (
                         <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full font-medium flex-shrink-0">
@@ -580,32 +546,32 @@ export default function DashboardPage() {
 
           {/* Low Stock Alerts */}
           {widgets.lowStock && lowStockItems.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-orange-200 dark:border-orange-800/50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-orange-200 dark:border-orange-800/50 p-4">
               <div className="flex items-center gap-2 mb-3">
-                <svg className="w-5 h-5 text-orange-500 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-orange-500 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Low Stock</h2>
+                <h2 className="font-semibold text-gray-900 dark:text-white">Low Stock</h2>
                 <span className="ml-auto text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-full font-medium">
                   {lowStockItems.length}
                 </span>
               </div>
-              <div className="space-y-2">
+              <div className="divide-y divide-orange-100 dark:divide-orange-900/20">
                 {lowStockItems.slice(0, 5).map(item => (
                   <div
                     key={item.id}
                     onClick={() => router.push('/inventory')}
-                    className="flex items-center justify-between p-2 bg-orange-50 dark:bg-orange-900/10 hover:bg-orange-100 dark:hover:bg-orange-900/20 rounded-lg cursor-pointer transition-colors"
+                    className="flex items-center justify-between py-2.5 hover:bg-orange-50 dark:hover:bg-orange-900/10 -mx-1 px-1 rounded-lg cursor-pointer transition-colors"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{item.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.currentStock} {item.unit} left</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.name}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">{item.currentStock} {item.unit} left</p>
                     </div>
                     <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 ml-2 flex-shrink-0">LOW</span>
                   </div>
                 ))}
                 {lowStockItems.length > 5 && (
-                  <button onClick={() => router.push('/inventory')} className="w-full text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-center py-1">
+                  <button onClick={() => router.push('/inventory')} className="w-full text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-center pt-2">
                     +{lowStockItems.length - 5} more
                   </button>
                 )}
