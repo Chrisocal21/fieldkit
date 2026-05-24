@@ -267,7 +267,7 @@ export default function BrandingStudioPage() {
           </button>
           <button
             onClick={() => setPreviewOpen(v => !v)}
-            className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               previewOpen
                 ? 'bg-slate-700 text-white ring-1 ring-slate-600'
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
@@ -383,12 +383,12 @@ export default function BrandingStudioPage() {
         )}
 
         {/* Main Workspace */}
-        <main className="flex-1 overflow-hidden bg-slate-950 flex">
-          <div className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-hidden bg-slate-950 flex relative">
+          <div className={`flex-1 overflow-hidden ${previewOpen ? 'hidden lg:block' : ''}`}>
             {renderActiveTool()}
           </div>
           {previewOpen && (
-            <div className="w-[420px] flex-shrink-0">
+            <div className="absolute inset-0 lg:relative lg:inset-auto lg:w-[420px] lg:flex-shrink-0 bg-slate-950">
               <BrandDocPreview />
             </div>
           )}

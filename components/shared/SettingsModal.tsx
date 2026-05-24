@@ -6,7 +6,6 @@ import { useSettingsStore, Theme, NotificationSettings } from '@/store/settingsS
 import { useBrandingStore } from '@/store/brandingStore'
 import QRCodeGeneratorModal from './QRCodeGeneratorModal'
 import ShortURLGeneratorModal from './ShortURLGeneratorModal'
-import BusinessCardGeneratorModal from './BusinessCardGeneratorModal'
 
 type SettingsTab = 'appearance' | 'profile' | 'documents' | 'notifications' | 'tools' | 'data' | 'about'
 
@@ -66,7 +65,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   // Tools
   const [showQRCode, setShowQRCode] = useState(false)
   const [showShortURL, setShowShortURL] = useState(false)
-  const [showBusinessCard, setShowBusinessCard] = useState(false)
 
   if (!isOpen) return null
 
@@ -114,19 +112,19 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <div className="flex flex-1 overflow-hidden min-h-0">
 
             {/* Left sidebar nav */}
-            <div className="w-40 flex-shrink-0 border-r border-gray-200 dark:border-gray-800 flex flex-col py-3 gap-0.5 px-2">
+            <div className="w-10 sm:w-40 flex-shrink-0 border-r border-gray-200 dark:border-gray-800 flex flex-col py-3 gap-0.5 px-1 sm:px-2">
               {TAB_NAV.map(({ id, label, icon }) => (
                 <button
                   key={id}
                   onClick={() => setActiveTab(id)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-colors ${
+                  className={`w-full flex items-center justify-center sm:justify-start gap-2.5 px-0 sm:px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-colors ${
                     activeTab === id
                       ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
                   }`}
                 >
                   <span className="flex-shrink-0 w-4 h-4">{icon}</span>
-                  {label}
+                  <span className="hidden sm:inline">{label}</span>
                 </button>
               ))}
 
@@ -134,20 +132,20 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <div className="mt-auto pt-2 border-t border-gray-100 dark:border-gray-800">
                 <button
                   onClick={() => setActiveTab('about')}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-colors ${
+                className={`w-full flex items-center justify-center sm:justify-start gap-2.5 px-0 sm:px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-colors ${
                     activeTab === 'about'
                       ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                       : 'text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
                 >
                   <span className="flex-shrink-0 w-4 h-4"><InfoIcon /></span>
-                  About
+                  <span className="hidden sm:inline">About</span>
                 </button>
               </div>
             </div>
 
             {/* Right content area */}
-            <div className="flex-1 overflow-y-auto p-6 min-w-0">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 min-w-0">
 
               {/* ── APPEARANCE ── */}
               {activeTab === 'appearance' && (
@@ -163,14 +161,14 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         <button
                           key={value}
                           onClick={() => setTheme(value)}
-                          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+                          className={`flex-1 flex items-center justify-center gap-1 py-2 px-1 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-all ${`
                             theme === value
                               ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                               : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                           }`}
                         >
                           {icon}
-                          {label}
+                          <span className="hidden sm:inline">{label}</span>
                         </button>
                       ))}
                     </div>
@@ -313,12 +311,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       icon={<LinkIcon />}
                       onClick={() => setShowShortURL(true)}
                     />
-                    <ToolRow
-                      label="Business Card"
-                      description="Design and export a digital card"
-                      icon={<CardIcon />}
-                      onClick={() => setShowBusinessCard(true)}
-                    />
+
                     <ToolRow
                       label="Branding Studio"
                       description="Logos, colors, typography & assets"
@@ -424,7 +417,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       {/* Tool sub-modals */}
       <QRCodeGeneratorModal isOpen={showQRCode} onClose={() => setShowQRCode(false)} />
       <ShortURLGeneratorModal isOpen={showShortURL} onClose={() => setShowShortURL(false)} />
-      <BusinessCardGeneratorModal isOpen={showBusinessCard} onClose={() => setShowBusinessCard(false)} />
     </>
   )
 }
