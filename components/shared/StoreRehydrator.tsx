@@ -42,7 +42,13 @@ function rehydrateAll() {
  * 4. Push any localStorage data that isn't in D1 yet (first-time sync).
  */
 async function syncWithCloud() {
-  const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL ?? ''
+  const _raw = process.env.NEXT_PUBLIC_WORKER_URL ?? ''
+  let WORKER_URL = _raw
+  if (_raw) {
+    try {
+      if (new URL(_raw).origin === window.location.origin) WORKER_URL = ''
+    } catch { WORKER_URL = '' }
+  }
   if (!WORKER_URL) return // No worker configured yet — local-only mode
 
   try {

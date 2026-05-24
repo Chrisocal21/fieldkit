@@ -4,7 +4,22 @@
  * so the app falls back to localStorage-only mode during local dev.
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_WORKER_URL ?? ''
+const _rawWorkerUrl = process.env.NEXT_PUBLIC_WORKER_URL ?? ''
+// Treat the URL as unconfigured if it points to the same origin as the Next.js
+// app (i.e. the env var was accidentally set to the Vercel deployment URL).
+function resolvedBaseUrl(): string {
+  if (!_rawWorkerUrl) return ''
+  if (typeof window !== 'undefined') {
+    try {
+      const workerOrigin = new URL(_rawWorkerUrl).origin
+      if (workerOrigin === window.location.origin) return ''
+    } catch {
+      return ''
+    }
+  }
+  return _rawWorkerUrl
+}
+const BASE_URL = resolvedBaseUrl()
 
 async function getToken(): Promise<string | null> {
   try {
