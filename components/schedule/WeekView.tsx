@@ -62,11 +62,31 @@ export default function WeekView({ onJobClick }: WeekViewProps) {
   }
 
   const getJobsForDate = (date: Date) => {
-    const startOfDay = new Date(date).setHours(0, 0, 0, 0)
-    const endOfDay = new Date(date).setHours(23, 59, 59, 999)
-    return jobs.filter(
-      (job) => job.dueDate && job.dueDate >= startOfDay && job.dueDate <= endOfDay
-    )
+    const dayStart = new Date(date).setHours(0, 0, 0, 0)
+    const dayEnd = new Date(date).setHours(23, 59, 59, 999)
+    return jobs.filter((job) => {
+      if (!job.dueDate) return false
+      const jobEnd = job.dueDate
+      const jobStart = job.startDate ?? job.dueDate
+      return jobStart <= dayEnd && jobEnd >= dayStart
+    })
+  }
+
+  // Returns 'only' | 'start' | 'middle' | 'end' for multi-day span styling
+  const getSpanPosition = (job: Job, date: Date): 'only' | 'start' | 'middle' | 'end' => {
+    if (!job.startDate || job.startDate >= job.dueDate) return 'only'
+    const dayStart = new Date(date).setHours(0, 0, 0, 0)
+    const dayEnd = new Date(date).setHours(23, 59, 59, 999)
+    const jobStartDay = new Date(job.startDate).setHours(0, 0, 0, 0)
+    const jobEndDay = new Date(job.dueDate).setHours(0, 0, 0, 0)
+    if (jobStartDay >= dayStart && jobStartDay <= dayEnd) return 'start'
+    if (jobEndDay >= dayStart && jobEndDay <= dayEnd) return 'end'
+    return 'middle'
+  }
+
+  const getDurationDays = (job: Job): number => {
+    if (!job.startDate || !job.dueDate) return 1
+    return Math.round((job.dueDate - job.startDate) / (1000 * 60 * 60 * 24)) + 1
   }
 
   const isToday = (date: Date) => {
@@ -114,9 +134,15 @@ export default function WeekView({ onJobClick }: WeekViewProps) {
         const oldDate = new Date(draggedJob.dueDate)
         newDueDate.setHours(oldDate.getHours(), oldDate.getMinutes(), 0, 0)
       } else {
-        newDueDate.setHours(9, 0, 0, 0) // Default to 9 AM
+        newDueDate.setHours(9, 0, 0, 0)
       }
-      updateJob(draggedJob.id, { dueDate: newDueDate.getTime() })
+      // For multi-day jobs, shift startDate by the same offset to preserve duration
+      const updates: Partial<Job> = { dueDate: newDueDate.getTime() }
+      if (draggedJob.startDate && draggedJob.dueDate) {
+        const duration = draggedJob.dueDate - draggedJob.startDate
+        updates.startDate = newDueDate.getTime() - duration
+      }
+      updateJob(draggedJob.id, updates)
       setDraggedJob(null)
       setDragOverDate(null)
     }
@@ -221,7 +247,29 @@ export default function WeekView({ onJobClick }: WeekViewProps) {
                       {dayJobs.map((job) => {
                         const assignee = members.find((m) => m.id === job.assigneeId)
                         const isDragging = draggedJob?.id === job.id
-                        
+                        const spanPos = getSpanPosition(job, date)
+                        const durationDays = getDurationDays(job)
+                        const isSpanning = spanPos !== 'only'
+                        const showFull = spanPos === 'only' || spanPos === 'start'
+
+                        const statusColors = job.status === 'Quoted'
+                          ? 'bg-gray-100 dark:bg-gray-700 border-l-2 border-gray-400'
+                          : job.status === 'Scheduled'
+                          ? 'bg-blue-100 dark:bg-blue-900/30 border-l-2 border-blue-500'
+                          : job.status === 'In Progress'
+                          ? 'bg-amber-100 dark:bg-amber-900/30 border-l-2 border-amber-500'
+                          : job.status === 'Completed'
+                          ? 'bg-green-100 dark:bg-green-900/30 border-l-2 border-green-500'
+                          : 'bg-red-100 dark:bg-red-900/30 border-l-2 border-red-500'
+
+                        const spanRounding = spanPos === 'start'
+                          ? 'rounded-l rounded-r-none'
+                          : spanPos === 'end'
+                          ? 'rounded-r rounded-l-none'
+                          : spanPos === 'middle'
+                          ? 'rounded-none'
+                          : 'rounded'
+
                         return (
                           <div
                             key={job.id}
@@ -229,29 +277,34 @@ export default function WeekView({ onJobClick }: WeekViewProps) {
                             onDragStart={(e) => handleDragStart(e, job)}
                             onDragEnd={handleDragEnd}
                             onClick={() => onJobClick?.(job)}
-                            className={`p-2 rounded text-xs cursor-move hover:shadow-md transition-all ${
+                            title={job.title}
+                            className={`p-2 text-xs cursor-move hover:shadow-md transition-all ${spanRounding} ${statusColors} ${
                               isDragging ? 'opacity-50' : ''
-                            } ${
-                              job.status === 'Quoted'
-                                ? 'bg-gray-100 dark:bg-gray-700 border-l-2 border-gray-400'
-                                : job.status === 'Scheduled'
-                                ? 'bg-blue-100 dark:bg-blue-900/30 border-l-2 border-blue-500'
-                                : job.status === 'In Progress'
-                                ? 'bg-amber-100 dark:bg-amber-900/30 border-l-2 border-amber-500'
-                                : job.status === 'Completed'
-                                ? 'bg-green-100 dark:bg-green-900/30 border-l-2 border-green-500'
-                                : 'bg-red-100 dark:bg-red-900/30 border-l-2 border-red-500'
                             }`}
                           >
-                            <div className="font-medium text-gray-900 dark:text-white truncate mb-1">
-                              {job.title}
-                            </div>
-                            <div className="text-gray-600 dark:text-gray-300 truncate">
-                              {job.clientName}
-                            </div>
-                            {assignee && (
-                              <div className="text-gray-500 dark:text-gray-400 truncate mt-1">
-                                {assignee.name}
+                            {showFull ? (
+                              <>
+                                <div className="font-medium text-gray-900 dark:text-white truncate mb-1 flex items-center gap-1">
+                                  {job.title}
+                                  {isSpanning && (
+                                    <span className="ml-auto text-[10px] font-normal text-gray-500 dark:text-gray-400 flex-shrink-0">
+                                      {durationDays}d
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-gray-600 dark:text-gray-300 truncate">
+                                  {job.clientName}
+                                </div>
+                                {assignee && (
+                                  <div className="text-gray-500 dark:text-gray-400 truncate mt-1">
+                                    {assignee.name}
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              // Middle / end days: just a slim continuation bar
+                              <div className="font-medium text-gray-700 dark:text-gray-300 truncate">
+                                {spanPos === 'end' ? `↳ ${job.title}` : `· · ·`}
                               </div>
                             )}
                           </div>

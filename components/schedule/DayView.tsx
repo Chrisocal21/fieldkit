@@ -40,7 +40,11 @@ export default function DayView({ onJobClick }: DayViewProps) {
     const startOfDay = new Date(currentDate).setHours(0, 0, 0, 0)
     const endOfDay = new Date(currentDate).setHours(23, 59, 59, 999)
     return jobs
-      .filter((job) => job.dueDate && job.dueDate >= startOfDay && job.dueDate <= endOfDay)
+      .filter((job) => {
+        if (!job.dueDate) return false
+        const jobStart = job.startDate ?? job.dueDate
+        return jobStart <= endOfDay && job.dueDate >= startOfDay
+      })
       .sort((a, b) => (a.dueDate || 0) - (b.dueDate || 0))
   }
 

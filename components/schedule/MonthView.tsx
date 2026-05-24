@@ -54,17 +54,28 @@ export default function MonthView({ jobs, onJobClick }: MonthViewProps) {
   // Group jobs by date
   const jobsByDate = useMemo(() => {
     const grouped = new Map<string, Job[]>()
-    
+
+    const addToDate = (date: Date, job: Job) => {
+      const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+      if (!grouped.has(dateKey)) grouped.set(dateKey, [])
+      if (!grouped.get(dateKey)!.find(j => j.id === job.id)) {
+        grouped.get(dateKey)!.push(job)
+      }
+    }
+
     jobs.forEach(job => {
       if (!job.dueDate) return
-      
-      const date = new Date(job.dueDate)
-      const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
-      
-      if (!grouped.has(dateKey)) {
-        grouped.set(dateKey, [])
+      const jobStart = job.startDate ?? job.dueDate
+      const jobEnd = job.dueDate
+      // Walk each calendar day the job spans
+      const cursor = new Date(jobStart)
+      cursor.setHours(0, 0, 0, 0)
+      const end = new Date(jobEnd)
+      end.setHours(0, 0, 0, 0)
+      while (cursor <= end) {
+        addToDate(new Date(cursor), job)
+        cursor.setDate(cursor.getDate() + 1)
       }
-      grouped.get(dateKey)!.push(job)
     })
 
     return grouped
