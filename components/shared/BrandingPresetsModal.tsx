@@ -18,6 +18,7 @@ export default function BrandingPresetsModal({ isOpen, onClose }: BrandingPreset
   const [previewType, setPreviewType] = useState<'quote' | 'invoice'>('quote')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [qrCodeText, setQrCodeText] = useState('')
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   const handleCreateNew = () => {
     if (!presetName.trim()) return
@@ -48,11 +49,15 @@ export default function BrandingPresetsModal({ isOpen, onClose }: BrandingPreset
   }
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this preset?')) {
+    if (deleteConfirmId === id) {
       deletePreset(id)
       if (selectedPreset?.id === id) {
         setSelectedPreset(null)
       }
+      setDeleteConfirmId(null)
+    } else {
+      setDeleteConfirmId(id)
+      setTimeout(() => setDeleteConfirmId(null), 3000)
     }
   }
 
@@ -290,12 +295,13 @@ export default function BrandingPresetsModal({ isOpen, onClose }: BrandingPreset
                     {!builtInPresetIds.includes(selectedPreset.id) && (
                       <button
                         onClick={() => handleDelete(selectedPreset.id)}
-                        className="px-3 py-1.5 border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-md text-sm flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
+                          deleteConfirmId === selectedPreset.id
+                            ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
+                            : 'border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                        }`}
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete
+                        {deleteConfirmId === selectedPreset.id ? 'Confirm?' : 'Delete'}
                       </button>
                     )}
                     {!selectedPreset.isDefault && (

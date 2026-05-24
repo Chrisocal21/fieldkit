@@ -17,6 +17,7 @@ export default function ClientsPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   // Prevent hydration mismatch and trigger migration
   useEffect(() => {
@@ -95,16 +96,16 @@ export default function ClientsPage() {
 
   const handleDeleteClient = (clientId: string, e?: React.MouseEvent) => {
     e?.stopPropagation() // Prevent opening drawer when clicking delete
-    const jobCount = getJobsByClientId(clientId).length
-    if (jobCount > 0) {
-      if (!confirm(`This client has ${jobCount} job(s). Are you sure you want to delete them?`)) {
-        return
+    if (deleteConfirmId === clientId) {
+      deleteClient(clientId)
+      setDeleteConfirmId(null)
+      if (selectedClient?.id === clientId) {
+        setSelectedClient(null)
+        setIsDrawerOpen(false)
       }
-    }
-    deleteClient(clientId)
-    if (selectedClient?.id === clientId) {
-      setSelectedClient(null)
-      setIsDrawerOpen(false)
+    } else {
+      setDeleteConfirmId(clientId)
+      setTimeout(() => setDeleteConfirmId(null), 3000)
     }
   }
 
@@ -323,17 +324,17 @@ export default function ClientsPage() {
                   </button>
                   <button
                     onClick={(e) => handleDeleteClient(client.id, e)}
-                    className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                    title="Delete"
+                    className={`text-xs px-2 py-1 rounded transition-colors ${
+                      deleteConfirmId === client.id
+                        ? 'bg-red-500 text-white hover:bg-red-600'
+                        : 'text-gray-400 hover:text-red-600 dark:hover:text-red-400'
+                    }`}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
+                    {deleteConfirmId === client.id ? 'Confirm?' : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    )}
                   </button>
                 </div>
               </div>

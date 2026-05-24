@@ -25,6 +25,7 @@ function calcQuoteAmountDue(quote: Quote): number {
 export function JobQuotesTab({ job }: JobQuotesTabProps) {
   const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false)
   const [editingQuote, setEditingQuote] = useState<Quote | undefined>()
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   
   const { deleteJobQuote, updateJobQuote } = useJobStore()
   const { invoices, createInvoice } = useInvoiceStore()
@@ -59,8 +60,12 @@ export function JobQuotesTab({ job }: JobQuotesTabProps) {
   }
 
   const handleDeleteQuote = (quoteId: string) => {
-    if (confirm('Delete this quote? This cannot be undone.')) {
+    if (deleteConfirmId === quoteId) {
       deleteJobQuote(job.id, quoteId)
+      setDeleteConfirmId(null)
+    } else {
+      setDeleteConfirmId(quoteId)
+      setTimeout(() => setDeleteConfirmId(null), 3000)
     }
   }
 
@@ -116,6 +121,7 @@ export function JobQuotesTab({ job }: JobQuotesTabProps) {
                 onEdit={() => handleEditQuote(quote)}
                 onDelete={() => handleDeleteQuote(quote.id)}
                 onSend={() => handleSendQuote(quote.id)}
+                deleteConfirm={deleteConfirmId === quote.id}
               />
             ))}
           </div>

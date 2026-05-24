@@ -32,6 +32,7 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('details')
   const [formData, setFormData] = useState<Partial<Job>>({})
+  const [archiveConfirm, setArchiveConfirm] = useState(false)
 
   useEffect(() => {
     if (job) {
@@ -60,9 +61,12 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
   }
 
   const handleArchive = () => {
-    if (confirm('Archive this job? You can view archived jobs later.')) {
+    if (archiveConfirm) {
       archiveJob(job.id)
       onClose()
+    } else {
+      setArchiveConfirm(true)
+      setTimeout(() => setArchiveConfirm(false), 3000)
     }
   }
 
@@ -509,9 +513,13 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
                   <div className="flex gap-3">
                     <button
                       onClick={handleArchive}
-                      className="px-4 py-2 border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className={`px-4 py-2 rounded-md border transition-colors ${
+                        archiveConfirm
+                          ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
+                          : 'border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                      }`}
                     >
-                      Archive
+                      {archiveConfirm ? 'Confirm Archive?' : 'Archive'}
                     </button>
                     <button
                       onClick={() => setIsEditing(true)}

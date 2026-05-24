@@ -794,8 +794,8 @@ export default function DashboardPage() {
                             : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'
                         }`}
                         onClick={() => {
-                          // TODO: Open job drawer with invoices tab
-                          router.push('/jobs')
+                          if (invoice.jobId) router.push(`/jobs?id=${invoice.jobId}`)
+                          else router.push('/invoices')
                         }}
                       >
                         <div className="flex-1 min-w-0">

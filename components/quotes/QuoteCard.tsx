@@ -8,9 +8,10 @@ interface QuoteCardProps {
   onEdit?: () => void
   onDelete?: () => void
   onSend?: () => void
+  deleteConfirm?: boolean
 }
 
-export function QuoteCard({ quote, onEdit, onDelete, onSend }: QuoteCardProps) {
+export function QuoteCard({ quote, onEdit, onDelete, onSend, deleteConfirm }: QuoteCardProps) {
   // Calculate totals (mirrors QuotePreview logic)
   const regularItems = quote.lineItems.filter(i => i.type !== 'discount' && i.type !== 'deposit')
   const discountAmt = quote.lineItems.filter(i => i.type === 'discount').reduce((s, i) => s + i.quantity * i.unitPrice, 0)
@@ -109,9 +110,13 @@ export function QuoteCard({ quote, onEdit, onDelete, onSend }: QuoteCardProps) {
         {onDelete && (
           <button
             onClick={onDelete}
-            className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 border border-red-300 dark:border-red-600 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+            className={`px-3 py-1.5 text-sm rounded border transition-colors ${
+              deleteConfirm
+                ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
+                : 'text-red-600 dark:text-red-400 border-red-300 dark:border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
+            }`}
           >
-            Delete
+            {deleteConfirm ? 'Confirm?' : 'Delete'}
           </button>
         )}
       </div>

@@ -34,6 +34,7 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
   const [copied, setCopied] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
   const [profileNameError, setProfileNameError] = useState(false)
+  const [deleteProfileConfirmId, setDeleteProfileConfirmId] = useState<string | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const qrCanvasRef = useRef<HTMLCanvasElement>(null)
   
@@ -137,11 +138,15 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
   }
 
   const handleDeleteProfile = (profileId: string) => {
-    if (confirm('Delete this profile?')) {
+    if (deleteProfileConfirmId === profileId) {
       deleteProfile(profileId)
       if (selectedProfileId === profileId) {
         setSelectedProfileId('')
       }
+      setDeleteProfileConfirmId(null)
+    } else {
+      setDeleteProfileConfirmId(profileId)
+      setTimeout(() => setDeleteProfileConfirmId(null), 3000)
     }
   }
 
@@ -248,9 +253,13 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
                   {selectedProfileId && (
                     <button
                       onClick={() => handleDeleteProfile(selectedProfileId)}
-                      className="w-full px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+                      className={`w-full px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        deleteProfileConfirmId === selectedProfileId
+                          ? 'bg-red-700 text-white hover:bg-red-800'
+                          : 'bg-red-600 text-white hover:bg-red-700'
+                      }`}
                     >
-                      Delete Current Profile
+                      {deleteProfileConfirmId === selectedProfileId ? 'Confirm Delete?' : 'Delete Current Profile'}
                     </button>
                   )}
                 </div>
