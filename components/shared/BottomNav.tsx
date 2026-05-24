@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 import SettingsModal from './SettingsModal'
@@ -148,8 +147,8 @@ export default function BottomNav() {
         <div className="fixed bottom-16 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-50 lg:hidden shadow-lg">
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <Image src="/fieldkitlogo.svg" alt="FieldKit" width={32} height={32} className="rounded-lg" />
-            <span className="text-base font-bold tracking-widest text-gray-900 dark:text-white">FIELDKIT</span>
+            <img src="/logo.svg" alt="FIELDKIT" className="h-8 w-8 flex-shrink-0 dark:invert" />
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">FIELDKIT</h1>
           </div>
           <div className="p-2 space-y-1">
             {moreMenuItems.map((item) => {
