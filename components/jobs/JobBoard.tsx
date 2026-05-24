@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Job, JobStatus, useJobStore } from '@/store/jobStore'
 import { useTeamStore } from '@/store/teamStore'
 import { useBoardSettingsStore } from '@/store/boardSettingsStore'
@@ -18,6 +18,32 @@ export default function JobBoard({ onJobClick }: JobBoardProps) {
   const [showSettings, setShowSettings] = useState(false)
   const [draggedJob, setDraggedJob] = useState<Job | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
+
+  // Drag-to-pan
+  const boardRef = useRef<HTMLDivElement>(null)
+  const panRef = useRef({ active: false, startX: 0, scrollLeft: 0 })
+  const [isPanning, setIsPanning] = useState(false)
+
+  const handleBoardMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement
+    if (target.closest('button, select, input, a, [draggable]')) return
+    const board = boardRef.current
+    if (!board) return
+    panRef.current = { active: true, startX: e.clientX, scrollLeft: board.scrollLeft }
+    setIsPanning(true)
+  }
+
+  const handleBoardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!panRef.current.active || !boardRef.current) return
+    e.preventDefault()
+    const dx = e.clientX - panRef.current.startX
+    boardRef.current.scrollLeft = panRef.current.scrollLeft - dx
+  }
+
+  const handleBoardMouseUp = () => {
+    panRef.current.active = false
+    setIsPanning(false)
+  }
 
   const getJobsByStatus = (status: string) => {
     return jobs.filter((job) => job.status === status)
@@ -62,7 +88,14 @@ export default function JobBoard({ onJobClick }: JobBoardProps) {
 
   return (
     <>
-      <div className="flex gap-3 overflow-x-auto pb-2 h-[calc(100vh-220px)] min-h-[500px]">
+      <div
+        ref={boardRef}
+        className={`flex gap-3 overflow-x-auto pb-2 h-[calc(100vh-220px)] min-h-[500px] select-none ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+        onMouseDown={handleBoardMouseDown}
+        onMouseMove={handleBoardMouseMove}
+        onMouseUp={handleBoardMouseUp}
+        onMouseLeave={handleBoardMouseUp}
+      >
         {columns.sort((a, b) => a.order - b.order).map((column) => {
         const columnJobs = getJobsByStatus(column.status)
         
