@@ -51,12 +51,13 @@ export const useInventoryStore = create<InventoryState>()(
       },
       
       updateItem: (id, updates) => {
+        const existing = get().items.find((item) => item.id === id)
         set((state) => ({
           items: state.items.map((item) =>
             item.id === id ? { ...item, ...updates, updatedAt: Date.now() } : item
           ),
         }))
-        api.inventory.update(id, { ...updates, updatedAt: Date.now() })
+        api.inventory.update(id, { ...existing, ...updates, updatedAt: Date.now() })
       },
       
       adjustStock: (itemId, delta, reason) => {

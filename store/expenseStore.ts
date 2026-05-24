@@ -65,6 +65,7 @@ export const useExpenseStore = create<ExpenseState>()(
       },
 
       updateExpense: (id, updates) => {
+        const existing = get().expenses.find((e) => e.id === id)
         set((state) => ({
           expenses: state.expenses.map((expense) =>
             expense.id === id
@@ -72,7 +73,7 @@ export const useExpenseStore = create<ExpenseState>()(
               : expense
           )
         }))
-        api.expenses.update(id, { ...updates, updatedAt: Date.now() })
+        api.expenses.update(id, { ...existing, ...updates, updatedAt: Date.now() })
       },
 
       deleteExpense: (id) => {

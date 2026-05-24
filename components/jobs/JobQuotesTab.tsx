@@ -6,9 +6,20 @@ import { Quote } from '@/store/quoteStore'
 import { QuoteCard } from '@/components/quotes/QuoteCard'
 import QuoteForm from '@/components/quotes/QuoteForm'
 import { useJobStore } from '@/store/jobStore'
+import { useInvoiceStore } from '@/store/invoiceStore'
 
 interface JobQuotesTabProps {
   job: Job
+}
+
+function calcQuoteAmountDue(quote: Quote): number {
+  const regular = quote.lineItems.filter(i => i.type !== 'discount' && i.type !== 'deposit')
+  const discountAmt = quote.lineItems.filter(i => i.type === 'discount').reduce((s, i) => s + i.quantity * i.unitPrice, 0)
+  const depositAmt = quote.lineItems.filter(i => i.type === 'deposit').reduce((s, i) => s + i.quantity * i.unitPrice, 0)
+  const subtotal = regular.reduce((s, i) => s + i.quantity * i.unitPrice, 0)
+  const taxable = Math.max(0, subtotal - discountAmt)
+  const gross = taxable + taxable * (quote.taxRate || 0) + (quote.roundingAdjustment ?? 0)
+  return gross - depositAmt
 }
 
 export function JobQuotesTab({ job }: JobQuotesTabProps) {
@@ -16,6 +27,7 @@ export function JobQuotesTab({ job }: JobQuotesTabProps) {
   const [editingQuote, setEditingQuote] = useState<Quote | undefined>()
   
   const { deleteJobQuote, updateJobQuote } = useJobStore()
+  const { invoices, createInvoice } = useInvoiceStore()
 
   const quotes = job.quotes || []
 
@@ -31,6 +43,19 @@ export function JobQuotesTab({ job }: JobQuotesTabProps) {
 
   const handleSendQuote = (quoteId: string) => {
     updateJobQuote(job.id, quoteId, { status: 'Sent' })
+
+    // Auto-create invoice record so it shows up in the Invoices tab immediately
+    const quote = quotes.find(q => q.id === quoteId)
+    const alreadyInvoiced = invoices.some(i => i.jobId === job.id && i.quoteId === quoteId)
+    if (quote && !alreadyInvoiced) {
+      createInvoice({
+        jobId: job.id,
+        quoteId: quote.id,
+        amountDue: calcQuoteAmountDue(quote),
+        issuedAt: Date.now(),
+        notes: `Quote #${quote.quoteNumber}`,
+      })
+    }
   }
 
   const handleDeleteQuote = (quoteId: string) => {

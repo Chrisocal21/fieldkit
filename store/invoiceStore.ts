@@ -87,6 +87,7 @@ export const useInvoiceStore = create<InvoiceState>()(
       },
 
       updateInvoice: (id, updates) => {
+        const existing = get().invoices.find((inv) => inv.id === id)
         set((state) => ({
           invoices: state.invoices.map((invoice) =>
             invoice.id === id
@@ -94,7 +95,7 @@ export const useInvoiceStore = create<InvoiceState>()(
               : invoice
           )
         }))
-        api.invoices.update(id, { ...updates, updatedAt: Date.now() })
+        api.invoices.update(id, { ...existing, ...updates, updatedAt: Date.now() })
         if (!updates.status) {
           get().updateInvoiceStatus(id)
         }

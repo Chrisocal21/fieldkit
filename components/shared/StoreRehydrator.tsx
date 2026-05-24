@@ -46,7 +46,18 @@ async function syncWithCloud() {
   if (!WORKER_URL) return // No worker configured yet — local-only mode
 
   try {
-    // Pull from D1 and overwrite local stores
+    // Capture local (localStorage-rehydrated) data BEFORE any cloud overwrites.
+    // This is critical: if a resource is missing from D1, we can push local up.
+    const localJobs = useJobStore.getState().jobs
+    const localClients = useClientStore.getState().clients
+    const localTeam = useTeamStore.getState().members
+    const localItems = useInventoryStore.getState().items
+    const localInvoices = useInvoiceStore.getState().invoices
+    const localExpenses = useExpenseStore.getState().expenses
+    const localMaterials = useMaterialCostStore.getState().jobMaterials
+    const localTimeEntries = useTimeEntryStore.getState().entries
+
+    // Pull all data from D1
     const [jobs, clients, team, inventory, invoices, expenses, materials, timeEntries] =
       await Promise.all([
         api.jobs.list(),
@@ -59,51 +70,36 @@ async function syncWithCloud() {
         api.timeEntries.list(),
       ])
 
-    if (jobs) useJobStore.setState({ jobs })
-    if (clients) useClientStore.setState({ clients })
-    if (team) useTeamStore.setState({ members: team })
-    if (inventory) {
+    // Only overwrite local store if D1 actually returned data for that resource.
+    // An empty array from D1 must NOT wipe data that exists only in localStorage.
+    if (jobs?.length) useJobStore.setState({ jobs })
+    if (clients?.length) useClientStore.setState({ clients })
+    if (team?.length) useTeamStore.setState({ members: team })
+    if (inventory?.items?.length || inventory?.adjustments?.length) {
       useInventoryStore.setState({
-        items: inventory.items,
-        adjustments: inventory.adjustments,
+        items: inventory!.items,
+        adjustments: inventory!.adjustments,
       })
     }
-    if (invoices) useInvoiceStore.setState({ invoices })
-    if (expenses) useExpenseStore.setState({ expenses })
-    if (materials) useMaterialCostStore.setState({ jobMaterials: materials })
-    if (timeEntries) useTimeEntryStore.setState({ entries: timeEntries })
+    if (invoices?.length) useInvoiceStore.setState({ invoices })
+    if (expenses?.length) useExpenseStore.setState({ expenses })
+    if (materials?.length) useMaterialCostStore.setState({ jobMaterials: materials })
+    if (timeEntries?.length) useTimeEntryStore.setState({ entries: timeEntries })
 
-    // If D1 is empty (new account with existing localStorage data), push it up
-    const cloudIsEmpty =
-      !jobs?.length && !clients?.length && !team?.length && !inventory?.items?.length
+    // Per-resource: if D1 has nothing for a resource but localStorage does,
+    // push that resource up so it's saved to the cloud.
+    const syncPayload: Parameters<typeof api.sync>[0] = {}
+    if (!jobs?.length && localJobs.length) syncPayload.jobs = localJobs
+    if (!clients?.length && localClients.length) syncPayload.clients = localClients
+    if (!team?.length && localTeam.length) syncPayload.team = localTeam
+    if (!inventory?.items?.length && localItems.length) syncPayload.inventory = localItems
+    if (!invoices?.length && localInvoices.length) syncPayload.invoices = localInvoices
+    if (!expenses?.length && localExpenses.length) syncPayload.expenses = localExpenses
+    if (!materials?.length && localMaterials.length) syncPayload.materials = localMaterials
+    if (!timeEntries?.length && localTimeEntries.length) syncPayload.timeEntries = localTimeEntries
 
-    if (cloudIsEmpty) {
-      const localJobs = useJobStore.getState().jobs
-      const localClients = useClientStore.getState().clients
-      const localTeam = useTeamStore.getState().members
-      const localItems = useInventoryStore.getState().items
-      const localInvoices = useInvoiceStore.getState().invoices
-      const localExpenses = useExpenseStore.getState().expenses
-      const localMaterials = useMaterialCostStore.getState().jobMaterials
-      const localTimeEntries = useTimeEntryStore.getState().entries
-
-      const hasLocalData =
-        localJobs.length || localClients.length || localTeam.length ||
-        localItems.length || localInvoices.length || localExpenses.length ||
-        localMaterials.length || localTimeEntries.length
-
-      if (hasLocalData) {
-        await api.sync({
-          jobs: localJobs,
-          clients: localClients,
-          team: localTeam,
-          inventory: localItems,
-          invoices: localInvoices,
-          expenses: localExpenses,
-          materials: localMaterials,
-          timeEntries: localTimeEntries,
-        })
-      }
+    if (Object.keys(syncPayload).length > 0) {
+      await api.sync(syncPayload)
     }
   } catch {
     // Cloud sync failed — continue with local data, no disruption to UX

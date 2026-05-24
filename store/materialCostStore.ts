@@ -63,6 +63,7 @@ export const useMaterialCostStore = create<MaterialCostState>()(
       },
 
       updateJobMaterial: (id, updates) => {
+        const existing = get().jobMaterials.find((m) => m.id === id)
         set((state) => ({
           jobMaterials: state.jobMaterials.map((material) => {
             if (material.id === id) {
@@ -75,7 +76,11 @@ export const useMaterialCostStore = create<MaterialCostState>()(
             return material
           })
         }))
-        api.materials.update(id, updates)
+        const merged = { ...existing, ...updates } as any
+        if (updates.quantity !== undefined || updates.unitCost !== undefined) {
+          merged.totalCost = (merged.quantity ?? 1) * (merged.unitCost ?? 0)
+        }
+        api.materials.update(id, merged)
       },
 
       deleteJobMaterial: (id) => {

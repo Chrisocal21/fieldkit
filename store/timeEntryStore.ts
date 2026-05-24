@@ -52,6 +52,7 @@ export const useTimeEntryStore = create<TimeEntryState>()(
       },
 
       updateEntry: (id, updates) => {
+        const existing = get().entries.find((e) => e.id === id)
         set((state) => ({
           entries: state.entries.map((entry) =>
             entry.id === id
@@ -59,7 +60,7 @@ export const useTimeEntryStore = create<TimeEntryState>()(
               : entry
           ),
         }))
-        api.timeEntries.update(id, { ...updates, updatedAt: Date.now() })
+        api.timeEntries.update(id, { ...existing, ...updates, updatedAt: Date.now() })
       },
 
       deleteEntry: (id) => {

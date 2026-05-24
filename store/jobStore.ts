@@ -62,12 +62,13 @@ export const useJobStore = create<JobState>()(
       },
       
       updateJob: (id, updates) => {
+        const existing = get().jobs.find((j) => j.id === id)
         set((state) => ({
           jobs: state.jobs.map((job) =>
             job.id === id ? { ...job, ...updates, updatedAt: Date.now() } : job
           ),
         }))
-        api.jobs.update(id, { ...updates, updatedAt: Date.now() })
+        api.jobs.update(id, { ...existing, ...updates, updatedAt: Date.now() })
       },
       
       archiveJob: (id) => {
@@ -161,8 +162,17 @@ export const useJobStore = create<JobState>()(
             return job
           }),
         }))
-        api.quotes.update(quoteId, { status: 'Accepted' })
-        api.jobs.update(jobId, { status: 'Scheduled' })
+        // Sync accepted quote
+        api.quotes.update(quoteId, { status: 'Accepted', updatedAt: Date.now() })
+        // Sync all other quotes that were just declined
+        const job = get().jobs.find((j) => j.id === jobId)
+        for (const q of job?.quotes ?? []) {
+          if (q.id !== quoteId && q.status === 'Declined') {
+            api.quotes.update(q.id, { status: 'Declined', updatedAt: Date.now() })
+          }
+        }
+        // Sync full job so no fields get wiped
+        if (job) api.jobs.update(jobId, { ...job, status: 'Scheduled', updatedAt: Date.now() })
       },
       
       deleteJobQuote: (jobId, quoteId) => {

@@ -71,6 +71,7 @@ export const useTeamStore = create<TeamState>()(
       },
 
       updateMember: (id, updates) => {
+        const existing = get().members.find((m) => m.id === id)
         set((state) => ({
           members: state.members.map((member) =>
             member.id === id
@@ -78,7 +79,7 @@ export const useTeamStore = create<TeamState>()(
               : member
           ),
         }))
-        api.team.update(id, { ...updates, updatedAt: Date.now() })
+        api.team.update(id, { ...existing, ...updates, updatedAt: Date.now() })
       },
 
       deleteMember: (id) => {
@@ -98,7 +99,7 @@ export const useTeamStore = create<TeamState>()(
               : member
           ),
         }))
-        api.team.update(id, { active: newActive, updatedAt: Date.now() })
+        api.team.update(id, { ...member, active: newActive, updatedAt: Date.now() })
       },
 
       getMemberById: (id) => {

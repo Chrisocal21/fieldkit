@@ -51,12 +51,13 @@ export const useClientStore = create<ClientState>()(
       },
 
       updateClient: (id, updates) => {
+        const existing = get().clients.find((c) => c.id === id)
         set((state) => ({
           clients: state.clients.map((client) =>
             client.id === id ? { ...client, ...updates, updatedAt: Date.now() } : client
           ),
         }))
-        api.clients.update(id, { ...updates, updatedAt: Date.now() })
+        api.clients.update(id, { ...existing, ...updates, updatedAt: Date.now() })
       },
 
       deleteClient: (id) => {
