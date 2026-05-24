@@ -13,6 +13,7 @@ import { useExpenseStore } from '@/store/expenseStore'
 import StatusBadge from '@/components/shared/StatusBadge'
 import SkeletonLoader from '@/components/shared/SkeletonLoader'
 import CollapsibleSection from '@/components/shared/CollapsibleSection'
+import CreateJobModal from '@/components/jobs/CreateJobModal'
 
 // Helper function to calculate quote total (mirrors QuotePreview logic)
 const calculateQuoteTotal = (quote: any) => {
@@ -28,6 +29,7 @@ const calculateQuoteTotal = (quote: any) => {
 export default function DashboardPage() {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
+  const [isCreateJobOpen, setIsCreateJobOpen] = useState(false)
   
   const jobs = useJobStore((state) => state.jobs)
   const clients = useClientStore((state) => state.clients)
@@ -548,7 +550,7 @@ export default function DashboardPage() {
             >
               <div className="space-y-2">
                 <button
-                  onClick={() => router.push('/jobs')}
+                  onClick={() => setIsCreateJobOpen(true)}
                   className="w-full flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors text-left"
                 >
                   <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -632,7 +634,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
             <div className="space-y-2">
               <button
-                onClick={() => router.push('/jobs')}
+                onClick={() => setIsCreateJobOpen(true)}
                 className="w-full flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors text-left"
               >
                 <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -861,5 +863,7 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+
+    <CreateJobModal isOpen={isCreateJobOpen} onClose={() => setIsCreateJobOpen(false)} />
   )
 }
