@@ -8,6 +8,7 @@ import EmptyState from '@/components/shared/EmptyState'
 import WeekView from '@/components/schedule/WeekView'
 import DayView from '@/components/schedule/DayView'
 import MonthView from '@/components/schedule/MonthView'
+import CreateJobModal from '@/components/jobs/CreateJobModal'
 
 type ViewMode = 'month' | 'week' | 'day'
 
@@ -19,6 +20,7 @@ export default function SchedulePage() {
   const [mounted, setMounted] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null)
+  const [isCreateJobOpen, setIsCreateJobOpen] = useState(false)
 
   // Prevent hydration mismatch by waiting for client-side mount
   useEffect(() => {
@@ -50,8 +52,20 @@ export default function SchedulePage() {
           </p>
         </div>
 
-        {/* View Toggle */}
-        <div className="inline-flex rounded-md shadow-sm flex-shrink-0" role="group">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* New Job */}
+          <button
+            onClick={() => setIsCreateJobOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            New Job
+          </button>
+
+          {/* View Toggle */}
+          <div className="inline-flex rounded-md shadow-sm" role="group">
           <button
             onClick={() => setViewMode('month')}
             className={`px-4 py-2 text-sm font-medium border rounded-l-md ${
@@ -91,6 +105,7 @@ export default function SchedulePage() {
             </svg>
             Day
           </button>
+        </div>
         </div>
       </div>
 
@@ -149,6 +164,8 @@ export default function SchedulePage() {
       ) : (
         <DayView onJobClick={handleJobClick} assigneeFilter={selectedAssignee ?? undefined} />
       )}
+
+      <CreateJobModal isOpen={isCreateJobOpen} onClose={() => setIsCreateJobOpen(false)} />
     </div>
   )
 }

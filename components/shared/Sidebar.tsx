@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 import SettingsModal from './SettingsModal'
+import { useInvoiceStore } from '@/store/invoiceStore'
+import { useInventoryStore } from '@/store/inventoryStore'
 
 const navItems = [
   {
@@ -134,6 +136,15 @@ export default function Sidebar() {
   const pathname = usePathname()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
+  const overdueCount = useInvoiceStore((s) => s.invoices.filter(inv => inv.status === 'Overdue').length)
+  const lowStockCount = useInventoryStore((s) => s.items.filter(item => item.currentStock <= item.lowStockThreshold).length)
+
+  const getBadge = (href: string) => {
+    if (href === '/invoices' && overdueCount > 0) return overdueCount
+    if (href === '/inventory' && lowStockCount > 0) return lowStockCount
+    return null
+  }
+
   return (
     <>
       <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
@@ -148,14 +159,21 @@ export default function Sidebar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                className={`flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md ${
                   isActive
                     ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
-                <span className="mr-3">{item.icon}</span>
-                {item.name}
+                <span className="flex items-center">
+                  <span className="mr-3">{item.icon}</span>
+                  {item.name}
+                </span>
+                {getBadge(item.href) !== null && (
+                  <span className="ml-auto inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded-full bg-rose-500 text-white">
+                    {getBadge(item.href)}
+                  </span>
+                )}
               </Link>
             )
           })}
