@@ -58,7 +58,7 @@ export default function QuotePreview({ quote, presetId }: QuotePreviewProps) {
         }}
       >
         {/* Logo */}
-        {preset.logoUrl && (
+        {preset.logoUrl && (preset.headerStyle || 'standard') !== 'banner' && (
           <div
             className={`mb-6 flex ${
               preset.logoPosition === 'center'
@@ -77,55 +77,119 @@ export default function QuotePreview({ quote, presetId }: QuotePreviewProps) {
           </div>
         )}
 
-        {/* Header */}
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1
-              className="font-bold mb-2"
-              style={{
-                fontSize: `${preset.fontSize.title}px`,
-                color: preset.colors.primary,
-              }}
-            >
-              QUOTE
-            </h1>
-            <p
-              className="text-sm"
-              style={{ color: preset.colors.textLight }}
-            >
-              #{quote.quoteNumber}
-            </p>
-            <p
-              className="text-sm"
-              style={{ color: preset.colors.textLight }}
-            >
-              {new Date(quote.createdAt).toLocaleDateString()}
-            </p>
+        {/* Header — Banner style */}
+        {(preset.headerStyle === 'banner') && (
+          <div className="rounded-lg px-6 py-4 mb-6 flex justify-between items-center" style={{ backgroundColor: preset.colors.primary }}>
+            <div>
+              {preset.logoUrl
+                ? <img src={preset.logoUrl} alt="Logo" className="h-10 object-contain" />
+                : <span className="text-white font-bold text-xl">{preset.businessName || ''}</span>
+              }
+              {preset.businessAddress && <p className="text-white/70 text-xs mt-0.5">{preset.businessAddress}</p>}
+            </div>
+            <div className="text-right">
+              {preset.businessEmail && <p className="text-white/60 text-xs">{preset.businessEmail}</p>}
+              <p className="text-white font-bold mt-1" style={{ fontSize: `${preset.fontSize.title}px` }}>
+                {preset.quoteLabel || 'QUOTE'}
+              </p>
+              <p className="text-white/60 text-xs mt-0.5">#{quote.quoteNumber}</p>
+              <p className="text-white/60 text-xs">{new Date(quote.createdAt).toLocaleDateString()}</p>
+            </div>
           </div>
-          <div className="text-right">
+        )}
+
+        {/* Header — Accent Bar style */}
+        {(preset.headerStyle === 'accent-bar') && (
+          <div className="flex mb-6 rounded-lg overflow-hidden" style={{ border: `1px solid ${preset.colors.border}` }}>
+            <div className="w-2 flex-shrink-0" style={{ backgroundColor: preset.colors.primary }} />
+            <div className="flex-1 px-5 py-4 flex justify-between items-start">
+              <div>
+                {preset.logoUrl
+                  ? <img src={preset.logoUrl} alt="Logo" style={{ width: `${preset.logoWidth}px` }} className="object-contain mb-1" />
+                  : <p className="font-bold text-lg" style={{ color: preset.colors.primary }}>{preset.businessName || ''}</p>
+                }
+                {preset.businessAddress && <p className="text-xs" style={{ color: preset.colors.textLight }}>{preset.businessAddress}</p>}
+                {preset.businessPhone && <p className="text-xs" style={{ color: preset.colors.textLight }}>{preset.businessPhone}</p>}
+                {preset.businessEmail && <p className="text-xs" style={{ color: preset.colors.textLight }}>{preset.businessEmail}</p>}
+              </div>
+              <div className="text-right">
+                <p className="font-bold" style={{ fontSize: `${preset.fontSize.title}px`, color: preset.colors.primary }}>
+                  {preset.quoteLabel || 'QUOTE'}
+                </p>
+                <p className="text-sm mt-1" style={{ color: preset.colors.textLight }}>#{quote.quoteNumber}</p>
+                <p className="text-sm" style={{ color: preset.colors.textLight }}>{new Date(quote.createdAt).toLocaleDateString()}</p>
+                {quote.expiryDate && (
+                  <p className="text-sm" style={{ color: preset.colors.textLight }}>Valid until: {new Date(quote.expiryDate).toLocaleDateString()}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Header — Standard style (default) */}
+        {(!preset.headerStyle || preset.headerStyle === 'standard') && (
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <h1
+                className="font-bold mb-2"
+                style={{
+                  fontSize: `${preset.fontSize.title}px`,
+                  color: preset.colors.primary,
+                }}
+              >
+                {preset.quoteLabel || 'QUOTE'}
+              </h1>
+              <p className="text-sm" style={{ color: preset.colors.textLight }}>#{quote.quoteNumber}</p>
+              <p className="text-sm" style={{ color: preset.colors.textLight }}>{new Date(quote.createdAt).toLocaleDateString()}</p>
+            </div>
+            <div className="text-right">
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                  quote.status === 'Accepted'
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                    : quote.status === 'Declined'
+                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                    : quote.status === 'Sent'
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                    : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                }`}
+              >
+                {quote.status}
+              </span>
+              {quote.expiryDate && (
+                <p className="text-sm mt-2" style={{ color: preset.colors.textLight }}>
+                  Valid until: {new Date(quote.expiryDate).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Status badge for non-standard headers */}
+        {preset.headerStyle && preset.headerStyle !== 'standard' && (
+          <div className="flex justify-end mb-4">
             <span
               className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                 quote.status === 'Accepted'
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                  ? 'bg-green-100 text-green-800'
                   : quote.status === 'Declined'
-                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                  ? 'bg-red-100 text-red-800'
                   : quote.status === 'Sent'
-                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                  : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'bg-gray-100 text-gray-800'
               }`}
             >
               {quote.status}
             </span>
-            {quote.expiryDate && (
-              <p
-                className="text-sm mt-2"
-                style={{ color: preset.colors.textLight }}
-              >
-                Valid until: {new Date(quote.expiryDate).toLocaleDateString()}
-              </p>
-            )}
           </div>
-        </div>
+        )}
+
+        {/* Intro message */}
+        {preset.introMessage && (
+          <div className="mb-6 px-4 py-3 rounded-lg" style={{ backgroundColor: preset.colors.primary + '10', borderLeft: `3px solid ${preset.colors.primary}` }}>
+            <p className="text-sm italic" style={{ color: preset.colors.textLight }}>{preset.introMessage}</p>
+          </div>
+        )}
 
         {/* Business Info */}
         {(preset.businessName || preset.businessAddress || preset.businessPhone || preset.businessEmail) && (
@@ -458,7 +522,7 @@ export default function QuotePreview({ quote, presetId }: QuotePreviewProps) {
                 color: preset.colors.secondary,
               }}
             >
-              Notes / Terms
+              Notes
             </h3>
             <p
               className="whitespace-pre-wrap"
@@ -472,11 +536,43 @@ export default function QuotePreview({ quote, presetId }: QuotePreviewProps) {
           </div>
         )}
 
-        {/* Footer */}
+        {/* Terms & Conditions */}
+        {preset.termsAndConditions && (
+          <div className="mt-6 pt-4" style={{ borderTop: `1px solid ${preset.colors.border}` }}>
+            <h3
+              className="font-semibold uppercase mb-2"
+              style={{ fontSize: `${preset.fontSize.heading}px`, color: preset.colors.secondary }}
+            >
+              Terms &amp; Conditions
+            </h3>
+            <p
+              className="whitespace-pre-wrap leading-relaxed"
+              style={{ fontSize: `${preset.fontSize.small}px`, color: preset.colors.textLight }}
+            >
+              {preset.termsAndConditions}
+            </p>
+          </div>
+        )}
+
+        {/* Signature Line */}
+        {preset.showSignatureLine && (
+          <div className="mt-8 grid grid-cols-2 gap-8">
+            <div>
+              <div className="border-b-2 pb-1 mb-1" style={{ borderColor: preset.colors.border }} />
+              <p style={{ fontSize: `${preset.fontSize.small}px`, color: preset.colors.textLight }}>Authorized signature</p>
+            </div>
+            <div>
+              <div className="border-b-2 pb-1 mb-1" style={{ borderColor: preset.colors.border }} />
+              <p style={{ fontSize: `${preset.fontSize.small}px`, color: preset.colors.textLight }}>Date</p>
+            </div>
+          </div>
+        )}
+
+        {/* Footer / tagline */}
         {preset.footerText && (
           <div className="mt-8 pt-6" style={{ borderTopWidth: '1px', borderColor: preset.colors.border }}>
             <p
-              className="whitespace-pre-wrap"
+              className="whitespace-pre-wrap text-center"
               style={{
                 fontSize: `${preset.fontSize.small}px`,
                 color: preset.colors.textLight,

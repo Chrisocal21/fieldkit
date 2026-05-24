@@ -276,7 +276,7 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
                     type="text"
                     value={cardData.name}
                     onChange={(e) => setCardData({ ...cardData, name: e.target.value })}
-                    placeholder="John Doe"
+                    placeholder="Your full name"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   />
                 </div>
@@ -289,7 +289,7 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
                     type="text"
                     value={cardData.title}
                     onChange={(e) => setCardData({ ...cardData, title: e.target.value })}
-                    placeholder="Field Service Manager"
+                    placeholder="Your job title"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   />
                 </div>
@@ -302,7 +302,7 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
                     type="text"
                     value={cardData.company}
                     onChange={(e) => setCardData({ ...cardData, company: e.target.value })}
-                    placeholder="ACME Services"
+                    placeholder="Company name"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   />
                 </div>
@@ -315,7 +315,7 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
                     type="email"
                     value={cardData.email}
                     onChange={(e) => setCardData({ ...cardData, email: e.target.value })}
-                    placeholder="john@example.com"
+                    placeholder="Email address"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   />
                 </div>
@@ -328,7 +328,7 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
                     type="tel"
                     value={cardData.phone}
                     onChange={(e) => setCardData({ ...cardData, phone: e.target.value })}
-                    placeholder="(555) 123-4567"
+                    placeholder="Phone number"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   />
                 </div>
@@ -341,7 +341,7 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
                     type="url"
                     value={cardData.website}
                     onChange={(e) => setCardData({ ...cardData, website: e.target.value })}
-                    placeholder="www.example.com"
+                    placeholder="Website URL"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

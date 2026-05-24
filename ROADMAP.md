@@ -1,5 +1,5 @@
 # FIELDKIT — Roadmap & Remaining Work
-**Last Updated:** May 23, 2026  
+**Last Updated:** May 24, 2026  
 **Current Commit:** `bc6281d` on `main`  
 **Production:** `get-fieldkit.com`
 
@@ -172,8 +172,19 @@ Capacitor or React Native wrapper around the existing PWA for App Store distribu
 
 ## ✅ Recently Completed (Reference)
 
-| Feature | Commit |
+| Feature | Date |
 |---|---|
+| **Settings modal** — full tabbed redesign (Appearance, Profile, Documents, Notifications, Tools, Data, About) | May 24, 2026 |
+| **Settings** — Document Defaults tab (tax rate, payment terms, expiry, prefixes, currency) | May 24, 2026 |
+| **Settings** — Notifications tab (job updates, quote activity, team activity, low stock toggles) | May 24, 2026 |
+| **Branding** — DocumentStyleEditor: header styles (standard/banner/accent-bar), quote/invoice labels, intro message, T&C, signature line, payment methods toggles | May 24, 2026 |
+| **QuotePreview** — 3 conditional header layouts driven by `preset.headerStyle`; intro message, T&C, and signature line blocks | May 24, 2026 |
+| **Branding** — Brand Voice field (`brandVoice`) added to `BrandingPreset` and `BrandIdentityEditor` | May 24, 2026 |
+| **Branding** — Logo color extraction: canvas pixel analysis on upload, top-5 dominant colors with one-click apply to palette | May 24, 2026 |
+| **Branding** — Font personality pairings (5 presets: Professional, Bold, Classic, Elegant, Technical) in `TypographyEditor` | May 24, 2026 |
+| **Branding** — Brand Health Score sidebar widget (7-criteria progress bar, red/yellow/green) | May 24, 2026 |
+| **Branding** — Export Brand Kit button (downloads structured JSON with colors+RGB, typography, CSS variables, document settings, brand voice) | May 24, 2026 |
+| **Branding** — Apply Brand button (top bar, syncs assets with visual confirmation flash) | May 24, 2026 |
 | Public quote share — API + cross-device | `4d977c4` |
 | Create Job from client drawer (pre-selected client) | `c82d2b9` |
 | fieldkit.md updated to v3.0 | `592ae6e` |

@@ -232,7 +232,7 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="John Doe"
+                        placeholder="Your full name"
                         className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                       />
                     </div>
@@ -244,7 +244,7 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        placeholder="Senior Developer"
+                        placeholder="Your job title"
                         className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                       />
                     </div>
@@ -257,7 +257,7 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="john@company.com"
+                          placeholder="Email address"
                           className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                         />
                       </div>
@@ -269,7 +269,7 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
                           type="tel"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
-                          placeholder="(555) 123-4567"
+                          placeholder="Phone number"
                           className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                         />
                       </div>
@@ -282,7 +282,7 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
                         type="url"
                         value={website}
                         onChange={(e) => setWebsite(e.target.value)}
-                        placeholder="https://company.com"
+                        placeholder="https://yourwebsite.com"
                         className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                       />
                     </div>
@@ -317,14 +317,14 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
                           type="url"
                           value={linkedIn}
                           onChange={(e) => setLinkedIn(e.target.value)}
-                          placeholder="https://linkedin.com/in/johndoe"
+                          placeholder="https://linkedin.com/in/yourprofile"
                           className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
                         />
                         <input
                           type="url"
                           value={twitter}
                           onChange={(e) => setTwitter(e.target.value)}
-                          placeholder="https://twitter.com/johndoe"
+                          placeholder="https://twitter.com/yourhandle"
                           className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
                         />
                       </div>

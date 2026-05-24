@@ -1,6 +1,7 @@
 # FIELDKIT — Master Handoff Document
-**Version:** 3.0 (Feature-Complete — Production Live)  
-**Status:** ~98% Complete — Backend integrated, Clerk auth live, all modules shipping, zero native dialogs, public quote share working  
+**Version:** 3.1 (Feature-Complete — Production Live)  
+**Last Updated:** May 24, 2026  
+**Status:** ~99% Complete — Backend integrated, Clerk auth live, all modules shipping, zero native dialogs, public quote share working  
 **Stack:** Next.js 14 · Cloudflare Workers + D1 · Tailwind CSS · Zustand · Clerk Auth · PWA  
 **Deployment:** Vercel (frontend) · Cloudflare Workers + D1 (backend + DB)  
 **Live Domain:** `get-fieldkit.com`  
@@ -28,7 +29,8 @@
 | Clients module (multi-property, create job from client) | ✅ Complete | 100% |
 | Team module | ✅ Complete | 100% |
 | Schedule (week/day/month views) | ✅ Complete | 100% |
-| Branding Studio (identity, palette, asset generators) | ✅ Complete | 100% |
+| Branding Studio (identity, palette, document styles, asset generators, health score, export kit) | ✅ Complete | 100% |
+| Settings (tabbed redesign, document defaults, notifications, data, about) | ✅ Complete | 100% |
 | Backend (Cloudflare Workers + D1) | ✅ Complete | 100% |
 | Auth (Clerk — production keys, live domain) | ✅ Complete | 100% |
 | PWA (service worker, installable) | ✅ Complete | 100% |
@@ -254,10 +256,12 @@ Manage team members for scheduling, assignment, and labor cost calculations.
 A full brand identity toolkit for generating professional business materials without a designer.
 
 **Foundation tools:**
-- **Brand Identity** — set business name, tagline, logo (upload), logo position, business contact info, and document footer text
-- **Color Palette** — define primary, secondary, text, background, border, and accent colors with hex picker
-- **Typography** — choose font family and set size scale (title, heading, body, small)
-- **Layout** — choose document layout type: Classic · Modern · Minimal · Bold
+- **Brand Identity** — business name, tagline, logo upload (drag/drop → base64), logo position/width, contact info, document footer, **Brand Voice** (tone descriptor for asset copy). Logo upload auto-extracts dominant colors from the image via canvas pixel analysis and offers one-click apply to the palette.
+- **Color Palette** — 7-color brand palette (primary, secondary, accent, background, border, text, textLight) with hex pickers, quick-apply named presets (Ocean Blue, Forest Green, Royal Purple, Sunset Orange, etc.)
+- **Typography** — **Font Personality Pairings** (5 one-click presets: Professional & Clean, Bold & Impactful, Classic & Established, Elegant & Premium, Technical & Precise — each sets font + matching size scale). Manual font picker and per-role size sliders (title/heading/body/small).
+
+**Document tools:**
+- **Document Style** — header style (Standard · Banner · Accent-bar), quote/invoice label picker (QUOTE/ESTIMATE/PROPOSAL/custom), intro message, terms & conditions, signature line toggle, payment methods toggle, table borders toggle. Live preview included.
 
 **Asset generators:**
 - **Email Signature** — branded HTML email signature using brand identity
@@ -271,6 +275,13 @@ A full brand identity toolkit for generating professional business materials wit
 - Save named presets for different brands or clients
 - Switch between presets without losing other settings
 - Default preset applies to all PDF documents (quotes, invoices, letterhead)
+
+**Brand Health Score:**
+- Sidebar widget showing brand completeness (0–100%) with a color-coded progress bar
+- Tracks 7 criteria: logo uploaded, business name, contact info, brand voice, custom colors, terms set, document style customized
+
+**Export Brand Kit:**
+- Downloads a structured `.json` file: all brand colors (hex + RGB), typography settings, document config, brand voice, and a ready-to-paste CSS `:root {}` variables block
 
 ---
 
@@ -925,6 +936,25 @@ Files updated:
 - [x] `ClientDrawer.onCreateJob` signature updated to `(clientId: string) => void`
 - [x] `app/clients/page.tsx` — "Create Job" button in client drawer opens `CreateJobModal` with client pre-selected
 - [x] Resolved the last remaining `// TODO` comment in the codebase
+
+### Phase 9 — Settings Redesign + Branding Studio Expansion ✅ COMPLETE
+**Completed:** May 24, 2026
+
+#### 9.1 — Settings Modal Redesign ✅
+- [x] `store/settingsStore.ts` — extended with `NotificationSettings` type (jobUpdates, quoteActivity, teamActivity, lowStock) and document defaults (defaultTaxRate, defaultPaymentTerms, defaultQuoteExpiry, invoicePrefix, quotePrefix, currency)
+- [x] `components/shared/SettingsModal.tsx` — full rewrite as tabbed left-nav + right-content layout (max-w-2xl). 7 tabs: **Appearance** (theme), **Profile** (business info → brandingStore), **Documents** (tax rate, payment terms, quote expiry, prefixes, currency), **Notifications** (4 toggles), **Tools** (QR, Short URL, Business Card, Branding Studio), **Data** (export JSON, clear localStorage), **About** (FK info card). About separated at the bottom of the nav.
+
+#### 9.2 — Branding Document Customization ✅
+- [x] `store/brandingStore.ts` — added `DocumentHeaderStyle`, `QuoteLabel`, `InvoiceLabel` types; new fields on `BrandingPreset`: `quoteLabel`, `invoiceLabel`, `headerStyle`, `introMessage`, `termsAndConditions`, `showSignatureLine`, `showPaymentInfo`
+- [x] `components/branding/DocumentStyleEditor.tsx` (new) — per-preset document customization: label pickers, 3 header style preview cards, intro message + T&C textareas, toggle rows, live preview
+- [x] `app/branding/page.tsx` — added "Documents" tool category; `document-style` tool entry
+- [x] `components/quotes/QuotePreview.tsx` — 3 conditional header renders (`standard` / `banner` / `accent-bar`); `preset.quoteLabel` for title; intro message block (colored border + italic); T&C section; signature line (`Authorized by` field)
+
+#### 9.3 — Branding Studio Intelligence ✅
+- [x] `store/brandingStore.ts` — added `brandVoice?: string` field to `BrandingPreset`
+- [x] `components/branding/BrandIdentityEditor.tsx` — **Brand Voice** textarea (describes tone/personality; feeds asset copy); **logo color extraction** via canvas pixel analysis on upload: 64×64 downsample, skip transparent/near-white/near-black, quantize to nearest 40, top-5 dominant colors shown as swatches with "Use these colors" one-click apply to primary/secondary/accent
+- [x] `components/branding/TypographyEditor.tsx` — **Font Personality Pairings** section (above font picker): 5 cards (Professional & Clean → Arial, Bold & Impactful → Helvetica, Classic & Established → Times, Elegant & Premium → Georgia, Technical & Precise → Courier); each card sets font family + matched size scale in a single click
+- [x] `app/branding/page.tsx` — **Brand Health Score** sidebar widget: `calcBrandHealth()` checks 7 criteria (logo, business name, contact, brand voice, custom colors, terms, document style), renders progress bar (red/yellow/green) + per-check grid; **Export Brand Kit** button downloads structured JSON (colors+RGB, typography, documents, brand voice, CSS `:root {}` variables); **Apply Brand** top-bar button with green confirmation flash
 
 ---
 

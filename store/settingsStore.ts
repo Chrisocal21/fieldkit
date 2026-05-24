@@ -4,9 +4,40 @@ import { userScopedStorage } from '@/lib/userStorage'
 
 export type Theme = 'light' | 'dark' | 'system'
 
+export interface NotificationSettings {
+  jobUpdates: boolean
+  quoteActivity: boolean
+  teamActivity: boolean
+  lowStock: boolean
+}
+
 interface SettingsState {
   theme: Theme
   setTheme: (theme: Theme) => void
+
+  // Document defaults
+  defaultTaxRate: number        // stored as decimal e.g. 0.08 = 8%
+  defaultPaymentTerms: number   // days e.g. 30
+  defaultQuoteExpiry: number    // days e.g. 30
+  invoicePrefix: string
+  quotePrefix: string
+  currency: string
+
+  // Notifications
+  notifications: NotificationSettings
+
+  // Setters
+  setDefaultTaxRate: (rate: number) => void
+  setDefaultPaymentTerms: (days: number) => void
+  setDefaultQuoteExpiry: (days: number) => void
+  setInvoicePrefix: (prefix: string) => void
+  setQuotePrefix: (prefix: string) => void
+  setCurrency: (currency: string) => void
+  setNotification: (key: keyof NotificationSettings, value: boolean) => void
+
+  // UI state
+  sidebarCollapsed: boolean
+  setSidebarCollapsed: (v: boolean) => void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -21,6 +52,34 @@ export const useSettingsStore = create<SettingsState>()(
         }
         applyTheme(theme)
       },
+
+      // Document defaults
+      defaultTaxRate: 0.08,
+      defaultPaymentTerms: 30,
+      defaultQuoteExpiry: 30,
+      invoicePrefix: 'INV-',
+      quotePrefix: 'QUO-',
+      currency: 'USD',
+
+      // Notifications
+      notifications: {
+        jobUpdates: true,
+        quoteActivity: true,
+        teamActivity: false,
+        lowStock: true,
+      },
+
+      setDefaultTaxRate: (rate) => set({ defaultTaxRate: rate }),
+      setDefaultPaymentTerms: (days) => set({ defaultPaymentTerms: days }),
+      setDefaultQuoteExpiry: (days) => set({ defaultQuoteExpiry: days }),
+      setInvoicePrefix: (prefix) => set({ invoicePrefix: prefix }),
+      setQuotePrefix: (prefix) => set({ quotePrefix: prefix }),
+      setCurrency: (currency) => set({ currency }),
+      setNotification: (key, value) =>
+        set((s) => ({ notifications: { ...s.notifications, [key]: value } })),
+
+      sidebarCollapsed: false,
+      setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
     }),
     {
       name: 'fieldkit-settings',

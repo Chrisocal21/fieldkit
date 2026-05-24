@@ -7,6 +7,7 @@ import { useJobStore } from '@/store/jobStore'
 import { useClientStore } from '@/store/clientStore'
 import ClientSelector from '@/components/shared/ClientSelector'
 import QuoteLineItems from './QuoteLineItems'
+import QuotePreview from './QuotePreview'
 
 // Rounds up to the nearest sensible clean number
 function getRoundTarget(amount: number): number {
@@ -45,6 +46,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
   })
 
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>([])
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   const handleClientSelect = (clientId: string) => {
     const client = getClientById(clientId)
@@ -176,6 +178,23 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
   const total = baseTotal + formData.roundingAdjustment
   const amountDue = total - depositTotal
 
+  const previewQuote: Quote = {
+    id: 'preview',
+    quoteNumber: quote?.quoteNumber || 1,
+    jobId: jobId || 'preview',
+    clientName: formData.clientName || 'Your Client',
+    clientEmail: formData.clientEmail || undefined,
+    clientPhone: formData.clientPhone || undefined,
+    notes: formData.notes || '',
+    taxRate: formData.taxRate / 100,
+    roundingAdjustment: formData.roundingAdjustment,
+    expiryDate: formData.expiryDate ? new Date(formData.expiryDate).getTime() : undefined,
+    status: formData.status,
+    lineItems,
+    createdAt: quote?.createdAt || Date.now(),
+    updatedAt: Date.now(),
+  }
+
   const handleRoundUp = () => {
     setFormData(prev => ({ ...prev, roundingAdjustment: roundingDiff }))
   }
@@ -194,11 +213,29 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
         />
 
         {/* Modal */}
-        <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl sm:p-6">
-          <div className="mb-4">
+        <div className={`relative transform rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full overflow-hidden ${
+          previewOpen ? 'sm:max-w-[90vw] flex items-stretch' : 'sm:max-w-3xl'
+        }`}>
+          {/* Form side */}
+          <div className={`px-4 pb-4 pt-5 sm:p-6 ${previewOpen ? 'w-[520px] flex-shrink-0 overflow-y-auto max-h-[85vh]' : ''}`}>
+          <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">
               {quote ? 'Edit Quote' : 'Create New Quote'}
             </h3>
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(v => !v)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                previewOpen
+                  ? 'bg-blue-600 text-white'
+                  : 'border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              {previewOpen ? 'Hide Preview' : 'Preview'}
+            </button>
           </div>
 
           <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
@@ -253,7 +290,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
                       setFormData({ ...formData, clientEmail: e.target.value })
                     }
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="client@example.com"
+                    placeholder="Client email address"
                   />
                 </div>
 
@@ -268,7 +305,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
                       setFormData({ ...formData, clientPhone: e.target.value })
                     }
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="(555) 123-4567"
+                    placeholder="Client phone number"
                   />
                 </div>
               </div>
@@ -425,6 +462,13 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
               </button>
             </div>
           </form>
+          </div>{/* end form side */}
+          {/* Preview side */}
+          {previewOpen && (
+            <div className="flex-1 border-l border-gray-200 dark:border-gray-700 overflow-y-auto max-h-[85vh] bg-gray-50 dark:bg-gray-900/50">
+              <QuotePreview quote={previewQuote} />
+            </div>
+          )}
         </div>
       </div>
     </div>

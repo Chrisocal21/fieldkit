@@ -23,6 +23,23 @@ export default function TypographyEditor() {
     updatePreset(currentPreset.id, { fontSize: newFontSize })
   }
 
+  const fontPairings: {
+    personality: string; desc: string; icon: string; fontFamily: FontFamily
+    fontSize: { title: number; heading: number; body: number; small: number }
+  }[] = [
+    { personality: 'Professional & Clean', desc: 'Trust-building, corporate, organized', icon: '🏢', fontFamily: 'Arial', fontSize: { title: 22, heading: 12, body: 10, small: 8 } },
+    { personality: 'Bold & Impactful',      desc: 'Confident, energetic, stands out',   icon: '⚡', fontFamily: 'Helvetica', fontSize: { title: 28, heading: 14, body: 11, small: 9 } },
+    { personality: 'Classic & Established', desc: 'Heritage, expertise, credibility',   icon: '📜', fontFamily: 'Times', fontSize: { title: 22, heading: 12, body: 10, small: 8 } },
+    { personality: 'Elegant & Premium',     desc: 'Sophisticated, refined, high-end',   icon: '✨', fontFamily: 'Georgia', fontSize: { title: 24, heading: 13, body: 10, small: 8 } },
+    { personality: 'Technical & Precise',   desc: 'Detail-oriented, modern, systematic',icon: '⚙️', fontFamily: 'Courier', fontSize: { title: 20, heading: 11, body: 9, small: 7 } },
+  ]
+
+  const applyPairing = (p: typeof fontPairings[number]) => {
+    setFontFamily(p.fontFamily)
+    setFontSize(p.fontSize)
+    updatePreset(currentPreset.id, { fontFamily: p.fontFamily, fontSize: p.fontSize })
+  }
+
   const fontFamilies: { value: FontFamily; label: string; description: string; style: string }[] = [
     { 
       value: 'Helvetica', 
@@ -71,6 +88,37 @@ export default function TypographyEditor() {
         <p className="text-slate-400 text-sm">
           Customize fonts and sizes for your branded documents
         </p>
+      </div>
+
+      {/* Font Personality Pairings */}
+      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-6">
+        <h4 className="text-lg font-semibold text-white mb-1">Brand Personality</h4>
+        <p className="text-sm text-slate-400 mb-4">Choose a style that matches your brand</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {fontPairings.map((p) => {
+            const active = fontFamily === p.fontFamily
+            return (
+              <button
+                key={p.personality}
+                onClick={() => applyPairing(p)}
+                className={`text-left p-4 rounded-xl border-2 overflow-hidden transition-all ${
+                  active
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-slate-700 hover:border-slate-600 hover:bg-slate-800/50'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl leading-none mt-0.5 flex-shrink-0">{p.icon}</span>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-semibold ${active ? 'text-purple-300' : 'text-white'}`}>{p.personality}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{p.desc}</p>
+                    <p className="text-xs text-slate-400 mt-1 font-mono">{p.fontFamily} · {p.fontSize.title}/{p.fontSize.body}pt</p>
+                  </div>
+                </div>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* Font Family Selection */}

@@ -4,6 +4,9 @@ import { nanoid } from 'nanoid'
 import { userScopedStorage } from '@/lib/userStorage'
 
 export type DocumentLayoutType = 'classic' | 'modern' | 'minimal' | 'bold'
+export type DocumentHeaderStyle = 'standard' | 'banner' | 'accent-bar'
+export type QuoteLabel = 'QUOTE' | 'ESTIMATE' | 'PROPOSAL' | string
+export type InvoiceLabel = 'INVOICE' | 'BILL' | 'STATEMENT' | string
 
 export interface BrandingColors {
   primary: string        // Main brand color (headers, accents)
@@ -56,6 +59,9 @@ export interface BrandingPreset {
   businessEmail?: string
   businessWebsite?: string
   
+  // Brand voice / personality
+  brandVoice?: string          // e.g. "professional and reliable" - describes tone
+  
   // Footer text
   footerText?: string          // Terms, thank you message, etc.
   
@@ -65,6 +71,15 @@ export interface BrandingPreset {
   // Additional styling
   showBorders: boolean         // Show table borders
   accentColor: string         // For highlights, totals (deprecated - use colors.accent)
+
+  // Document customization
+  quoteLabel?: QuoteLabel              // "QUOTE", "ESTIMATE", "PROPOSAL" or custom
+  invoiceLabel?: InvoiceLabel          // "INVOICE", "BILL", "STATEMENT" or custom
+  headerStyle?: DocumentHeaderStyle    // Document header style
+  introMessage?: string                // Opening message shown on every document
+  termsAndConditions?: string          // T&C / terms block at document bottom
+  showSignatureLine?: boolean          // Show "Authorized signature" line
+  showPaymentInfo?: boolean            // Show payment methods block
   
   isDefault: boolean          // Is this the default preset?
   createdAt: number
