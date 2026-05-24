@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Job, useJobStore } from '@/store/jobStore'
 import EmptyState from '@/components/shared/EmptyState'
 import JobBoard from '@/components/jobs/JobBoard'
@@ -13,6 +14,7 @@ type ViewMode = 'list' | 'board'
 export default function JobsPage() {
   const allJobs = useJobStore((state) => state.jobs)
   const getJobById = useJobStore((state) => state.getJobById)
+  const searchParams = useSearchParams()
   
   const [mounted, setMounted] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('board')
@@ -26,6 +28,13 @@ export default function JobsPage() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Auto-open job drawer when ?id= param is present (e.g. from schedule click)
+  useEffect(() => {
+    if (!mounted) return
+    const idParam = searchParams.get('id')
+    if (idParam) setSelectedJobId(idParam)
+  }, [mounted, searchParams])
 
   const jobs = mounted ? allJobs.filter((job) => !job.archived) : []
 

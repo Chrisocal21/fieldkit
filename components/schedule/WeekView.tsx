@@ -7,11 +7,16 @@ import StatusBadge from '@/components/shared/StatusBadge'
 
 interface WeekViewProps {
   onJobClick?: (job: Job) => void
+  assigneeFilter?: string
 }
 
-export default function WeekView({ onJobClick }: WeekViewProps) {
+export default function WeekView({ onJobClick, assigneeFilter }: WeekViewProps) {
   const jobs = useJobStore((state) =>
-    state.jobs.filter((job) => !job.archived && job.dueDate)
+    state.jobs.filter((job) => {
+      if (job.archived || !job.dueDate) return false
+      if (assigneeFilter && job.assigneeId !== assigneeFilter) return false
+      return true
+    })
   )
   const updateJob = useJobStore((state) => state.updateJob)
   const members = useTeamStore((state) => state.members)
