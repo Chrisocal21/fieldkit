@@ -156,7 +156,9 @@ export default function SocialMediaGenerator({ isOpen, onClose, isEmbedded = fal
               </button>
               <div>
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <span>📱</span>
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
                   Social Media Graphics
                 </h2>
               </div>
@@ -317,7 +319,9 @@ export default function SocialMediaGenerator({ isOpen, onClose, isEmbedded = fal
                 {/* Pro Tips */}
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                   <h4 className="text-white text-xs font-semibold mb-2 flex items-center gap-2">
-                    <span>💡</span>
+                    <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347A3.5 3.5 0 0112 18.5a3.5 3.5 0 01-2.33-.95L9 17.1" />
+                    </svg>
                     Pro Tips
                   </h4>
                   <ul className="text-xs text-slate-400 space-y-1">

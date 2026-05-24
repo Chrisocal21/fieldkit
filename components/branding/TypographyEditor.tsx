@@ -237,7 +237,11 @@ export default function TypographyEditor() {
       {/* Tips */}
       <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
         <div className="flex gap-3">
-          <div className="flex-shrink-0 text-xl">💡</div>
+          <div className="flex-shrink-0 mt-0.5">
+            <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347A3.5 3.5 0 0112 18.5a3.5 3.5 0 01-2.33-.95L9 17.1" />
+            </svg>
+          </div>
           <div className="text-sm text-slate-300">
             <p className="font-semibold text-white mb-1">Typography Tips</p>
             <ul className="space-y-1 text-slate-400">
