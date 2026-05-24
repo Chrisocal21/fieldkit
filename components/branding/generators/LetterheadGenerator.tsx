@@ -17,7 +17,6 @@ const pageSizes = {
 }
 
 export default function LetterheadGenerator({ isOpen, onClose, isEmbedded = false }: LetterheadGeneratorProps) {
-  // If not embedded, require isOpen prop
   if (!isEmbedded && !isOpen) return null
   
   const { getDefaultPreset } = useBrandingStore()
@@ -31,12 +30,10 @@ export default function LetterheadGenerator({ isOpen, onClose, isEmbedded = fals
   const [previewUrl, setPreviewUrl] = useState<string>('')
 
   useEffect(() => {
-    if (isOpen) {
-      renderCanvas()
-    }
+    renderCanvas()
   }, [pageSize, includeFooter, customMessage, currentPreset, isOpen])
 
-  if (!isOpen) return null
+  if (!isEmbedded && !isOpen) return null
 
   const renderCanvas = () => {
     const canvas = canvasRef.current

@@ -12,7 +12,6 @@ interface EmailSignatureGeneratorProps {
 type LayoutType = 'minimal' | 'professional' | 'creative'
 
 export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = false }: EmailSignatureGeneratorProps) {
-  // If not embedded, require isOpen prop
   if (!isEmbedded && !isOpen) return null
   
   const { getDefaultPreset } = useBrandingStore()
@@ -31,8 +30,6 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
   const [copied, setCopied] = useState(false)
   
   const signatureRef = useRef<HTMLDivElement>(null)
-
-  if (!isOpen) return null
 
   const generateHTML = () => {
     const html = `

@@ -8,17 +8,73 @@ import TypographyEditor from '@/components/branding/TypographyEditor'
 import EmailSignatureGenerator from '@/components/branding/generators/EmailSignatureGenerator'
 import SocialMediaGenerator from '@/components/branding/generators/SocialMediaGenerator'
 import LetterheadGenerator from '@/components/branding/generators/LetterheadGenerator'
+import BusinessCardGeneratorModal from '@/components/shared/BusinessCardGeneratorModal'
+import QRCodeGeneratorModal from '@/components/shared/QRCodeGeneratorModal'
 import { useRouter } from 'next/navigation'
 
-type BrandingTool = 
-  | 'identity' 
-  | 'colors' 
-  | 'typography' 
-  | 'email-signature' 
-  | 'social-media' 
+type BrandingTool =
+  | 'identity'
+  | 'colors'
+  | 'typography'
+  | 'email-signature'
+  | 'social-media'
   | 'letterhead'
   | 'business-card'
   | 'qr-code'
+
+const toolIcons: Record<BrandingTool, React.ReactNode> = {
+  'identity': (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+    </svg>
+  ),
+  'colors': (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+    </svg>
+  ),
+  'typography': (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h8m-8 6h16" />
+    </svg>
+  ),
+  'email-signature': (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+  ),
+  'social-media': (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+    </svg>
+  ),
+  'letterhead': (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  ),
+  'business-card': (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M3 14h18M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+    </svg>
+  ),
+  'qr-code': (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+    </svg>
+  ),
+}
+
+const toolList: { id: BrandingTool; name: string; category: string }[] = [
+  { id: 'identity',        name: 'Brand Identity',  category: 'Foundation' },
+  { id: 'colors',          name: 'Color Palette',   category: 'Foundation' },
+  { id: 'typography',      name: 'Typography',      category: 'Foundation' },
+  { id: 'email-signature', name: 'Email Signature', category: 'Assets' },
+  { id: 'social-media',    name: 'Social Graphics', category: 'Assets' },
+  { id: 'letterhead',      name: 'Letterhead',      category: 'Assets' },
+  { id: 'business-card',   name: 'Business Card',   category: 'Assets' },
+  { id: 'qr-code',         name: 'QR Code',         category: 'Assets' },
+]
 
 export default function BrandingStudioPage() {
   const router = useRouter()
@@ -27,60 +83,7 @@ export default function BrandingStudioPage() {
   const getDefaultPreset = useBrandingStore(state => state.getDefaultPreset)
   const currentPreset = getDefaultPreset()
 
-  const tools = [
-    {
-      id: 'identity' as BrandingTool,
-      name: 'Brand Identity',
-      icon: '🎨',
-      category: 'Foundation'
-    },
-    {
-      id: 'colors' as BrandingTool,
-      name: 'Color Palette',
-      icon: '🎨',
-      category: 'Foundation'
-    },
-    {
-      id: 'typography' as BrandingTool,
-      name: 'Typography',
-      icon: '📝',
-      category: 'Foundation'
-    },
-    {
-      id: 'email-signature' as BrandingTool,
-      name: 'Email Signature',
-      icon: '✉️',
-      category: 'Assets'
-    },
-    {
-      id: 'social-media' as BrandingTool,
-      name: 'Social Graphics',
-      icon: '📱',
-      category: 'Assets'
-    },
-    {
-      id: 'letterhead' as BrandingTool,
-      name: 'Letterhead',
-      icon: '📄',
-      category: 'Assets'
-    },
-    {
-      id: 'business-card' as BrandingTool,
-      name: 'Business Card',
-      icon: '💼',
-      category: 'Assets',
-      comingSoon: true
-    },
-    {
-      id: 'qr-code' as BrandingTool,
-      name: 'QR Code',
-      icon: '📲',
-      category: 'Assets',
-      comingSoon: true
-    }
-  ]
-
-  const categories = Array.from(new Set(tools.map(t => t.category)))
+  const categories = Array.from(new Set(toolList.map(t => t.category)))
 
   const renderActiveTool = () => {
     switch (activeTool) {
@@ -108,7 +111,18 @@ export default function BrandingStudioPage() {
         return <SocialMediaGenerator onClose={() => setActiveTool('identity')} isEmbedded />
       case 'letterhead':
         return <LetterheadGenerator onClose={() => setActiveTool('identity')} isEmbedded />
-      default:
+      case 'business-card':
+        return (
+          <div className="h-full overflow-auto">
+            <BusinessCardGeneratorModal isOpen onClose={() => setActiveTool('identity')} />
+          </div>
+        )
+      case 'qr-code':
+        return (
+          <div className="h-full overflow-auto">
+            <QRCodeGeneratorModal isOpen onClose={() => setActiveTool('identity')} />
+          </div>
+        )
         return (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
@@ -137,7 +151,9 @@ export default function BrandingStudioPage() {
 
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <span className="text-xl">🎨</span>
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
             </div>
             <div>
               <h1 className="text-lg font-bold text-white">Branding Studio</h1>
@@ -187,36 +203,23 @@ export default function BrandingStudioPage() {
                   {category}
                 </h3>
                 <div className="space-y-1">
-                  {tools.filter(t => t.category === category).map(tool => (
+                  {toolList.filter(t => t.category === category).map(tool => (
                     <button
                       key={tool.id}
                       onClick={() => {
-                        if (!tool.comingSoon) {
-                          setActiveTool(tool.id)
-                          // Close sidebar on mobile after selection
-                          if (window.innerWidth < 1024) {
-                            setSidebarOpen(false)
-                          }
-                        }
+                        setActiveTool(tool.id)
+                        if (window.innerWidth < 1024) setSidebarOpen(false)
                       }}
-                      disabled={tool.comingSoon}
                       className={`
                         w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all
                         ${activeTool === tool.id
                           ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                          : tool.comingSoon
-                          ? 'text-slate-600 cursor-not-allowed'
                           : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                         }
                       `}
                     >
-                      <span className="text-xl">{tool.icon}</span>
+                      {toolIcons[tool.id]}
                       <span className="flex-1 text-left font-medium text-sm">{tool.name}</span>
-                      {tool.comingSoon && (
-                        <span className="text-xs text-slate-600 bg-slate-800 px-2 py-0.5 rounded">
-                          Soon
-                        </span>
-                      )}
                     </button>
                   ))}
                 </div>
@@ -228,7 +231,7 @@ export default function BrandingStudioPage() {
           <div className="flex-shrink-0 p-4 border-t border-slate-800">
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
               <p className="text-xs text-slate-400">
-                💡 Changes are saved automatically
+                Changes are saved automatically
               </p>
             </div>
           </div>
