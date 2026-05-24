@@ -152,12 +152,13 @@ export default function MonthView({ jobs, onJobClick }: MonthViewProps) {
 
       {/* Day Labels */}
       <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+        {[['Sun','S'],['Mon','M'],['Tue','T'],['Wed','W'],['Thu','T'],['Fri','F'],['Sat','S']].map(([full, short]) => (
           <div
-            key={day}
-            className="p-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+            key={full}
+            className="py-2 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
           >
-            {day}
+            <span className="hidden sm:inline">{full}</span>
+            <span className="sm:hidden">{short}</span>
           </div>
         ))}
       </div>
@@ -172,7 +173,7 @@ export default function MonthView({ jobs, onJobClick }: MonthViewProps) {
           return (
             <div
               key={idx}
-              className={`min-h-[120px] border-r border-b border-gray-200 dark:border-gray-700 p-2 ${
+              className={`min-h-[80px] sm:min-h-[120px] border-r border-b border-gray-200 dark:border-gray-700 p-1 sm:p-2 ${
                 !isCurrentMonthDay ? 'bg-gray-50 dark:bg-gray-900/50' : 'bg-white dark:bg-gray-800'
               } ${idx % 7 === 6 ? 'border-r-0' : ''} ${
                 idx >= calendarDays.length - 7 ? 'border-b-0' : ''
