@@ -11,12 +11,15 @@ interface QuoteCardProps {
 }
 
 export function QuoteCard({ quote, onEdit, onDelete, onSend }: QuoteCardProps) {
-  // Calculate totals
-  const subtotal = quote.lineItems.reduce((sum, item) => {
-    return sum + item.quantity * item.unitPrice
-  }, 0)
-  const tax = subtotal * quote.taxRate
-  const total = subtotal + tax
+  // Calculate totals (mirrors QuotePreview logic)
+  const regularItems = quote.lineItems.filter(i => i.type !== 'discount' && i.type !== 'deposit')
+  const discountAmt = quote.lineItems.filter(i => i.type === 'discount').reduce((s, i) => s + i.quantity * i.unitPrice, 0)
+  const depositAmt = quote.lineItems.filter(i => i.type === 'deposit').reduce((s, i) => s + i.quantity * i.unitPrice, 0)
+  const subtotal = regularItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)
+  const taxable = Math.max(0, subtotal - discountAmt)
+  const tax = taxable * quote.taxRate
+  const total = taxable + tax + (quote.roundingAdjustment ?? 0)
+  const amountDue = total - depositAmt
 
   const isExpired = quote.expiryDate && quote.expiryDate < Date.now()
 
@@ -41,16 +44,21 @@ export function QuoteCard({ quote, onEdit, onDelete, onSend }: QuoteCardProps) {
         <StatusBadge status={quote.status} />
       </div>
 
-      {/* Line Items Summary */}
       <div className="mb-3 space-y-1">
         <div className="flex justify-between text-sm">
           <span className="text-gray-600 dark:text-gray-400">
-            {quote.lineItems.length} item{quote.lineItems.length !== 1 ? 's' : ''}
+            {quote.lineItems.filter(i => i.type !== 'discount' && i.type !== 'deposit').length} item{regularItems.length !== 1 ? 's' : ''}
           </span>
           <span className="text-gray-600 dark:text-gray-400">
             ${subtotal.toFixed(2)}
           </span>
         </div>
+        {discountAmt > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600 dark:text-gray-400">Discount</span>
+            <span className="text-rose-600 dark:text-rose-400">-${discountAmt.toFixed(2)}</span>
+          </div>
+        )}
         {quote.taxRate > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">
@@ -61,9 +69,15 @@ export function QuoteCard({ quote, onEdit, onDelete, onSend }: QuoteCardProps) {
             </span>
           </div>
         )}
+        {depositAmt > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600 dark:text-gray-400">Deposit</span>
+            <span className="text-blue-600 dark:text-blue-400">-${depositAmt.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-base font-semibold pt-1 border-t border-gray-200 dark:border-gray-700">
-          <span className="text-gray-900 dark:text-white">Total</span>
-          <span className="text-gray-900 dark:text-white">${total.toFixed(2)}</span>
+          <span className="text-gray-900 dark:text-white">{depositAmt > 0 ? 'Amount Due' : 'Total'}</span>
+          <span className="text-gray-900 dark:text-white">${amountDue.toFixed(2)}</span>
         </div>
       </div>
 
