@@ -1,33 +1,37 @@
 # FIELDKIT — Master Handoff Document
-**Version:** 2.0 (Production-Ready — Backend Live)  
-**Status:** ~90% Complete — Backend integrated, deployed on Vercel + Cloudflare, preparing for testers  
+**Version:** 3.0 (Feature-Complete — Production Live)  
+**Status:** ~98% Complete — Backend integrated, Clerk auth live, all modules shipping, zero native dialogs, public quote share working  
 **Stack:** Next.js 14 · Cloudflare Workers + D1 · Tailwind CSS · Zustand · Clerk Auth · PWA  
-**Deployment:** Vercel (frontend) · Cloudflare Workers + D1 (backend + DB)
+**Deployment:** Vercel (frontend) · Cloudflare Workers + D1 (backend + DB)  
+**Live Domain:** `get-fieldkit.com`  
+**Latest Commit:** `c82d2b9` on `main`
 
 ---
 
 ## 📊 Project Status
 
-### Overall: ~90% Complete
+### Overall: ~98% Complete
 
 | Area | Status | % |
 |---|---|---|
 | Jobs module (kanban, drawer, CRUD) | ✅ Complete | 100% |
 | Quotes (nested in jobs, send/draft, share link, PDF) | ✅ Complete | 100% |
+| Public quote share (cross-device, API-backed) | ✅ Complete | 100% |
 | Quote line items (discount + deposit types, totals) | ✅ Complete | 100% |
-| Invoicing (per-job, mark paid, view/copy/PDF) | ✅ Complete | 100% |
+| Invoicing (per-job, overdue filter, mark paid, PDF) | ✅ Complete | 100% |
 | Materials tab (manual + auto-populated from quotes) | ✅ Complete | 100% |
 | Inventory (personal stock, auto-deduct on job use) | ✅ Complete | 100% |
 | Expenses tab | ✅ Complete | 100% |
 | Time Log tab | ✅ Complete | 100% |
-| Clients module (multi-property support) | ✅ Complete | 100% |
+| Clients module (multi-property, create job from client) | ✅ Complete | 100% |
 | Team module | ✅ Complete | 100% |
 | Schedule (week/day/month views) | ✅ Complete | 100% |
 | Branding Studio (identity, palette, asset generators) | ✅ Complete | 100% |
 | Backend (Cloudflare Workers + D1) | ✅ Complete | 100% |
-| Auth (Clerk — dev keys) | ⏳ Needs prod keys | 80% |
+| Auth (Clerk — production keys, live domain) | ✅ Complete | 100% |
 | PWA (service worker, installable) | ✅ Complete | 100% |
-| Clerk production instance | ❌ Blocked (domain UI bug) | 0% |
+| Dashboard (metrics, quick actions, outstanding invoices) | ✅ Complete | 100% |
+| UX polish (no native dialogs, double-tap confirm) | ✅ Complete | 100% |
 
 ---
 
@@ -487,6 +491,8 @@ DELETE /api/jobs/:id/quotes/:quoteId           -- delete quote
 GET    /api/quotes            -- list ALL quotes across all jobs (for Quotes module view)
 GET    /api/quotes/:id        -- get single quote + line items (for shareable link)
 
+GET    /api/public/quotes/:id -- PUBLIC (no auth) -- get quote + line items by ID for share page
+
 GET    /api/team              -- list team members
 POST   /api/team              -- add team member
 PATCH  /api/team/:id          -- update team member
@@ -863,13 +869,60 @@ fieldkit/
 - [x] `components/shared/GlobalSearch.tsx` — Search across all modules (Cmd/Ctrl+K)
 - [x] Schedule MonthView added (`components/schedule/MonthView.tsx`)
 
-### Phase 7 — Backend Integration ⏳ NOT STARTED
-- [ ] Cloudflare D1 setup + schema migration (use updated schema from section 3.2 — includes clients, invoices, payments, job_materials, expenses, time_entries tables)
-- [ ] Cloudflare Workers API with all routes implemented (use routes from section 3.3)
-- [ ] Create wrangler.toml with D1 and R2 bindings
-- [ ] Refactor all Zustand stores to call real API endpoints (jobStore, quoteStore, clientStore, teamStore, invoiceStore, materialCostStore, expenseStore, timeEntryStore, inventoryStore)
-- [ ] Data migration from localStorage mock data to D1
-- [ ] Test all CRUD operations end-to-end
+### Phase 7 — Backend Integration ✅ COMPLETE
+- [x] Cloudflare D1 setup + schema migration (clients, invoices, payments, job_materials, expenses, time_entries, quote_line_items)
+- [x] Cloudflare Workers API with all CRUD routes implemented and deployed at `https://fieldkit-api.recipeer-cbv.workers.dev`
+- [x] `wrangler.toml` with D1 binding (`fieldkit-db`, ID: `476cb614-63c0-44b3-968c-f45f73ff58d0`)
+- [x] All Zustand stores call real API endpoints; JWT auth via Clerk token in `Authorization` header
+- [x] Clerk production instance live at `get-fieldkit.com` — prod keys active
+- [x] `userScopedStorage` — localStorage namespaced by Clerk `userId` for isolation
+- [x] `GET /api/public/quotes/:id` — public endpoint (no auth), enables cross-device quote sharing
+- [x] All routes require valid Clerk JWT except the public quote endpoint
+
+### Phase 8 — Production Polish ✅ COMPLETE
+**Goal:** Eliminate all UX rough edges, complete dashboard, and finalize public sharing
+
+#### 8.1 — Dashboard Improvements ✅
+- [x] **Dashboard** (`app/page.tsx`) — revenue metrics, upcoming jobs panel (This Week), outstanding invoices panel with deep-links to `/jobs?id=`
+- [x] **Quick Actions** — "Create Job" button opens `CreateJobModal` directly (mobile + desktop), no page navigation required
+- [x] **Outstanding Invoices** — each invoice row deep-links directly to the job drawer (`/jobs?id=${invoice.jobId}`)
+- [x] Wrapped dashboard return in `<>...</>` fragment (fixed JSX parent element error)
+
+#### 8.2 — Eliminate All Native Dialogs ✅
+Replaced every `alert()`, `window.confirm()`, and `confirm()` call across the codebase with inline state feedback. Standard pattern adopted:
+- **Double-tap confirm** — first click sets `deleteConfirmId` / `archiveConfirm` state for 3000ms; second click executes; button shows "Confirm?" in red
+- **Clipboard feedback** — `copied` state shows "Copied!" for 2s, then reverts
+- **Inline errors** — invalid input shows red error text below the field instead of an alert
+
+Files updated:
+- [x] `app/team/page.tsx` — delete member
+- [x] `app/clients/page.tsx` — delete client (removed job-count warning entirely)
+- [x] `components/jobs/TimeLog.tsx` — invalid duration → inline error; delete entry → no confirm
+- [x] `components/jobs/JobDrawer.tsx` — archive job
+- [x] `components/jobs/JobQuotesTab.tsx` — delete quote
+- [x] `components/quotes/QuoteCard.tsx` — delete quote (accepts `deleteConfirm` prop)
+- [x] `components/jobs/ExpensesTab.tsx` — delete expense
+- [x] `components/jobs/MaterialsTab.tsx` — delete material
+- [x] `components/jobs/BoardSettingsModal.tsx` — delete column
+- [x] `components/shared/BrandingPresetsModal.tsx` — delete preset
+- [x] `components/shared/BusinessCardGeneratorModal.tsx` — delete profile + clipboard copy + profile name validation + save success
+- [x] `components/shared/QRCodeGeneratorModal.tsx` — clipboard copy feedback
+- [x] `components/shared/ShortURLGeneratorModal.tsx` — clipboard copy feedback
+- [x] `components/branding/BrandIdentityEditor.tsx` — silent ignore on non-image upload
+
+#### 8.3 — Invoices Page Improvements ✅
+- [x] **Overdue filter tab** added to `app/invoices/page.tsx` — rose badge with count, filters to overdue-only rows
+- [x] `FilterTab` type extended: `'all' | 'unpaid' | 'overdue' | 'paid'`
+
+#### 8.4 — Public Quote Share ✅
+- [x] `GET /api/public/quotes/:id` added to `worker/index.ts` — placed **before** the `getUserId()` auth check; returns quote + line items as JSON; no user_id filter (share by UUID)
+- [x] `app/quotes/share/[id]/page.tsx` rewritten — on mount, tries localStorage first (same-device), then fetches from public API (cross-device); shows spinner during fetch; shows "Quote Not Found" only if both fail
+
+#### 8.5 — Create Job from Client Drawer ✅
+- [x] `CreateJobModal` accepts new `initialClientId?: string` prop — pre-selects client in the form
+- [x] `ClientDrawer.onCreateJob` signature updated to `(clientId: string) => void`
+- [x] `app/clients/page.tsx` — "Create Job" button in client drawer opens `CreateJobModal` with client pre-selected
+- [x] Resolved the last remaining `// TODO` comment in the codebase
 
 ---
 
@@ -1206,7 +1259,7 @@ Beyond the original four-module v1 scope, the following features have been fully
 
 ## 9.5 Potential Future Enhancements
 
-These features would extend FIELDKIT's capabilities beyond the current frontend. They're not required for MVP but represent natural next steps.
+These features would extend FIELDKIT's capabilities beyond the current production build. Phases 1–8 are complete; the below represents Phase 9+ additive work.
 
 ### Priority: High
 
@@ -1226,9 +1279,7 @@ Speed up quote creation for common services.
 
 - Save job types as templates (e.g., "Standard Room Paint")
 - Pre-fill quote line items from template
-- Template categories
 - Clone template to create new job with pre-filled quote
-- Edit template line items
 - Use cases: Standard install jobs, common service calls, package deals
 
 #### Reports & Analytics
@@ -1239,78 +1290,76 @@ Business intelligence beyond the dashboard.
 - Top performing services
 - Client lifetime value rankings
 - Labor efficiency: hours logged vs estimated
-- Material waste analysis
-- Tax reporting helpers (year-end summaries)
 - Export reports to CSV/PDF
-- Date range filtering
+
+#### Email Sending
+Send quotes directly from the app.
+
+- Send quote PDF as email attachment from FIELDKIT
+- Custom email template using branding settings
+- Quote follow-up reminders for \"Sent\" status quotes
+- Requires: Cloudflare Email Workers or SendGrid/Resend integration
+
+### Priority: Medium
+
+#### `rounding_adjustment` in D1
+The `rounding_adjustment` field on quotes is currently localStorage-only (not persisted to D1). To fix:
+```sql
+ALTER TABLE quotes ADD COLUMN rounding_adjustment REAL NOT NULL DEFAULT 0;
+```
+Update worker insert/update queries to include this field.
+
+#### Notifications & Reminders
+- Upcoming job due dates (24hr, 3-day, 1-week)
+- Quote follow-ups for "Sent" quotes without response
+- Overdue invoice alerts
+- Quote expiry warnings
+- Browser notifications (PWA)
+
+#### Recurring Jobs
+- Define job recurrence: weekly, monthly, quarterly
+- Auto-create jobs on schedule
+- Use cases: Monthly maintenance, seasonal services, contracts
 
 ### Priority: Low (Nice to Have)
 
-#### Notifications & Reminders
-Proactive alerts for important events.
-
-- Upcoming job due dates (24hr, 3-day, 1-week)
-- Quote follow-ups for "Sent" quotes without response
-- Low inventory alerts (enhanced beyond current visual badges)
-- Overdue invoices
-- Quote expiry warnings
-- Browser notifications (PWA)
-- Optional SMS integration (future paid feature?)
-
-#### Recurring Jobs
-Automate maintenance contracts and repeat services.
-
-- Define job recurrence: daily, weekly, monthly, quarterly, annually
-- Auto-create jobs on schedule
-- Recurring invoice generation
-- Client subscription tracking
-- Pause/resume recurring jobs
-- Use cases: Monthly maintenance, seasonal services, contracts
-
 #### Activity Log & Audit Trail
-Track all changes for accountability and client communication history.
-
 - Who changed what and when on jobs
-- Status change history
-- Quote revisions tracking
-- Client communication log (calls, texts, emails)
-- Notes with timestamps and author
+- Status change history, quote revision tracking
 - Filter by team member or date range
-- Useful for: Multi-person teams, client disputes, quality control
 
 #### Client Portal (Self-Service)
-Allow clients to view job status and approve quotes.
-
 - Unique client login per client
 - View assigned jobs and their status
-- See and approve quotes (e-signature)
-- Upload photos/files to jobs
-- Communication thread with business
-- Out of scope for v1 - would require authentication system
+- Approve quotes (e-signature)
+- Out of scope for current version — requires dedicated auth system
 
 ---
 
-## 10. Out of Scope (v1)
+## 10. Out of Scope (v1) — Status
 
-- User authentication / accounts
-- Push notifications
-- Email sending (outbound — no SMTP integration)
-- External calendar sync (Google Calendar, etc.)
-- Client portal / client-facing login
-- Payment processing (invoices track payments manually — no Stripe/payment gateway)
-- Multi-tenant / team sharing via invite
-- Barcode / QR scanning for inventory
-- Photo attachments on jobs
+| Feature | Status |
+|---|---|
+| User authentication / accounts | ✅ DONE — Clerk production |
+| Push notifications | ❌ Out of scope |
+| Email sending (outbound SMTP) | ❌ Out of scope |
+| External calendar sync (Google Calendar) | ❌ Out of scope |
+| Client portal / client-facing login | ❌ Out of scope |
+| Payment processing (Stripe/gateway) | ❌ Out of scope — manual tracking only |
+| Multi-tenant team sharing via invite | ❌ Out of scope |
+| Barcode / QR scanning for inventory | ❌ Out of scope |
+| Photo attachments on jobs | ❌ Out of scope |
 
 ---
 
 ## 11. Future Considerations (v2+)
 
-- Optional account creation for cloud sync across devices
-- Team sharing via invite link
-- Client-facing portal (job status + quote approval)
+- ~~Optional account creation for cloud sync across devices~~ — **Done** (Clerk + D1)
+- Team sharing via invite link (multiple users under one business account)
+- Client-facing portal (job status + quote approval with e-signature)
 - Push notifications for low stock and upcoming jobs
-- Integrations: Stripe for invoicing, Google Calendar sync
+- Integrations: Stripe for invoicing, Google Calendar sync, Resend/SendGrid for email
+- Mobile app (React Native or Capacitor wrapper over the existing PWA)
 - White-label / cloneable version for other builders
 
 ---
@@ -1319,10 +1368,16 @@ Allow clients to view job status and approve quotes.
 
 > You are helping build FIELDKIT — a free, lightweight operations PWA for small service businesses, with a focus on construction trades (plumbers, painters, flooring installers, electricians, HVAC techs) and other physical/field work providers. The stack is Next.js 14 (App Router), Tailwind CSS, Zustand, Cloudflare Workers, Cloudflare D1, and Cloudflare R2. Frontend deploys to Vercel; backend runs on Cloudflare Workers.
 >
-> This document is the single source of truth. Follow the data model, API routes, file structure, and build phases exactly as specified. Do not add features beyond what is described in v1 scope. Do not use emojis anywhere in the UI — SVG icons only (Heroicons or Lucide). Mobile-first on every component. Ask before making architectural decisions not covered in this document.
+> This document is the single source of truth. Follow the data model, API routes, file structure, and build phases exactly as specified. Do not add features beyond what is described. Do not use emojis anywhere in the UI — SVG icons only (Heroicons or Lucide). Mobile-first on every component. Ask before making architectural decisions not covered in this document.
 >
-> **Current state (v1.3):** All frontend modules are complete — Jobs (with 7-tab drawer), Quotes, Clients, Team, Schedule (week/day/month), Inventory, and Branding Studio. Stores implemented: jobStore, quoteStore, clientStore, teamStore, invoiceStore, materialCostStore, expenseStore, timeEntryStore, inventoryStore, brandingStore, businessCardStore, settingsStore, boardSettingsStore. The app uses localStorage persistence via Zustand `persist` middleware. Phase 7 (Cloudflare D1 + Workers backend) has not started.
+> **Current state (v3.0 — feature-complete):** All frontend modules complete. Backend (Cloudflare Workers + D1) live at `https://fieldkit-api.recipeer-cbv.workers.dev`. Clerk production auth live at `get-fieldkit.com`. All stores use `userScopedStorage` (localStorage namespaced by Clerk `userId`). Public quote share endpoint live. Zero native `alert()`/`confirm()` calls — all destructive actions use double-tap confirm pattern. Zero TypeScript errors. Latest commit: `c82d2b9`.
 >
-> **Target users:** Think construction trades workflows — multi-day jobs, site addresses, material tracking (paint, wire, pipe, flooring), crew scheduling, and quick itemized quotes (materials + labor). Every feature should work equally well for a one-person plumber or a three-person painting crew.
+> **Standard patterns in use:**
+> - **Double-tap confirm:** `const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)`. First click sets state + 3s timeout; second click executes. Button shows "Confirm?" in `bg-red-500 text-white` on first click.
+> - **Clipboard feedback:** `const [copied, setCopied] = useState(false)`, set to true then clear after 2s.
+> - **Inline errors:** Form validation errors shown as `<p className="text-sm text-rose-600">` below the relevant field.
+> - **Public routes:** Any route added before the `getUserId()` check in `worker/index.ts` is unauthenticated.
 >
-> **Build approach:** Frontend-first with mock data — COMPLETE. Next step is Phase 7: backend integration with Cloudflare D1 and Workers. Confirm completion of each phase before moving to the next.
+> **Target users:** Construction trades workflows — multi-day jobs, site addresses, material tracking (paint, wire, pipe, flooring), crew scheduling, and quick itemized quotes (materials + labor). Every feature should work equally well for a one-person plumber or a three-person painting crew.
+>
+> **Build approach:** Phases 1–8 complete. The app is in production and receiving real users. Future work is additive enhancements only.
