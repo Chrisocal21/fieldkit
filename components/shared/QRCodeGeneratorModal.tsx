@@ -11,6 +11,7 @@ interface QRCodeGeneratorModalProps {
 export default function QRCodeGeneratorModal({ isOpen, onClose }: QRCodeGeneratorModalProps) {
   const [text, setText] = useState('')
   const [qrCodeUrl, setQrCodeUrl] = useState('')
+  const [copied, setCopied] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -46,7 +47,8 @@ export default function QRCodeGeneratorModal({ isOpen, onClose }: QRCodeGenerato
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob }),
         ])
-        alert('QR Code copied to clipboard!')
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
       } catch (err) {
         console.error('Failed to copy:', err)
       }

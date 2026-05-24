@@ -18,6 +18,7 @@ export default function ShortURLGeneratorModal({ isOpen, onClose }: ShortURLGene
   const [url, setUrl] = useState('')
   const [customSlug, setCustomSlug] = useState('')
   const [urls, setUrls] = useState<ShortenedURL[]>([])
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
 
   const generateShortCode = () => {
     return Math.random().toString(36).substring(2, 8)
@@ -43,7 +44,8 @@ export default function ShortURLGeneratorModal({ isOpen, onClose }: ShortURLGene
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text)
-    alert('Copied to clipboard!')
+    setCopiedUrl(text)
+    setTimeout(() => setCopiedUrl(null), 2000)
   }
 
   if (!isOpen) return null

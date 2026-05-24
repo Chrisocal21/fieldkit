@@ -30,8 +30,7 @@ export default function BrandIdentityEditor() {
 
   const handleLogoUpload = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file')
-      return
+      return // silently ignore non-images
     }
 
     const reader = new FileReader()

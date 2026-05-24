@@ -14,6 +14,7 @@ export default function TimeLog({ jobId }: TimeLogProps) {
   const jobEntries = getEntriesByJobId(jobId)
   
   const [showAddForm, setShowAddForm] = useState(false)
+  const [timeError, setTimeError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     teamMemberId: '',
     startTime: '',
@@ -51,9 +52,10 @@ export default function TimeLog({ jobId }: TimeLogProps) {
     const duration = Math.round((endTime - startTime) / 60000) // minutes
 
     if (duration <= 0) {
-      alert('End time must be after start time')
+      setTimeError('End time must be after start time')
       return
     }
+    setTimeError(null)
 
     addEntry({
       jobId,
@@ -65,6 +67,7 @@ export default function TimeLog({ jobId }: TimeLogProps) {
     })
 
     setShowAddForm(false)
+    setTimeError(null)
     setFormData({
       teamMemberId: '',
       startTime: '',
@@ -75,9 +78,7 @@ export default function TimeLog({ jobId }: TimeLogProps) {
   }
 
   const handleDeleteEntry = (entryId: string) => {
-    if (window.confirm('Delete this time entry?')) {
-      deleteEntry(entryId)
-    }
+    deleteEntry(entryId)
   }
 
   const formatDuration = (minutes: number) => {
@@ -227,6 +228,10 @@ export default function TimeLog({ jobId }: TimeLogProps) {
                 />
               </div>
             </div>
+
+            {timeError && (
+              <p className="text-sm text-rose-600 dark:text-rose-400">{timeError}</p>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

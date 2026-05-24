@@ -31,6 +31,9 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
   const [theme, setTheme] = useState<'light' | 'dark' | 'blue'>('light')
   const [profileName, setProfileName] = useState('')
   const [selectedProfileId, setSelectedProfileId] = useState<string>('')
+  const [copied, setCopied] = useState(false)
+  const [profileSaved, setProfileSaved] = useState(false)
+  const [profileNameError, setProfileNameError] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
   const qrCanvasRef = useRef<HTMLCanvasElement>(null)
   
@@ -89,7 +92,8 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
           await navigator.clipboard.write([
             new ClipboardItem({ 'image/png': blob }),
           ])
-          alert('Business card copied to clipboard!')
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
         }
       })
     } catch (err) {
@@ -99,9 +103,11 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
 
   const handleSaveProfile = () => {
     if (!profileName.trim()) {
-      alert('Please enter a profile name')
+      setProfileNameError(true)
+      setTimeout(() => setProfileNameError(false), 2000)
       return
     }
+    setProfileNameError(false)
 
     addProfile({
       ...cardData,
@@ -110,7 +116,8 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
     })
     
     setProfileName('')
-    alert('Profile saved!')
+    setProfileSaved(true)
+    setTimeout(() => setProfileSaved(false), 2000)
   }
 
   const handleLoadProfile = (profileId: string) => {
