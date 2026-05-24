@@ -23,7 +23,7 @@ export default function DocumentStyleEditor({ mode }: { mode?: 'quote' | 'invoic
   ]
 
   return (
-    <div className="p-6 space-y-8 max-w-2xl">
+    <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 max-w-2xl">
 
       {/* Mode title */}
       {mode && (
@@ -123,7 +123,7 @@ export default function DocumentStyleEditor({ mode }: { mode?: 'quote' | 'invoic
 
       {/* ── Header Style ── */}
       <Section title="Header Style" desc="Choose how your company info and document title are laid out at the top.">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {HEADER_STYLES.map(({ id, label, desc }) => (
             <button
               key={id}

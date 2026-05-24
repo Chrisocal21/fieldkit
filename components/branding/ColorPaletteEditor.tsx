@@ -97,7 +97,7 @@ export default function ColorPaletteEditor() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 px-4 py-4 lg:px-6">
       {/* Header */}
       <div>
         <h3 className="text-xl font-semibold text-white mb-2">Color Palette</h3>
