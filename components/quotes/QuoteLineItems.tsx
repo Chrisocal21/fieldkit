@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { nanoid } from 'nanoid'
 import { QuoteLineItem } from '@/store/quoteStore'
+import { useInventoryStore } from '@/store/inventoryStore'
 
 interface QuoteLineItemsProps {
   items: QuoteLineItem[]
@@ -10,6 +11,7 @@ interface QuoteLineItemsProps {
 }
 
 export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps) {
+  const inventoryItems = useInventoryStore((state) => state.items)
   const addLineItem = () => {
     const newItem: QuoteLineItem = {
       id: nanoid(),
@@ -66,7 +68,7 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
           }`}
         >
           <div className="grid grid-cols-12 gap-2 mb-2">
-            <div className="col-span-12 sm:col-span-5">
+          <div className="col-span-12 sm:col-span-5">
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Description</label>
               <input
                 type="text"
@@ -77,6 +79,50 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
                 }
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
+              {/* Inventory picker — visible on material rows */}
+              {item.type === 'material' && inventoryItems.length > 0 && (
+                <select
+                  value={item.inventoryItemId ?? ''}
+                  onChange={(e) => {
+                    const inv = inventoryItems.find(i => i.id === e.target.value)
+                    if (inv) {
+                      updateLineItem(item.id, {
+                        inventoryItemId: inv.id,
+                        description: item.description || inv.name,
+                      })
+                    } else {
+                      updateLineItem(item.id, { inventoryItemId: undefined })
+                    }
+                  }}
+                  className="mt-1 w-full px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                >
+                  <option value="">From inventory…</option>
+                  {(() => {
+                    const personal = inventoryItems.filter(i => (i.storageType ?? 'personal') === 'personal')
+                    const project = inventoryItems.filter(i => i.storageType === 'project')
+                    const property = inventoryItems.filter(i => i.storageType === 'property')
+                    return (
+                      <>
+                        {personal.length > 0 && (
+                          <optgroup label="🏠 Personal">
+                            {personal.map(i => <option key={i.id} value={i.id}>{i.name} ({i.currentStock} {i.unit})</option>)}
+                          </optgroup>
+                        )}
+                        {project.length > 0 && (
+                          <optgroup label="📋 Project">
+                            {project.map(i => <option key={i.id} value={i.id}>{i.name} ({i.currentStock} {i.unit}) — {i.storageLocationLabel}</option>)}
+                          </optgroup>
+                        )}
+                        {property.length > 0 && (
+                          <optgroup label="📍 Property">
+                            {property.map(i => <option key={i.id} value={i.id}>{i.name} ({i.currentStock} {i.unit}) — {i.storageLocationLabel}</option>)}
+                          </optgroup>
+                        )}
+                      </>
+                    )
+                  })()}
+                </select>
+              )}
             </div>
 
             <div className="col-span-4 sm:col-span-2">

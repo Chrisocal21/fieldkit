@@ -11,6 +11,7 @@ export interface QuoteLineItem {
   unitPrice: number
   type: 'material' | 'labor' | 'other' | 'discount' | 'deposit'
   sortOrder: number
+  inventoryItemId?: string
 }
 
 export interface Quote {

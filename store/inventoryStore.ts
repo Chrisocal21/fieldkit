@@ -12,7 +12,9 @@ export interface InventoryItem {
   currentStock: number
   lowStockThreshold: number
   notes: string
-  /** 'personal' | job id */
+  /** Discriminant: 'personal' | 'project' | 'property' */
+  storageType: 'personal' | 'project' | 'property'
+  /** Job ID (project), client ID (property), or '' (personal) */
   storageLocation: string
   storageLocationLabel: string
   createdAt: number

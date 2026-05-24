@@ -261,12 +261,31 @@ export default function MaterialsTab({ jobId }: MaterialsTabProps) {
                   defaultValue={editingMaterial?.inventoryItemId || ''}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
-                  <option value="">None</option>
-                  {inventoryItems.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
+                  <option value="">None — manual entry</option>
+                  {(() => {
+                    const personal = inventoryItems.filter(i => (i.storageType ?? 'personal') === 'personal')
+                    const project = inventoryItems.filter(i => i.storageType === 'project')
+                    const property = inventoryItems.filter(i => i.storageType === 'property')
+                    return (
+                      <>
+                        {personal.length > 0 && (
+                          <optgroup label="🏠 Personal Storage">
+                            {personal.map(i => <option key={i.id} value={i.id}>{i.name} ({i.currentStock} {i.unit})</option>)}
+                          </optgroup>
+                        )}
+                        {project.length > 0 && (
+                          <optgroup label="📋 Project Storage">
+                            {project.map(i => <option key={i.id} value={i.id}>{i.name} ({i.currentStock} {i.unit}) — {i.storageLocationLabel}</option>)}
+                          </optgroup>
+                        )}
+                        {property.length > 0 && (
+                          <optgroup label="📍 Property Storage">
+                            {property.map(i => <option key={i.id} value={i.id}>{i.name} ({i.currentStock} {i.unit}) — {i.storageLocationLabel}</option>)}
+                          </optgroup>
+                        )}
+                      </>
+                    )
+                  })()}
                 </select>
               </div>
 
