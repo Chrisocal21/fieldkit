@@ -190,11 +190,6 @@ export default function DocumentStyleEditor({ mode }: { mode?: 'quote' | 'invoic
         </div>
       </Section>
 
-      {/* ── Live Preview ── */}
-      <Section title="Document Preview" desc="A simplified look at how your document header will appear.">
-        <LivePreview preset={preset} mode={mode} />
-      </Section>
-
     </div>
   )
 }
