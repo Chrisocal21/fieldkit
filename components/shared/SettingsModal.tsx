@@ -161,7 +161,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         <button
                           key={value}
                           onClick={() => setTheme(value)}
-                          className={`flex-1 flex items-center justify-center gap-1 py-2 px-1 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-all ${`
+                          className={`flex-1 flex items-center justify-center gap-1 py-2 px-1 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-all ${
                             theme === value
                               ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                               : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
