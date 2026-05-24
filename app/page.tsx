@@ -14,12 +14,15 @@ import StatusBadge from '@/components/shared/StatusBadge'
 import SkeletonLoader from '@/components/shared/SkeletonLoader'
 import CollapsibleSection from '@/components/shared/CollapsibleSection'
 
-// Helper function to calculate quote total
+// Helper function to calculate quote total (mirrors QuotePreview logic)
 const calculateQuoteTotal = (quote: any) => {
-  const subtotal = quote.lineItems?.reduce((sum: number, item: any) => 
-    sum + (item.quantity * item.unitPrice), 0) || 0
-  const tax = subtotal * (quote.taxRate || 0)
-  return subtotal + tax
+  const regular = (quote.lineItems || []).filter((i: any) => i.type !== 'discount' && i.type !== 'deposit')
+  const discountAmt = (quote.lineItems || []).filter((i: any) => i.type === 'discount').reduce((s: number, i: any) => s + i.quantity * i.unitPrice, 0)
+  const depositAmt = (quote.lineItems || []).filter((i: any) => i.type === 'deposit').reduce((s: number, i: any) => s + i.quantity * i.unitPrice, 0)
+  const subtotal = regular.reduce((s: number, i: any) => s + i.quantity * i.unitPrice, 0)
+  const taxable = Math.max(0, subtotal - discountAmt)
+  const gross = taxable + taxable * (quote.taxRate || 0) + (quote.roundingAdjustment ?? 0)
+  return gross - depositAmt
 }
 
 export default function DashboardPage() {
