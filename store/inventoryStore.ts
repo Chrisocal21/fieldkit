@@ -12,6 +12,9 @@ export interface InventoryItem {
   currentStock: number
   lowStockThreshold: number
   notes: string
+  /** 'personal' | job id */
+  storageLocation: string
+  storageLocationLabel: string
   createdAt: number
   updatedAt: number
 }
