@@ -58,12 +58,48 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === 'OPTIONS') return options()
 
+    const url = new URL(request.url)
+    const path = url.pathname.replace(/\/$/, '')
+    const method = request.method
+
+    // ── Public: /api/public/quotes/:id (no auth required) ────────────────────
+    const publicQuoteMatch = path.match(/^\/api\/public\/quotes\/([^/]+)$/)
+    if (publicQuoteMatch && method === 'GET') {
+      const quoteId = publicQuoteMatch[1]
+      const q = await env.DB.prepare('SELECT * FROM quotes WHERE id = ?').bind(quoteId).first() as any
+      if (!q) return err('Quote not found', 404)
+      const items = await env.DB.prepare(
+        'SELECT * FROM quote_line_items WHERE quote_id = ? ORDER BY sort_order ASC'
+      ).bind(quoteId).all()
+      return json({
+        id: q.id,
+        quoteNumber: q.quote_number,
+        jobId: q.job_id,
+        clientName: q.client_name,
+        clientEmail: q.client_email,
+        clientPhone: q.client_phone,
+        notes: q.notes,
+        taxRate: q.tax_rate,
+        expiryDate: q.expiry_date,
+        status: q.status,
+        lineItems: (items.results as any[]).map(li => ({
+          id: li.id,
+          quoteId: li.quote_id,
+          description: li.description,
+          quantity: li.quantity,
+          unitPrice: li.unit_price,
+          type: li.type,
+          sortOrder: li.sort_order,
+        })),
+        createdAt: q.created_at,
+        updatedAt: q.updated_at,
+      })
+    }
+
     const userId = getUserId(request)
     if (!userId) return err('Unauthorized', 401)
 
-    const url = new URL(request.url)
-    const path = url.pathname.replace(/\/$/, '') // strip trailing slash
-    const method = request.method
+    // path and method already set above
 
     // ── /api/jobs ────────────────────────────────────────────────────────────
     if (path === '/api/jobs' && method === 'GET') {

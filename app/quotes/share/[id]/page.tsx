@@ -1,17 +1,51 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { useQuoteStore } from '@/store/quoteStore'
 import QuotePreview from '@/components/quotes/QuotePreview'
 import { generateQuotePDF } from '@/lib/pdf'
+import { Quote } from '@/store/quoteStore'
+
+const API_BASE = 'https://fieldkit-api.recipeer-cbv.workers.dev'
 
 export default function ShareQuotePage() {
   const params = useParams()
-  const router = useRouter()
   const quoteId = params.id as string
   
   const getQuoteById = useQuoteStore((state) => state.getQuoteById)
-  const quote = getQuoteById(quoteId)
+  const [quote, setQuote] = useState<Quote | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Try localStorage first (same-device case)
+    const local = getQuoteById(quoteId)
+    if (local) {
+      setQuote(local)
+      setLoading(false)
+      return
+    }
+    // Fetch from public API (cross-device share)
+    fetch(`${API_BASE}/api/public/quotes/${quoteId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) setQuote(data as Quote)
+      })
+      .catch(() => {/* ignore */})
+      .finally(() => setLoading(false))
+  }, [quoteId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleDownloadPDF = () => {
+    if (quote) generateQuotePDF(quote)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   if (!quote) {
     return (
@@ -26,10 +60,6 @@ export default function ShareQuotePage() {
         </div>
       </div>
     )
-  }
-
-  const handleDownloadPDF = () => {
-    generateQuotePDF(quote)
   }
 
   return (
