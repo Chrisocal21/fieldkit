@@ -33,7 +33,8 @@ export default function GlobalSearch() {
   const clients = useClientStore((state) => state.clients)
   const inventory = useInventoryStore((state) => state.items)
   const members = useTeamStore((state) => state.members)
-  const quotes = useQuoteStore((state) => state.quotes)
+  const getAllQuotes = useQuoteStore((state) => state.getAllQuotes)
+  const quotes = useMemo(() => getAllQuotes(), [jobs]) // re-derive when jobs change
 
   // Load recent searches on mount
   useEffect(() => {
@@ -116,7 +117,7 @@ export default function GlobalSearch() {
               saveToRecent(query)
               setIsOpen(false)
               setQuery('')
-              router.push('/jobs')
+              router.push(`/jobs?id=${job.id}`)
             }
           })
         }
@@ -140,7 +141,7 @@ export default function GlobalSearch() {
               setIsOpen(false)
               setQuery('')
               // Navigate to clients page - you'll need to implement client detail view
-              router.push('/jobs') // Temporary
+              router.push('/clients')
             }
           })
         }
@@ -187,7 +188,7 @@ export default function GlobalSearch() {
               setIsOpen(false)
               setQuery('')
               // Navigate to team management (Settings modal)
-              router.push('/jobs') // Temporary
+              router.push('/team')
             }
           })
         }

@@ -79,7 +79,7 @@ export default function WeekView({ onJobClick, assigneeFilter }: WeekViewProps) 
 
   // Returns 'only' | 'start' | 'middle' | 'end' for multi-day span styling
   const getSpanPosition = (job: Job, date: Date): 'only' | 'start' | 'middle' | 'end' => {
-    if (!job.startDate || job.startDate >= job.dueDate) return 'only'
+    if (!job.startDate || !job.dueDate || job.startDate >= job.dueDate) return 'only'
     const dayStart = new Date(date).setHours(0, 0, 0, 0)
     const dayEnd = new Date(date).setHours(23, 59, 59, 999)
     const jobStartDay = new Date(job.startDate).setHours(0, 0, 0, 0)

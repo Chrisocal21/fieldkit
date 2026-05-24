@@ -195,12 +195,17 @@ function generateDocumentPDF(
   }
   yPos += 5
   
-  // Line Items
+  // Separate line items by type (mirrors QuotePreview logic)
+  const regularItems = quote.lineItems.filter(i => i.type !== 'discount' && i.type !== 'deposit')
+  const discountItems = quote.lineItems.filter(i => i.type === 'discount')
+  const depositItems = quote.lineItems.filter(i => i.type === 'deposit')
+
+  // Line Items — regular rows
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(...hexToRgb(preset.colors.text))
   doc.setFontSize(preset.fontSize.body)
   
-  quote.lineItems.forEach((item) => {
+  regularItems.forEach((item) => {
     const lineTotal = item.quantity * item.unitPrice
     
     doc.text(item.description.substring(0, 50), 20, yPos)
@@ -209,13 +214,24 @@ function generateDocumentPDF(
     doc.text(`$${lineTotal.toFixed(2)}`, 190, yPos, { align: 'right' })
     yPos += 6
     
-    // Check if we need a new page
-    if (yPos > 250) {
-      doc.addPage()
-      yPos = 20
-    }
+    if (yPos > 250) { doc.addPage(); yPos = 20 }
   })
-  
+
+  // Discount rows (shown in red-ish, as negative amounts)
+  if (discountItems.length > 0) {
+    doc.setTextColor(...hexToRgb('#dc2626'))
+    discountItems.forEach((item) => {
+      const lineTotal = item.quantity * item.unitPrice
+      doc.text(item.description.substring(0, 50), 20, yPos)
+      doc.text('', 120, yPos)
+      doc.text('', 145, yPos)
+      doc.text(`-$${lineTotal.toFixed(2)}`, 190, yPos, { align: 'right' })
+      yPos += 6
+      if (yPos > 250) { doc.addPage(); yPos = 20 }
+    })
+    doc.setTextColor(...hexToRgb(preset.colors.text))
+  }
+
   // Totals
   yPos += 5
   if (preset.showBorders) {
@@ -224,22 +240,41 @@ function generateDocumentPDF(
   }
   yPos += 7
   
-  const subtotal = quote.lineItems.reduce(
-    (sum, item) => sum + item.quantity * item.unitPrice,
-    0
-  )
-  const tax = subtotal * quote.taxRate
-  const total = subtotal + tax
+  const subtotal = regularItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)
+  const discountTotal = discountItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0)
+  const depositTotal = depositItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0)
+  const taxableAmount = Math.max(0, subtotal - discountTotal)
+  const tax = taxableAmount * quote.taxRate
+  const roundingAdjustment = (quote as Quote).roundingAdjustment ?? 0
+  const total = taxableAmount + tax + roundingAdjustment
+  const amountDue = total - depositTotal
   
   doc.setFontSize(preset.fontSize.body)
   doc.setTextColor(...hexToRgb(preset.colors.text))
+  doc.setFont('helvetica', 'normal')
   doc.text('Subtotal:', 145, yPos)
   doc.text(`$${subtotal.toFixed(2)}`, 190, yPos, { align: 'right' })
   yPos += 6
+
+  if (discountTotal > 0) {
+    doc.setTextColor(...hexToRgb('#dc2626'))
+    doc.text('Discount:', 145, yPos)
+    doc.text(`-$${discountTotal.toFixed(2)}`, 190, yPos, { align: 'right' })
+    doc.setTextColor(...hexToRgb(preset.colors.text))
+    yPos += 6
+  }
   
-  doc.text(`Tax (${(quote.taxRate * 100).toFixed(1)}%):`, 145, yPos)
-  doc.text(`$${tax.toFixed(2)}`, 190, yPos, { align: 'right' })
-  yPos += 6
+  if (quote.taxRate > 0) {
+    doc.text(`Tax (${(quote.taxRate * 100).toFixed(1)}%):`, 145, yPos)
+    doc.text(`$${tax.toFixed(2)}`, 190, yPos, { align: 'right' })
+    yPos += 6
+  }
+
+  if (roundingAdjustment !== 0) {
+    doc.text('Rounding:', 145, yPos)
+    doc.text(`${roundingAdjustment >= 0 ? '+' : ''}$${roundingAdjustment.toFixed(2)}`, 190, yPos, { align: 'right' })
+    yPos += 6
+  }
   
   // Total with accent color
   doc.setFont('helvetica', 'bold')
@@ -247,7 +282,26 @@ function generateDocumentPDF(
   doc.setTextColor(...accentRgb)
   doc.text('TOTAL:', 145, yPos)
   doc.text(`$${total.toFixed(2)}`, 190, yPos, { align: 'right' })
-  yPos += 10
+  yPos += 6
+
+  // Deposit (if any)
+  if (depositTotal > 0) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(preset.fontSize.body)
+    doc.setTextColor(...hexToRgb(preset.colors.text))
+    doc.text('Deposit:', 145, yPos)
+    doc.text(`-$${depositTotal.toFixed(2)}`, 190, yPos, { align: 'right' })
+    yPos += 6
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(preset.fontSize.heading)
+    doc.setTextColor(...accentRgb)
+    doc.text('AMOUNT DUE:', 145, yPos)
+    doc.text(`$${amountDue.toFixed(2)}`, 190, yPos, { align: 'right' })
+    yPos += 6
+  }
+
+  yPos += 4
   
   // Invoice-specific: Payment info
   if (type === 'invoice') {
