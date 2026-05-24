@@ -642,7 +642,7 @@ export default function DashboardPage() {
             {WIDGET_ORDER.map(id => (
               <div
                 key={id}
-                className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 dark:text-white text-sm">{WIDGET_META[id].label}</p>
@@ -650,7 +650,7 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={() => toggleWidget(id)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 mt-0.5 focus:outline-none ${
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 shrink-0 p-0 focus:outline-none ${
                     widgets[id] ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                   role="switch"
