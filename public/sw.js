@@ -1,7 +1,9 @@
 // FIELDKIT Service Worker - Offline Caching & PWA Support
 
-const CACHE_NAME = 'fieldkit-v1'
-const STATIC_CACHE_NAME = 'fieldkit-static-v1'
+const CACHE_NAME = 'fieldkit-v2'
+const STATIC_CACHE_NAME = 'fieldkit-static-v2'
+const API_CACHE_NAME = 'fieldkit-api-v2'
+const API_ORIGIN = 'https://fieldkit-api.recipeer-cbv.workers.dev'
 
 // Assets to cache immediately on install
 const STATIC_ASSETS = [
@@ -32,7 +34,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME && name !== STATIC_CACHE_NAME)
+          .filter((name) => name !== CACHE_NAME && name !== STATIC_CACHE_NAME && name !== API_CACHE_NAME)
           .map((name) => caches.delete(name))
       )
     })
@@ -49,7 +51,26 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Skip chrome extensions and external resources
+  // Stale-while-revalidate for Cloudflare API (GET only)
+  if (request.url.startsWith(API_ORIGIN)) {
+    event.respondWith(
+      caches.open(API_CACHE_NAME).then((cache) => {
+        return cache.match(request).then((cachedResponse) => {
+          const fetchPromise = fetch(request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(request, networkResponse.clone())
+            }
+            return networkResponse
+          }).catch(() => cachedResponse)
+          // Return stale immediately while revalidating in background
+          return cachedResponse || fetchPromise
+        })
+      })
+    )
+    return
+  }
+
+  // Skip other external resources
   if (!request.url.startsWith(self.location.origin)) {
     return
   }

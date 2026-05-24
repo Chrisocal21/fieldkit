@@ -33,7 +33,7 @@ export default function DashboardPage() {
   const members = useTeamStore((state) => state.members)
   const { calculateJobLaborCost, calculateJobTotalHours } = useTimeEntryStore()
   const invoices = useInvoiceStore((state) => state.invoices)
-  const { getTotalOutstanding, getOverdueInvoices } = useInvoiceStore()
+  const { getTotalOutstanding, getOverdueInvoices, markOverdueInvoices } = useInvoiceStore()
   const { calculateJobMaterialCost } = useMaterialCostStore()
   const { calculateJobExpenses } = useExpenseStore()
 
@@ -131,7 +131,24 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    markOverdueInvoices()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Upcoming jobs this week (next 7 days, non-terminal status)
+  const upcomingThisWeek = useMemo(() => {
+    const now = Date.now()
+    const weekEnd = now + 7 * 24 * 60 * 60 * 1000
+    return activeJobs
+      .filter(j =>
+        j.dueDate &&
+        j.dueDate >= now &&
+        j.dueDate <= weekEnd &&
+        j.status !== 'Completed' &&
+        j.status !== 'Cancelled'
+      )
+      .sort((a, b) => (a.dueDate || 0) - (b.dueDate || 0))
+      .slice(0, 6)
+  }, [activeJobs])
 
   if (!mounted) {
     return (
@@ -242,6 +259,18 @@ export default function DashboardPage() {
               <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Cost</p>
             </div>
 
+            {/* Outstanding Card */}
+            <div className="bg-white dark:bg-gray-800 border border-rose-200 dark:border-rose-800/50 rounded-lg p-3 w-[140px] flex-shrink-0">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Outstanding</p>
+                <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-xl font-bold text-rose-600 dark:text-rose-400">${getTotalOutstanding().toFixed(0)}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Unpaid</p>
+            </div>
+
             {/* Net Profit Card */}
             <div className={`border rounded-lg p-3 w-[140px] flex-shrink-0 ${
               netProfit >= 0 
@@ -269,7 +298,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Desktop: Grid */}
-        <div className="hidden lg:grid grid-cols-2 xl:grid-cols-7 gap-4">
+        <div className="hidden lg:grid grid-cols-2 xl:grid-cols-4 gap-4">
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-slate-400 dark:hover:border-slate-600 transition-colors">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Quoted</p>
@@ -357,6 +386,17 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {completedRevenue > 0 ? ((netProfit / completedRevenue) * 100).toFixed(1) : '0'}% margin
           </p>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 border border-rose-200 dark:border-rose-800/50 rounded-lg p-4 hover:border-rose-400 dark:hover:border-rose-600 transition-colors">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Outstanding</p>
+            <svg className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">${getTotalOutstanding().toFixed(0)}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Unpaid invoices</p>
         </div>
       </div>
       </div>
@@ -546,6 +586,43 @@ export default function DashboardPage() {
               </div>
             </CollapsibleSection>
           </div>
+
+          {/* This Week - Upcoming Jobs */}
+          {upcomingThisWeek.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-800/50 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">This Week</h2>
+                </div>
+                <button onClick={() => router.push('/schedule')} className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Schedule</button>
+              </div>
+              <div className="space-y-2">
+                {upcomingThisWeek.map(job => {
+                  const daysUntil = Math.ceil(((job.dueDate ?? 0) - Date.now()) / (1000 * 60 * 60 * 24))
+                  const dayLabel = daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : new Date(job.dueDate!).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                  return (
+                    <div key={job.id} className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg cursor-pointer transition-colors" onClick={() => router.push('/jobs')}>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{job.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{job.clientName}</p>
+                      </div>
+                      <div className="text-right ml-2 flex-shrink-0">
+                        <p className={`text-xs font-semibold ${
+                          daysUntil === 0 ? 'text-rose-600 dark:text-rose-400' :
+                          daysUntil === 1 ? 'text-amber-600 dark:text-amber-400' :
+                          'text-blue-600 dark:text-blue-400'
+                        }`}>{dayLabel}</p>
+                        <StatusBadge status={job.status} className="mt-0.5" />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Desktop Quick Actions - Always Expanded */}
           <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">

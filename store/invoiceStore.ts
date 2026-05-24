@@ -50,6 +50,7 @@ interface InvoiceState {
   // Helper functions
   calculateBalance: (invoiceId: string) => number
   updateInvoiceStatus: (invoiceId: string) => void
+  markOverdueInvoices: () => void
   getOverdueInvoices: () => Invoice[]
   getTotalOutstanding: () => number
 }
@@ -200,6 +201,24 @@ export const useInvoiceStore = create<InvoiceState>()(
           invoice.dueDate && 
           invoice.dueDate < now
         )
+      },
+
+      markOverdueInvoices: () => {
+        const now = Date.now()
+        set((state) => ({
+          invoices: state.invoices.map((inv) => {
+            if (inv.status === 'Paid') return inv
+            if (inv.amountPaid >= inv.amountDue) return inv
+            if (inv.dueDate && inv.dueDate < now) {
+              return { ...inv, status: 'Overdue' as InvoiceStatus, updatedAt: now }
+            }
+            // Revert Overdue→Unpaid if due date was removed or pushed out
+            if (inv.status === 'Overdue' && (!inv.dueDate || inv.dueDate >= now)) {
+              return { ...inv, status: (inv.amountPaid > 0 ? 'Partial' : 'Unpaid') as InvoiceStatus, updatedAt: now }
+            }
+            return inv
+          })
+        }))
       },
 
       getTotalOutstanding: () => {

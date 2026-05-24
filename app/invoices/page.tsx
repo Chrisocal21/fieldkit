@@ -28,14 +28,16 @@ export default function InvoicesPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [isNewInvoiceOpen, setIsNewInvoiceOpen] = useState(false)
 
-  useEffect(() => { setMounted(true) }, [])
 
   const jobs = useJobStore(s => s.jobs)
   const { clients } = useClientStore()
   const invoices = useInvoiceStore(s => s.invoices)
-  const { createInvoice, addPayment, deletePayment } = useInvoiceStore()
+  const { createInvoice, addPayment, deletePayment, markOverdueInvoices } = useInvoiceStore()
 
-  // Collect every Sent/Accepted quote across all active jobs
+  useEffect(() => {
+    setMounted(true)
+    markOverdueInvoices()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const billableRows = useMemo(() => {
     if (!mounted) return []
     const rows: Array<{
