@@ -656,8 +656,8 @@ export default function DashboardPage() {
                   role="switch"
                   aria-checked={widgets[id]}
                 >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                    widgets[id] ? 'translate-x-6' : 'translate-x-1'
+                  <span className={`inline-block h-4 w-6 transform rounded-full bg-white shadow-sm transition-transform ${
+                    widgets[id] ? 'translate-x-4' : 'translate-x-1'
                   }`} />
                 </button>
               </div>
