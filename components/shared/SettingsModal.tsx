@@ -442,13 +442,13 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
       role="switch"
       aria-checked={enabled}
       onClick={() => onChange(!enabled)}
-      className={`relative inline-flex h-4 w-14 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
+      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
         enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
       }`}
     >
       <span
-        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
-          enabled ? 'translate-x-9' : 'translate-x-px'
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
+          enabled ? 'translate-x-5' : 'translate-x-0.5'
         }`}
       />
     </button>
