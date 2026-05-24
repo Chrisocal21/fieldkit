@@ -9,9 +9,10 @@ import ClientSelector from '@/components/shared/ClientSelector'
 interface CreateJobModalProps {
   isOpen: boolean
   onClose: () => void
+  initialClientId?: string
 }
 
-export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
+export default function CreateJobModal({ isOpen, onClose, initialClientId }: CreateJobModalProps) {
   const addJob = useJobStore((state) => state.addJob)
   const { getClientById } = useClientStore()
   const { getActiveMembers } = useTeamStore()
@@ -19,7 +20,7 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
 
   const [formData, setFormData] = useState({
     title: '',
-    clientId: '',
+    clientId: initialClientId ?? '',
     siteAddress: '',
     description: '',
     status: 'Draft' as JobStatus,

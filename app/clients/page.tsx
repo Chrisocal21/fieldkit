@@ -6,6 +6,7 @@ import { Client, ClientProperty, useClientStore } from '@/store/clientStore'
 import { useJobStore } from '@/store/jobStore'
 import EmptyState from '@/components/shared/EmptyState'
 import ClientDrawer from '@/components/clients/ClientDrawer'
+import CreateJobModal from '@/components/jobs/CreateJobModal'
 
 export default function ClientsPage() {
   const { clients, searchClients, addClient, updateClient, deleteClient, migrateFromJobs } = useClientStore()
@@ -18,6 +19,8 @@ export default function ClientsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [createJobForClientId, setCreateJobForClientId] = useState<string | undefined>()
+  const [isCreateJobOpen, setIsCreateJobOpen] = useState(false)
 
   // Prevent hydration mismatch and trigger migration
   useEffect(() => {
@@ -119,10 +122,10 @@ export default function ClientsPage() {
     handleEditClick(client)
   }
 
-  const handleCreateJobForClient = () => {
-    // TODO: Open job creation modal with client pre-selected
+  const handleCreateJobForClient = (clientId: string) => {
+    setCreateJobForClientId(clientId)
     setIsDrawerOpen(false)
-    // This can be enhanced later to pre-select the client in CreateJobModal
+    setIsCreateJobOpen(true)
   }
 
   const addProperty = () => {
@@ -533,6 +536,13 @@ export default function ClientsPage() {
         }}
         onEdit={handleDrawerEdit}
         onCreateJob={handleCreateJobForClient}
+      />
+
+      {/* Create Job Modal (with client pre-selected) */}
+      <CreateJobModal
+        isOpen={isCreateJobOpen}
+        onClose={() => { setIsCreateJobOpen(false); setCreateJobForClientId(undefined) }}
+        initialClientId={createJobForClientId}
       />
     </div>
   )

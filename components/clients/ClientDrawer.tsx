@@ -11,7 +11,7 @@ interface ClientDrawerProps {
   isOpen: boolean
   onClose: () => void
   onEdit: (client: Client) => void
-  onCreateJob?: () => void
+  onCreateJob?: (clientId: string) => void
 }
 
 export default function ClientDrawer({ client, isOpen, onClose, onEdit, onCreateJob }: ClientDrawerProps) {
@@ -256,7 +256,7 @@ export default function ClientDrawer({ client, isOpen, onClose, onEdit, onCreate
                   <p className="text-gray-500 dark:text-gray-400 mb-4">No jobs for this client yet</p>
                   {onCreateJob && (
                     <button
-                      onClick={onCreateJob}
+                      onClick={() => onCreateJob(client!.id)}
                       className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                     >
                       Create First Job
@@ -272,7 +272,7 @@ export default function ClientDrawer({ client, isOpen, onClose, onEdit, onCreate
         <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
           {onCreateJob && (
             <button
-              onClick={onCreateJob}
+              onClick={() => onCreateJob(client!.id)}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
