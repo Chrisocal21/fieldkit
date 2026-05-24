@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSettingsStore, Theme, NotificationSettings } from '@/store/settingsStore'
 import { useBrandingStore } from '@/store/brandingStore'
+import { syncWithCloud } from '@/lib/sync'
 import QRCodeGeneratorModal from './QRCodeGeneratorModal'
 import ShortURLGeneratorModal from './ShortURLGeneratorModal'
 
@@ -17,6 +18,8 @@ interface SettingsModalProps {
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<SettingsTab>('appearance')
+  const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle')
+  const [syncResult, setSyncResult] = useState<Record<string, number>>({})
 
   // Appearance
   const theme = useSettingsStore((s) => s.theme)
@@ -328,6 +331,52 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <TabHeading>Data & Privacy</TabHeading>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Manage your local app data and preferences.</p>
                   <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                    {/* Sync to Cloud */}
+                    <button
+                      onClick={async () => {
+                        setSyncState('syncing')
+                        setSyncResult({})
+                        const result = await syncWithCloud()
+                        setSyncState(result.ok ? 'done' : 'error')
+                        setSyncResult(result.pushed)
+                        setTimeout(() => setSyncState('idle'), 4000)
+                      }}
+                      disabled={syncState === 'syncing'}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left group disabled:opacity-60"
+                    >
+                      <span className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg ${
+                        syncState === 'done' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' :
+                        syncState === 'error' ? 'bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400' :
+                        'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                      }`}>
+                        {syncState === 'syncing' ? (
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                          </svg>
+                        ) : syncState === 'done' ? (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        )}
+                      </span>
+                      <span className="flex-1">
+                        <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                          {syncState === 'syncing' ? 'Syncing…' : syncState === 'done' ? 'Sync complete' : syncState === 'error' ? 'Sync failed' : 'Sync to Cloud'}
+                        </span>
+                        <span className="block text-xs text-gray-400 mt-0.5">
+                          {syncState === 'done' && Object.keys(syncResult).length > 0
+                            ? `Pushed: ${Object.entries(syncResult).map(([k, v]) => `${v} ${k}`).join(', ')}`
+                            : syncState === 'done'
+                            ? 'Everything is up to date'
+                            : syncState === 'error'
+                            ? 'Could not reach cloud — check your connection'
+                            : 'Upload any local-only data to your cloud account'
+                          }
+                        </span>
+                      </span>
+                      {syncState === 'idle' && <ChevronIcon />}
+                    </button>
                     <button
                       onClick={() => {
                         const exportData: Record<string, unknown> = { exportedAt: new Date().toISOString(), version: '0.17' }
