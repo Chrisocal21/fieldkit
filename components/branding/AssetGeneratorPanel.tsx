@@ -171,7 +171,6 @@ export default function AssetGeneratorPanel({ onClose }: AssetGeneratorPanelProp
   )
 }
 
-  const [showBusinessCard, setShowBusinessCard] = useState(false)
   const [showQRCode, setShowQRCode] = useState(false)
   const [showEmailSignature, setShowEmailSignature] = useState(false)
   const [showSocialMedia, setShowSocialMedia] = useState(false)
