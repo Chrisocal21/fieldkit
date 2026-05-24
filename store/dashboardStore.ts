@@ -11,16 +11,24 @@ export type WidgetId =
   | 'invoices'
   | 'quotePipeline'
   | 'team'
+  | 'quickActions'
+  | 'monthlyRevenue'
+  | 'netProfit'
+  | 'timeThisWeek'
 
 export const WIDGET_META: Record<WidgetId, { label: string; description: string }> = {
-  jobStatus:     { label: 'Job Status',           description: 'Count of jobs by current status' },
-  schedule:      { label: 'Upcoming Schedule',    description: '7-day calendar strip with due jobs' },
-  recentActivity:{ label: 'Recent Activity',      description: 'Jobs updated in the last 7 days' },
-  topClients:    { label: 'Top Clients',           description: 'Clients ranked by completed revenue' },
-  lowStock:      { label: 'Low Stock Alerts',      description: 'Inventory items below threshold' },
-  invoices:      { label: 'Outstanding Invoices',  description: 'Unpaid and overdue invoices' },
-  quotePipeline: { label: 'Quote Pipeline',        description: 'Quote counts and value by status' },
-  team:          { label: 'Team Overview',         description: 'Active members and their job load' },
+  jobStatus:      { label: 'Job Status',           description: 'Count of jobs by current status' },
+  schedule:       { label: 'Upcoming Schedule',    description: '7-day calendar strip with due jobs' },
+  recentActivity: { label: 'Recent Activity',      description: 'Jobs updated in the last 7 days' },
+  topClients:     { label: 'Top Clients',           description: 'Clients ranked by completed revenue' },
+  lowStock:       { label: 'Low Stock Alerts',      description: 'Inventory items below threshold' },
+  invoices:       { label: 'Outstanding Invoices',  description: 'Unpaid and overdue invoices' },
+  quotePipeline:  { label: 'Quote Pipeline',        description: 'Quote counts and value by status' },
+  team:           { label: 'Team Overview',         description: 'Active members and their job load' },
+  quickActions:   { label: 'Quick Actions',         description: 'Shortcuts to create jobs, quotes, and clients' },
+  monthlyRevenue: { label: 'Revenue This Month',    description: 'Payments received vs the prior month' },
+  netProfit:      { label: 'Net Profit',            description: 'Profit margin on completed jobs' },
+  timeThisWeek:   { label: 'Hours This Week',       description: 'Total hours logged across all jobs' },
 }
 
 const DEFAULT_WIDGETS: Record<WidgetId, boolean> = {
@@ -32,6 +40,10 @@ const DEFAULT_WIDGETS: Record<WidgetId, boolean> = {
   invoices:       true,
   quotePipeline:  true,
   team:           false,
+  quickActions:   true,
+  monthlyRevenue: false,
+  netProfit:      false,
+  timeThisWeek:   false,
 }
 
 interface DashboardState {

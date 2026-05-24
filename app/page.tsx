@@ -25,8 +25,10 @@ const calculateQuoteTotal = (quote: any) => {
 }
 
 const WIDGET_ORDER: WidgetId[] = [
-  'jobStatus', 'schedule', 'recentActivity', 'topClients',
-  'lowStock', 'invoices', 'quotePipeline', 'team',
+  'quickActions',
+  'jobStatus', 'recentActivity', 'quotePipeline', 'invoices',
+  'schedule', 'monthlyRevenue', 'netProfit', 'timeThisWeek',
+  'topClients', 'team', 'lowStock',
 ]
 
 const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
@@ -48,7 +50,7 @@ export default function DashboardPage() {
   const clients = useClientStore((state) => state.clients)
   const inventory = useInventoryStore((state) => state.items)
   const members = useTeamStore((state) => state.members)
-  const { calculateJobLaborCost } = useTimeEntryStore()
+  const { calculateJobLaborCost, entries: timeEntries } = useTimeEntryStore()
   const invoices = useInvoiceStore((state) => state.invoices)
   const { getTotalOutstanding, markOverdueInvoices } = useInvoiceStore()
   const { calculateJobMaterialCost } = useMaterialCostStore()
@@ -165,6 +167,39 @@ export default function DashboardPage() {
     [members, activeJobs]
   )
 
+  const { thisMonthRevenue, lastMonthRevenue } = useMemo(() => {
+    const now = new Date()
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime()
+    let thisMonth = 0
+    let lastMonth = 0
+    invoices.forEach(inv => {
+      inv.payments.forEach(p => {
+        if (p.paymentDate >= thisMonthStart) thisMonth += p.amount
+        else if (p.paymentDate >= lastMonthStart && p.paymentDate < thisMonthStart) lastMonth += p.amount
+      })
+    })
+    return { thisMonthRevenue: thisMonth, lastMonthRevenue: lastMonth }
+  }, [invoices])
+
+  const hoursThisWeek = useMemo(() => {
+    const now = new Date()
+    const weekStart = new Date(now)
+    weekStart.setDate(now.getDate() - now.getDay())
+    weekStart.setHours(0, 0, 0, 0)
+    return timeEntries
+      .filter(e => e.startTime >= weekStart.getTime() && e.endTime)
+      .reduce((sum, e) => sum + e.duration / 60, 0)
+  }, [timeEntries])
+
+  const weeklyEntries = useMemo(() => {
+    const now = new Date()
+    const weekStart = new Date(now)
+    weekStart.setDate(now.getDate() - now.getDay())
+    weekStart.setHours(0, 0, 0, 0)
+    return timeEntries.filter(e => e.startTime >= weekStart.getTime() && e.endTime)
+  }, [timeEntries])
+
   useEffect(() => {
     setMounted(true)
     markOverdueInvoices()
@@ -251,6 +286,29 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* Quick Actions — full-width strip */}
+      {widgets.quickActions && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {[
+            { label: 'New Job',     icon: 'M12 4v16m8-8H4',                                                                                                                href: '/jobs',      color: 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800/50' },
+            { label: 'New Quote',   icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',     href: '/quotes',    color: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50' },
+            { label: 'Add Client',  icon: 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z',                                      href: '/clients',   color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50' },
+            { label: 'Schedule',    icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',                                    href: '/schedule',  color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50' },
+          ].map(({ label, icon, href, color }) => (
+            <button
+              key={label}
+              onClick={() => router.push(href)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl border font-medium text-sm transition-all hover:scale-[1.02] active:scale-[0.98] ${color}`}
+            >
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
+              </svg>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Widget Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -410,6 +468,77 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* Monthly Revenue */}
+          {widgets.monthlyRevenue && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-gray-900 dark:text-white">Revenue This Month</h2>
+                {lastMonthRevenue > 0 && (
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    thisMonthRevenue >= lastMonthRevenue
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                      : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
+                  }`}>
+                    {thisMonthRevenue >= lastMonthRevenue ? '↑' : '↓'}{' '}
+                    {lastMonthRevenue > 0 ? `${Math.abs(((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100).toFixed(0)}%` : '—'} vs last month
+                  </span>
+                )}
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                ${thisMonthRevenue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  {(thisMonthRevenue > 0 || lastMonthRevenue > 0) && (
+                    <div
+                      className="h-full bg-emerald-500 rounded-full transition-all"
+                      style={{ width: `${Math.min(100, lastMonthRevenue > 0 ? (thisMonthRevenue / Math.max(thisMonthRevenue, lastMonthRevenue)) * 100 : 100)}%` }}
+                    />
+                  )}
+                </div>
+                <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+                  ${lastMonthRevenue.toLocaleString('en-US', { maximumFractionDigits: 0 })} last mo
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Net Profit */}
+          {widgets.netProfit && (
+            <div className={`bg-white dark:bg-gray-800 rounded-xl p-4 border ${
+              netProfit < 0
+                ? 'border-rose-200 dark:border-rose-800/50'
+                : 'border-gray-200 dark:border-gray-700'
+            }`}>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-gray-900 dark:text-white">Net Profit</h2>
+                <span className="text-xs text-gray-400 dark:text-gray-500">Completed jobs</span>
+              </div>
+              <p className={`text-3xl font-bold ${netProfit < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                {netProfit < 0 ? '-' : ''}${Math.abs(netProfit).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+              </p>
+              <div className="mt-3 grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                {[
+                  { label: 'Revenue', value: completedRevenue },
+                  { label: 'Labor',   value: totalLaborCost },
+                  { label: 'Costs',   value: totalMaterialCost + totalExpenses },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{label}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white mt-0.5">
+                      ${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              {completedRevenue > 0 && (
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                  {((netProfit / completedRevenue) * 100).toFixed(1)}% margin
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Top Clients */}
           {widgets.topClients && topClients.length > 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
@@ -503,6 +632,27 @@ export default function DashboardPage() {
                     )
                   })}
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Hours This Week */}
+          {widgets.timeThisWeek && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-gray-900 dark:text-white">Hours This Week</h2>
+                <button onClick={() => router.push('/jobs')} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">View jobs</button>
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                {hoursThisWeek.toFixed(1)}
+                <span className="text-base font-normal text-gray-400 dark:text-gray-500 ml-1">hrs</span>
+              </p>
+              {weeklyEntries.length === 0 ? (
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">No time logged this week</p>
+              ) : (
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
+                  {weeklyEntries.length} session{weeklyEntries.length !== 1 ? 's' : ''} across {new Set(weeklyEntries.map(e => e.jobId)).size} job{new Set(weeklyEntries.map(e => e.jobId)).size !== 1 ? 's' : ''}
+                </p>
               )}
             </div>
           )}
