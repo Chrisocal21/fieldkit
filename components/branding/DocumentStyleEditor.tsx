@@ -222,13 +222,13 @@ function ToggleRow({ label, desc, enabled, onChange }: { label: string; desc: st
       </div>
       <button
         onClick={() => onChange(!enabled)}
-        className={`relative inline-flex h-7 w-14 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${
+        className={`relative inline-flex h-8 w-16 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${
           enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
         }`}
       >
         <span
-          className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition duration-200 ${
-            enabled ? 'translate-x-7' : 'translate-x-0.5'
+          className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow transition duration-200 ${
+            enabled ? 'translate-x-8' : 'translate-x-0.5'
           }`}
         />
       </button>
