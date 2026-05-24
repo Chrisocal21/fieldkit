@@ -15,6 +15,10 @@ export const useSettingsStore = create<SettingsState>()(
       theme: 'system',
       setTheme: (theme) => {
         set({ theme })
+        // Write to plain key so the anti-flash script can read it before Clerk/Zustand loads
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('fieldkit-theme', theme)
+        }
         applyTheme(theme)
       },
     }),

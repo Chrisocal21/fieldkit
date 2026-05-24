@@ -66,10 +66,10 @@ export default function QuotesPage() {
     return (
       <EmptyState
         title="No quotes yet"
-        description="Create quotes from within jobs to start estimating work for clients."
+        description="Create a quote directly — a job will be created automatically."
         action={{
-          label: 'Go to Jobs',
-          onClick: () => router.push('/jobs'),
+          label: 'New Quote',
+          onClick: () => setIsFormOpen(true),
         }}
       />
     )
@@ -182,11 +182,23 @@ export default function QuotesPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quotes</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          View all quotes across your jobs
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quotes</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            View all quotes across your jobs
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            setSelectedQuote(null)
+            setSelectedJobId(null)
+            setIsFormOpen(true)
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+        >
+          New Quote
+        </button>
       </div>
 
       {/* Legacy Quotes Warning */}
@@ -212,10 +224,10 @@ export default function QuotesPage() {
       {validQuotes.length === 0 && legacyQuotes.length === 0 && (
         <EmptyState
           title="No quotes yet"
-          description="Create quotes from within jobs to start estimating work for clients."
+          description="Create a quote directly — a job will be created automatically."
           action={{
-            label: 'Go to Jobs',
-            onClick: () => router.push('/jobs'),
+            label: 'New Quote',
+            onClick: () => setIsFormOpen(true),
           }}
         />
       )}
@@ -223,10 +235,10 @@ export default function QuotesPage() {
       {validQuotes.length === 0 && legacyQuotes.length > 0 && (
         <EmptyState
           title="No active quotes"
-          description="Your old quotes are incompatible with the new Jobs-First architecture. Create new quotes from within jobs."
+          description="Your old quotes are incompatible with the new Jobs-First architecture. Create new quotes directly."
           action={{
-            label: 'Go to Jobs',
-            onClick: () => router.push('/jobs'),
+            label: 'New Quote',
+            onClick: () => setIsFormOpen(true),
           }}
         />
       )}
@@ -320,18 +332,16 @@ export default function QuotesPage() {
       )}
 
       {/* Modals */}
-      {selectedQuote && selectedJobId && (
-        <QuoteForm
-          jobId={selectedJobId}
-          quote={selectedQuote || undefined}
-          isOpen={isFormOpen}
-          onClose={() => {
-            setIsFormOpen(false)
-            setSelectedQuote(null)
-            setSelectedJobId(null)
-          }}
-        />
-      )}
+      <QuoteForm
+        jobId={selectedJobId || undefined}
+        quote={selectedQuote || undefined}
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false)
+          setSelectedQuote(null)
+          setSelectedJobId(null)
+        }}
+      />
     </div>
   )
 }

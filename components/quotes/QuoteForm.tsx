@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { nanoid } from 'nanoid'
 import { Quote, QuoteLineItem } from '@/store/quoteStore'
 import { useJobStore } from '@/store/jobStore'
+import { useClientStore } from '@/store/clientStore'
+import ClientSelector from '@/components/shared/ClientSelector'
 import QuoteLineItems from './QuoteLineItems'
 
 // Rounds up to the nearest sensible clean number
@@ -15,17 +17,21 @@ function getRoundTarget(amount: number): number {
 }
 
 interface QuoteFormProps {
-  jobId: string  // Required - quotes belong to a job
+  jobId?: string  // Optional - will auto-create a job if not provided
   quote?: Quote
   isOpen: boolean
   onClose: () => void
 }
 
 export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormProps) {
-  const { jobs, addQuoteToJob, updateJobQuote } = useJobStore()
-  
+  const { jobs, addJob, addQuoteToJob, updateJobQuote } = useJobStore()
+  const getClientById = useClientStore(s => s.getClientById)
+
   // Get the job to pre-fill client information
   const job = jobs.find(j => j.id === jobId)
+
+  const [selectedClientId, setSelectedClientId] = useState<string | undefined>()
+  const [siteAddress, setSiteAddress] = useState('')
 
   const [formData, setFormData] = useState({
     clientName: '',
@@ -39,6 +45,20 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
   })
 
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>([])
+
+  const handleClientSelect = (clientId: string) => {
+    const client = getClientById(clientId)
+    if (client) {
+      setFormData(prev => ({
+        ...prev,
+        clientName: client.name,
+        clientEmail: client.email || '',
+        clientPhone: client.phone || '',
+      }))
+      setSelectedClientId(clientId)
+      setSiteAddress('')
+    }
+  }
 
   // Reset form when modal opens or quote changes
   useEffect(() => {
@@ -58,6 +78,9 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
           status: quote.status || 'Draft',
         })
         setLineItems(quote.lineItems || [])
+        // Pre-select client if the job has one
+        setSelectedClientId(job?.clientId)
+        setSiteAddress('')
       } else if (job) {
         // Creating new quote - pre-fill from job
         setFormData({
@@ -71,8 +94,10 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
           status: 'Draft',
         })
         setLineItems([])
+        setSelectedClientId(job?.clientId)
+        setSiteAddress('')
       } else {
-        // Fallback - empty form
+        // Standalone new quote - empty form
         setFormData({
           clientName: '',
           clientEmail: '',
@@ -84,6 +109,8 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
           status: 'Draft',
         })
         setLineItems([])
+        setSelectedClientId(undefined)
+        setSiteAddress('')
       }
     }
   }, [isOpen, quote, job])
@@ -105,10 +132,29 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
       lineItems: lineItems,
     }
 
+    let targetJobId = jobId
+
+    if (!targetJobId) {
+      // Auto-create a job using the client name as the title
+      const currentJobs = useJobStore.getState().jobs
+      targetJobId = `JOB-${String(currentJobs.length + 1).padStart(4, '0')}`
+      addJob({
+        title: formData.clientName.trim() || 'New Quote',
+        clientId: selectedClientId || undefined,
+        clientName: formData.clientName,
+        clientEmail: formData.clientEmail || undefined,
+        clientPhone: formData.clientPhone || undefined,
+        siteAddress: siteAddress || undefined,
+        description: '',
+        status: 'Quoted',
+        notes: '',
+      })
+    }
+
     if (quote) {
-      updateJobQuote(jobId, quote.id, quoteData)
+      updateJobQuote(targetJobId, quote.id, quoteData)
     } else {
-      addQuoteToJob(jobId, quoteData)
+      addQuoteToJob(targetJobId, quoteData)
     }
 
     onClose()
@@ -161,24 +207,41 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
               <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                 Client Information
               </h4>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Client Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.clientName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, clientName: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="Client or company name"
-                  />
-                </div>
 
+              {/* Client selector dropdown */}
+              <ClientSelector
+                selectedClientId={selectedClientId}
+                onSelectClient={handleClientSelect}
+                label="Client *"
+              />
+
+              {/* Property / site picker — shown when client has multiple properties */}
+              {(() => {
+                const client = selectedClientId ? getClientById(selectedClientId) : undefined
+                const props = client?.properties ?? []
+                if (props.length === 0) return null
+                return (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Property / Site
+                    </label>
+                    <select
+                      value={siteAddress}
+                      onChange={(e) => setSiteAddress(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="">— Select a property —</option>
+                      {props.map((p) => (
+                        <option key={p.id} value={p.address}>
+                          {p.label} — {p.address}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )
+              })()}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Email

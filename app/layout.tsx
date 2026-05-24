@@ -39,7 +39,25 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          {/* Anti-flash: apply dark class before React hydrates */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  try {
+                    var t = localStorage.getItem('fieldkit-theme');
+                    var sys = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (t === 'dark' || (!t && sys) || (t === 'system' && sys)) {
+                      document.documentElement.classList.add('dark');
+                    }
+                  } catch(e) {}
+                })();
+              `,
+            }}
+          />
+        </head>
         <body>
           <ServiceWorkerRegistration />
           <InstallPrompt />
