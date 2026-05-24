@@ -330,7 +330,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <button
                       onClick={() => {
-                        const exportData: Record<string, unknown> = { exportedAt: new Date().toISOString(), version: '1.0.0' }
+                        const exportData: Record<string, unknown> = { exportedAt: new Date().toISOString(), version: '0.17' }
                         for (let i = 0; i < localStorage.length; i++) {
                           const key = localStorage.key(i)
                           if (key && key.startsWith('fieldkit')) {
@@ -398,7 +398,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </div>
                   </div>
                   <div className="bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
-                    <AboutRow label="Version" value="1.0.0" />
+                    <AboutRow label="Version" value="0.17" />
                     <AboutRow label="Platform" value="Web / PWA" />
                     <AboutRow label="Stack" value="Next.js · Cloudflare" />
                     <AboutRow label="Year" value="2026" last />
