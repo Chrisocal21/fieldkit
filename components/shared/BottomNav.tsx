@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { UserButton } from '@clerk/nextjs'
 import SettingsModal from './SettingsModal'
 
 const primaryNavItems = [
@@ -171,7 +172,12 @@ export default function BottomNav() {
                 </button>
               )
             })}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2 space-y-1">
+              {/* Profile / Account */}
+              <div className="flex items-center gap-3 px-4 py-3">
+                <UserButton afterSignOutUrl="/sign-in" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Account</span>
+              </div>
               <button
                 onClick={() => {
                   setIsMoreMenuOpen(false)
