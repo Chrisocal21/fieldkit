@@ -208,12 +208,6 @@ export default function BrandingStudioPage() {
             <QRCodeGeneratorModal isOpen onClose={() => setActiveTool('quote-layout')} />
           </div>
         )
-      case 'documents':
-        return (
-          <div className="h-full overflow-auto">
-            <DocumentStyleEditor />
-          </div>
-        )
       default:
         return null
     }
