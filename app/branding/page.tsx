@@ -123,14 +123,8 @@ export default function BrandingStudioPage() {
             <QRCodeGeneratorModal isOpen onClose={() => setActiveTool('identity')} />
           </div>
         )
-        return (
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-2xl mb-2">🚧</p>
-              <p className="text-slate-400">Coming Soon</p>
-            </div>
-          </div>
-        )
+      default:
+        return null
     }
   }
 

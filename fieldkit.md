@@ -4,7 +4,9 @@
 **Stack:** Next.js 14 · Cloudflare Workers + D1 · Tailwind CSS · Zustand · Clerk Auth · PWA  
 **Deployment:** Vercel (frontend) · Cloudflare Workers + D1 (backend + DB)  
 **Live Domain:** `get-fieldkit.com`  
-**Latest Commit:** `c82d2b9` on `main`
+**Latest Commit:** `bc6281d` on `main`  
+**Roadmap:** See [ROADMAP.md](./ROADMAP.md) for all remaining bugs and planned features.
+**Roadmap:** See [ROADMAP.md](./ROADMAP.md) for all remaining work, bugs, and planned features.
 
 ---
 
@@ -1257,82 +1259,34 @@ Beyond the original four-module v1 scope, the following features have been fully
 
 ---
 
-## 9.5 Potential Future Enhancements
+## 9.5 Remaining Work & Future Enhancements
 
-These features would extend FIELDKIT's capabilities beyond the current production build. Phases 1–8 are complete; the below represents Phase 9+ additive work.
+All remaining bugs, polish items, and planned features are tracked in **[ROADMAP.md](./ROADMAP.md)**.
 
-### Priority: High
+**Summary of open items:**
 
-#### Photo & File Attachments
-Attach before/after photos and documents to jobs.
-
-- Before/after photo gallery per job
-- Upload files: contracts, permits, drawings, receipts
-- Attach visual mockups to quotes
-- Photo storage via Cloudflare R2
-- Max file size limits (5MB per photo, 10MB per document)
-- Thumbnail generation for photos
-- Grid view for photo galleries
-
-#### Job Templates
-Speed up quote creation for common services.
-
-- Save job types as templates (e.g., "Standard Room Paint")
-- Pre-fill quote line items from template
-- Clone template to create new job with pre-filled quote
-- Use cases: Standard install jobs, common service calls, package deals
-
-#### Reports & Analytics
-Business intelligence beyond the dashboard.
-
-- Revenue by month/quarter/year
-- Profit margins over time (revenue - materials - expenses - labor)
-- Top performing services
-- Client lifetime value rankings
-- Labor efficiency: hours logged vs estimated
-- Export reports to CSV/PDF
-
-#### Email Sending
-Send quotes directly from the app.
-
-- Send quote PDF as email attachment from FIELDKIT
-- Custom email template using branding settings
-- Quote follow-up reminders for \"Sent\" status quotes
-- Requires: Cloudflare Email Workers or SendGrid/Resend integration
-
-### Priority: Medium
-
-#### `rounding_adjustment` in D1
-The `rounding_adjustment` field on quotes is currently localStorage-only (not persisted to D1). To fix:
-```sql
-ALTER TABLE quotes ADD COLUMN rounding_adjustment REAL NOT NULL DEFAULT 0;
-```
-Update worker insert/update queries to include this field.
-
-#### Notifications & Reminders
-- Upcoming job due dates (24hr, 3-day, 1-week)
-- Quote follow-ups for "Sent" quotes without response
-- Overdue invoice alerts
-- Quote expiry warnings
-- Browser notifications (PWA)
-
-#### Recurring Jobs
-- Define job recurrence: weekly, monthly, quarterly
-- Auto-create jobs on schedule
-- Use cases: Monthly maintenance, seasonal services, contracts
-
-### Priority: Low (Nice to Have)
-
-#### Activity Log & Audit Trail
-- Who changed what and when on jobs
-- Status change history, quote revision tracking
-- Filter by team member or date range
-
-#### Client Portal (Self-Service)
-- Unique client login per client
-- View assigned jobs and their status
-- Approve quotes (e-signature)
-- Out of scope for current version — requires dedicated auth system
+| Priority | Item |
+|---|---|
+| 🔴 Bug | Branding Studio — AssetGeneratorPanel still uses emoji icons |
+| 🔴 Bug | BrandingModal — "Export" tab is a Coming Soon stub |
+| 🔴 Bug | Email Signature — social icons use shields.io (fragile external URLs) |
+| 🔴 Bug | Letterhead + Social generators — no Download/Print button wired |
+| 🟡 High | PDF generator ignores branding preset (hardcoded colors/logo/fonts) |
+| 🟡 High | D1 schema missing `rounding_adjustment` column on quotes table |
+| 🟡 High | Service worker offline caching — untested |
+| 🟡 High | Dark mode — full QA pass needed |
+| 🟢 Medium | Invoices page not in sidebar nav |
+| 🟢 Medium | Quote expiry date never shown as expired/warning |
+| 🟢 Medium | Global Search doesn't include inventory items |
+| 🔵 Planned | Job Templates |
+| 🔵 Planned | Photo & File Attachments (Cloudflare R2) |
+| 🔵 Planned | Reports & Analytics page |
+| 🔵 Planned | Email sending (Resend / Cloudflare Email Workers) |
+| 🔵 Planned | Recurring Jobs |
+| 🔵 Planned | Push Notifications |
+| 🔵 Planned | Team Sharing / Multi-User (Clerk Organizations) |
+| 🔵 Planned | Client Portal (token-based read-only access) |
+| 🔵 Planned | Mobile App Wrapper (Capacitor) |
 
 ---
 
@@ -1370,7 +1324,7 @@ Update worker insert/update queries to include this field.
 >
 > This document is the single source of truth. Follow the data model, API routes, file structure, and build phases exactly as specified. Do not add features beyond what is described. Do not use emojis anywhere in the UI — SVG icons only (Heroicons or Lucide). Mobile-first on every component. Ask before making architectural decisions not covered in this document.
 >
-> **Current state (v3.0 — feature-complete):** All frontend modules complete. Backend (Cloudflare Workers + D1) live at `https://fieldkit-api.recipeer-cbv.workers.dev`. Clerk production auth live at `get-fieldkit.com`. All stores use `userScopedStorage` (localStorage namespaced by Clerk `userId`). Public quote share endpoint live. Zero native `alert()`/`confirm()` calls — all destructive actions use double-tap confirm pattern. Zero TypeScript errors. Latest commit: `c82d2b9`.
+> **Current state (v3.0 — feature-complete):** All frontend modules complete. Backend (Cloudflare Workers + D1) live at `https://fieldkit-api.recipeer-cbv.workers.dev`. Clerk production auth live at `get-fieldkit.com`. All stores use `userScopedStorage` (localStorage namespaced by Clerk `userId`). Public quote share endpoint live. Zero native `alert()`/`confirm()` calls — all destructive actions use double-tap confirm pattern. Zero TypeScript errors. Latest commit: `bc6281d`. See [ROADMAP.md](./ROADMAP.md) for remaining work.
 >
 > **Standard patterns in use:**
 > - **Double-tap confirm:** `const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)`. First click sets state + 3s timeout; second click executes. Button shows "Confirm?" in `bg-red-500 text-white` on first click.
