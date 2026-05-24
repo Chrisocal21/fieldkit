@@ -9,7 +9,7 @@ import QuotePreview from '@/components/quotes/QuotePreview'
 import QuoteForm from '@/components/quotes/QuoteForm'
 import { generateQuotePDF } from '@/lib/pdf'
 
-type FilterTab = 'all' | 'unpaid' | 'paid'
+type FilterTab = 'all' | 'unpaid' | 'overdue' | 'paid'
 
 function calcQuoteTotal(quote: Quote): number {
   const regular = quote.lineItems.filter(i => i.type !== 'discount' && i.type !== 'deposit')
@@ -49,6 +49,7 @@ export default function InvoicesPage() {
       amountPaid: number
       balance: number
       isPaid: boolean
+      isOverdue: boolean
     }> = []
 
     for (const job of jobs) {
@@ -71,6 +72,7 @@ export default function InvoicesPage() {
           amountPaid,
           balance,
           isPaid: amountPaid >= total - 0.01,
+          isOverdue: inv?.status === 'Overdue',
         })
       }
     }
@@ -82,12 +84,14 @@ export default function InvoicesPage() {
   const filtered = useMemo(() => {
     if (filter === 'paid') return billableRows.filter(r => r.isPaid)
     if (filter === 'unpaid') return billableRows.filter(r => !r.isPaid)
+    if (filter === 'overdue') return billableRows.filter(r => r.isOverdue)
     return billableRows
   }, [billableRows, filter])
 
   const totalOutstanding = billableRows.filter(r => !r.isPaid).reduce((s, r) => s + r.balance, 0)
   const totalPaid = billableRows.filter(r => r.isPaid).reduce((s, r) => s + r.total, 0)
   const unpaidCount = billableRows.filter(r => !r.isPaid).length
+  const overdueCount = billableRows.filter(r => r.isOverdue).length
 
   const handleMarkPaid = (row: typeof billableRows[0]) => {
     let inv = invoices.find(i => i.jobId === row.jobId && i.quoteId === row.quote.id)
@@ -166,7 +170,7 @@ export default function InvoicesPage() {
 
       {/* Filter tabs */}
       <div className="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
-        {(['all', 'unpaid', 'paid'] as FilterTab[]).map(tab => (
+        {(['all', 'unpaid', 'overdue', 'paid'] as FilterTab[]).map(tab => (
           <button
             key={tab}
             onClick={() => setFilter(tab)}
@@ -180,6 +184,11 @@ export default function InvoicesPage() {
             {tab === 'unpaid' && unpaidCount > 0 && (
               <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400">
                 {unpaidCount}
+              </span>
+            )}
+            {tab === 'overdue' && overdueCount > 0 && (
+              <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-xs bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400">
+                {overdueCount}
               </span>
             )}
           </button>

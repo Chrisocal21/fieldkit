@@ -178,6 +178,7 @@ export default function DashboardPage() {
     .slice(0, 5)
 
   return (
+    <>
     <div className="p-4 lg:p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
@@ -865,5 +866,6 @@ export default function DashboardPage() {
     </div>
 
     <CreateJobModal isOpen={isCreateJobOpen} onClose={() => setIsCreateJobOpen(false)} />
+    </>
   )
 }
