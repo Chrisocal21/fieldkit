@@ -650,14 +650,14 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={() => toggleWidget(id)}
-                  className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors flex-shrink-0 mt-0.5 focus:outline-none ${
+                  className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors flex-shrink-0 mt-0.5 focus:outline-none ${
                     widgets[id] ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                   role="switch"
                   aria-checked={widgets[id]}
                 >
                   <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                    widgets[id] ? 'translate-x-6' : 'translate-x-0.5'
+                    widgets[id] ? 'translate-x-8' : 'translate-x-0.5'
                   }`} />
                 </button>
               </div>
