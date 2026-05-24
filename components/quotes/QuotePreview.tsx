@@ -3,6 +3,7 @@
 import { Quote } from '@/store/quoteStore'
 import { useBrandingStore, BrandingPreset } from '@/store/brandingStore'
 import { useState } from 'react'
+import BrandingModal from '@/components/branding/BrandingModal'
 
 interface QuotePreviewProps {
   quote: Quote
@@ -14,6 +15,7 @@ export default function QuotePreview({ quote, presetId }: QuotePreviewProps) {
   const [selectedPresetId, setSelectedPresetId] = useState<string>(
     presetId || getDefaultPreset().id
   )
+  const [brandingOpen, setBrandingOpen] = useState(false)
   
   const preset = getPresetById(selectedPresetId) || getDefaultPreset()
   
@@ -31,15 +33,15 @@ export default function QuotePreview({ quote, presetId }: QuotePreviewProps) {
 
   return (
     <div className="space-y-4">
-      {/* Preset Selector */}
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      {/* Preset Selector + Customize Style */}
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">
           Preview Style:
         </label>
         <select
           value={selectedPresetId}
           onChange={(e) => setSelectedPresetId(e.target.value)}
-          className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+          className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
         >
           {presets.map((p) => (
             <option key={p.id} value={p.id}>
@@ -47,7 +49,19 @@ export default function QuotePreview({ quote, presetId }: QuotePreviewProps) {
             </option>
           ))}
         </select>
+        <button
+          onClick={() => setBrandingOpen(true)}
+          title="Customize branding style"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-800/40 transition-colors shrink-0"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+          </svg>
+          Customize
+        </button>
       </div>
+
+      <BrandingModal isOpen={brandingOpen} onClose={() => setBrandingOpen(false)} />
 
       {/* Document Preview */}
       <div
