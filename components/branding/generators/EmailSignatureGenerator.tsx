@@ -47,10 +47,10 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
         </tr>
         ${title ? `<tr><td style="padding-bottom: 8px; color: ${currentPreset.colors.textLight}; font-size: 13px;">${title}</td></tr>` : ''}
         ${currentPreset.businessName ? `<tr><td style="padding-bottom: 10px; font-weight: 600;">${currentPreset.businessName}</td></tr>` : ''}
-        ${email ? `<tr><td style="padding-bottom: 3px;"><a href="mailto:${email}" style="color: ${currentPreset.colors.text}; text-decoration: none;">📧 ${email}</a></td></tr>` : ''}
-        ${phone ? `<tr><td style="padding-bottom: 3px;"><a href="tel:${phone}" style="color: ${currentPreset.colors.text}; text-decoration: none;">📞 ${phone}</a></td></tr>` : ''}
-        ${website ? `<tr><td style="padding-bottom: 3px;"><a href="${website}" style="color: ${currentPreset.colors.primary}; text-decoration: none;">🌐 ${website.replace(/^https?:\/\//, '')}</a></td></tr>` : ''}
-        ${includeAddress && currentPreset.businessAddress ? `<tr><td style="padding-bottom: 3px; font-size: 12px; color: ${currentPreset.colors.textLight};">📍 ${currentPreset.businessAddress.replace(/\n/g, ', ')}</td></tr>` : ''}
+        ${email ? `<tr><td style="padding-bottom: 3px;"><a href="mailto:${email}" style="color: ${currentPreset.colors.text}; text-decoration: none;">${email}</a></td></tr>` : ''}
+        ${phone ? `<tr><td style="padding-bottom: 3px;"><a href="tel:${phone}" style="color: ${currentPreset.colors.text}; text-decoration: none;">${phone}</a></td></tr>` : ''}
+        ${website ? `<tr><td style="padding-bottom: 3px;"><a href="${website}" style="color: ${currentPreset.colors.primary}; text-decoration: none;">${website.replace(/^https?:\/\//, '')}</a></td></tr>` : ''}
+        ${includeAddress && currentPreset.businessAddress ? `<tr><td style="padding-bottom: 3px; font-size: 12px; color: ${currentPreset.colors.textLight};">${currentPreset.businessAddress.replace(/\n/g, ', ')}</td></tr>` : ''}
         ${includeSocial && (linkedIn || twitter) ? `
         <tr>
           <td style="padding-top: 10px;">
@@ -106,12 +106,12 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
               </div>
             )}
             <div className="text-sm space-y-1" style={{ color: currentPreset.colors.text }}>
-              {email && <div>📧 <a href={`mailto:${email}`} style={{ color: currentPreset.colors.text, textDecoration: 'none' }}>{email}</a></div>}
-              {phone && <div>📞 <a href={`tel:${phone}`} style={{ color: currentPreset.colors.text, textDecoration: 'none' }}>{phone}</a></div>}
-              {website && <div>🌐 <a href={website} style={{ color: currentPreset.colors.primary, textDecoration: 'none' }}>{website.replace(/^https?:\/\//, '')}</a></div>}
+              {email && <div><a href={`mailto:${email}`} style={{ color: currentPreset.colors.text, textDecoration: 'none' }}>{email}</a></div>}
+              {phone && <div><a href={`tel:${phone}`} style={{ color: currentPreset.colors.text, textDecoration: 'none' }}>{phone}</a></div>}
+              {website && <div><a href={website} style={{ color: currentPreset.colors.primary, textDecoration: 'none' }}>{website.replace(/^https?:\/\//, '')}</a></div>}
               {includeAddress && currentPreset.businessAddress && (
                 <div className="text-xs mt-2" style={{ color: currentPreset.colors.textLight }}>
-                  📍 {currentPreset.businessAddress.replace(/\n/g, ', ')}
+                  {currentPreset.businessAddress.replace(/\n/g, ', ')}
                 </div>
               )}
             </div>
@@ -157,8 +157,7 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
                 </svg>
               </button>
               <div>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <span>✉️</span>
+                <h2 className="text-lg font-bold text-white">
                   Email Signature
                 </h2>
               </div>

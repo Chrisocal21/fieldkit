@@ -6,7 +6,6 @@ import BrandIdentityEditor from '@/components/branding/BrandIdentityEditor'
 import ColorPaletteEditor from '@/components/branding/ColorPaletteEditor'
 import TypographyEditor from '@/components/branding/TypographyEditor'
 import EmailSignatureGenerator from '@/components/branding/generators/EmailSignatureGenerator'
-import SocialMediaGenerator from '@/components/branding/generators/SocialMediaGenerator'
 import LetterheadGenerator from '@/components/branding/generators/LetterheadGenerator'
 import BusinessCardGeneratorModal from '@/components/shared/BusinessCardGeneratorModal'
 import QRCodeGeneratorModal from '@/components/shared/QRCodeGeneratorModal'
@@ -63,26 +62,19 @@ function exportBrandKit(preset: BrandingPreset) {
 }
 
 type BrandingTool =
-  | 'quote-layout'
-  | 'invoice-layout'
+  | 'documents'
   | 'identity'
   | 'colors'
   | 'typography'
   | 'email-signature'
-  | 'social-media'
   | 'letterhead'
   | 'business-card'
   | 'qr-code'
 
 const toolIcons: Record<BrandingTool, React.ReactNode> = {
-  'quote-layout': (
+  'documents': (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-    </svg>
-  ),
-  'invoice-layout': (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
     </svg>
   ),
   'identity': (
@@ -105,11 +97,6 @@ const toolIcons: Record<BrandingTool, React.ReactNode> = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
     </svg>
   ),
-  'social-media': (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-    </svg>
-  ),
   'letterhead': (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -128,48 +115,34 @@ const toolIcons: Record<BrandingTool, React.ReactNode> = {
 }
 
 const toolList: { id: BrandingTool; name: string; category: string }[] = [
-  { id: 'quote-layout',    name: 'Quote Layout',    category: 'Documents' },
-  { id: 'invoice-layout',  name: 'Invoice Layout',  category: 'Documents' },
+  { id: 'documents',       name: 'Document Style',  category: 'Documents' },
   { id: 'identity',        name: 'Brand Identity',  category: 'Brand' },
   { id: 'colors',          name: 'Color Palette',   category: 'Brand' },
   { id: 'typography',      name: 'Typography',      category: 'Brand' },
-  { id: 'email-signature', name: 'Email Signature', category: 'Brand' },
-  { id: 'social-media',    name: 'Social Graphics', category: 'Brand' },
-  { id: 'letterhead',      name: 'Letterhead',      category: 'Brand' },
-  { id: 'business-card',   name: 'Business Card',   category: 'Brand' },
-  { id: 'qr-code',         name: 'QR Code',         category: 'Brand' },
+  { id: 'email-signature', name: 'Email Signature', category: 'Assets' },
+  { id: 'letterhead',      name: 'Letterhead',      category: 'Assets' },
+  { id: 'business-card',   name: 'Business Card',   category: 'Assets' },
+  { id: 'qr-code',         name: 'QR Code',         category: 'Assets' },
 ]
 
 export default function BrandingStudioPage() {
   const router = useRouter()
-  const [activeTool, setActiveTool] = useState<BrandingTool>('quote-layout')
+  const [activeTool, setActiveTool] = useState<BrandingTool>('documents')
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [applyFlash, setApplyFlash] = useState(false)
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
   const getDefaultPreset = useBrandingStore(state => state.getDefaultPreset)
   const sidebarCollapsed = useSettingsStore(s => s.sidebarCollapsed)
-  const [previewOpen, setPreviewOpen] = useState(false)
   const currentPreset = getDefaultPreset()
   const health = calcBrandHealth(currentPreset)
-
-  const handleApplyBrand = () => {
-    setApplyFlash(true)
-    setTimeout(() => setApplyFlash(false), 2000)
-  }
 
   const categories = Array.from(new Set(toolList.map(t => t.category)))
 
   const renderActiveTool = () => {
     switch (activeTool) {
-      case 'quote-layout':
+      case 'documents':
         return (
           <div className="h-full overflow-auto">
-            <DocumentStyleEditor mode="quote" />
-          </div>
-        )
-      case 'invoice-layout':
-        return (
-          <div className="h-full overflow-auto">
-            <DocumentStyleEditor mode="invoice" />
+            <DocumentStyleEditor />
           </div>
         )
       case 'identity':
@@ -191,21 +164,19 @@ export default function BrandingStudioPage() {
           </div>
         )
       case 'email-signature':
-        return <EmailSignatureGenerator onClose={() => setActiveTool('quote-layout')} isEmbedded />
-      case 'social-media':
-        return <SocialMediaGenerator onClose={() => setActiveTool('quote-layout')} isEmbedded />
+        return <EmailSignatureGenerator onClose={() => setActiveTool('documents')} isEmbedded />
       case 'letterhead':
-        return <LetterheadGenerator onClose={() => setActiveTool('quote-layout')} isEmbedded />
+        return <LetterheadGenerator onClose={() => setActiveTool('documents')} isEmbedded />
       case 'business-card':
         return (
           <div className="h-full overflow-auto">
-            <BusinessCardGeneratorModal isOpen onClose={() => setActiveTool('quote-layout')} />
+            <BusinessCardGeneratorModal isOpen onClose={() => setActiveTool('documents')} />
           </div>
         )
       case 'qr-code':
         return (
           <div className="h-full overflow-auto">
-            <QRCodeGeneratorModal isOpen onClose={() => setActiveTool('quote-layout')} />
+            <QRCodeGeneratorModal isOpen onClose={() => setActiveTool('documents')} />
           </div>
         )
       default:
@@ -252,23 +223,9 @@ export default function BrandingStudioPage() {
             Export Kit
           </button>
           <button
-            onClick={handleApplyBrand}
-            className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-              applyFlash
-                ? 'bg-emerald-600 text-white'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
-          >
-            {applyFlash ? (
-              <><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>Applied!</>
-            ) : (
-              <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Apply Brand</>
-            )}
-          </button>
-          <button
-            onClick={() => setPreviewOpen(v => !v)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-              previewOpen
+            onClick={() => setMobilePreviewOpen(v => !v)}
+            className={`lg:hidden flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+              mobilePreviewOpen
                 ? 'bg-slate-700 text-white ring-1 ring-slate-600'
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
             }`}
@@ -276,7 +233,7 @@ export default function BrandingStudioPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            {previewOpen ? 'Hide Preview' : 'Preview'}
+            {mobilePreviewOpen ? 'Hide' : 'Preview'}
           </button>
           <button
             onClick={() => router.back()}
@@ -297,21 +254,21 @@ export default function BrandingStudioPage() {
           className={`
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             fixed lg:relative top-16 bottom-0 lg:top-0 left-0 z-20
-            w-72 lg:w-80
+            w-64
             bg-slate-900/95 backdrop-blur-xl border-r border-slate-800
             transition-transform duration-300 ease-in-out
             flex flex-col
           `}
         >
           {/* Sidebar Header */}
-          <div className="flex-shrink-0 px-6 py-4 border-b border-slate-800">
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
+          <div className="flex-shrink-0 px-4 py-3 border-b border-slate-800">
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
               Tools
             </h2>
           </div>
 
           {/* Tools List */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          <div className="flex-1 overflow-y-auto p-3 space-y-4">
             {categories.map(category => (
               <div key={category}>
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-2">
@@ -326,10 +283,10 @@ export default function BrandingStudioPage() {
                         if (window.innerWidth < 1024) setSidebarOpen(false)
                       }}
                       className={`
-                        w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                        w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all
                         ${activeTool === tool.id
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                          ? 'bg-blue-600 text-white'
+                          : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                         }
                       `}
                     >
@@ -343,34 +300,21 @@ export default function BrandingStudioPage() {
           </div>
 
           {/* Sidebar Footer — Brand Health Score */}
-          <div className="flex-shrink-0 p-4 border-t border-slate-800 space-y-3">
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Brand Health</span>
-                <span className={`text-sm font-bold ${
-                  health.score >= 80 ? 'text-emerald-400' : health.score >= 50 ? 'text-yellow-400' : 'text-red-400'
-                }`}>{health.score}%</span>
-              </div>
-              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    health.score >= 80 ? 'bg-emerald-500' : health.score >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                  }`}
-                  style={{ width: `${health.score}%` }}
-                />
-              </div>
-              <div className="mt-2 grid grid-cols-3 gap-x-2 gap-y-0.5">
-                {health.checks.map(c => (
-                  <div key={c.label} className="flex items-center gap-1">
-                    <span className={`text-[10px] leading-none ${c.done ? 'text-emerald-400' : 'text-slate-600'}`}>
-                      {c.done ? '✓' : '○'}
-                    </span>
-                    <span className={`text-[10px] leading-tight ${c.done ? 'text-slate-400' : 'text-slate-600'}`}>{c.label}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="flex-shrink-0 p-3 border-t border-slate-800">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-slate-500">Brand Health</span>
+              <span className={`text-xs font-bold ${
+                health.score >= 80 ? 'text-emerald-400' : health.score >= 50 ? 'text-yellow-400' : 'text-red-400'
+              }`}>{health.score}%</span>
             </div>
-            <p className="text-xs text-slate-600">Changes saved automatically</p>
+            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  health.score >= 80 ? 'bg-emerald-500' : health.score >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                }`}
+                style={{ width: `${health.score}%` }}
+              />
+            </div>
           </div>
         </aside>
 
@@ -384,14 +328,14 @@ export default function BrandingStudioPage() {
 
         {/* Main Workspace */}
         <main className="flex-1 overflow-hidden bg-slate-950 flex relative">
-          <div className={`flex-1 overflow-hidden ${previewOpen ? 'hidden lg:block' : ''}`}>
+          <div className={`flex-1 overflow-hidden ${mobilePreviewOpen ? 'hidden' : ''} lg:block`}>
             {renderActiveTool()}
           </div>
-          {previewOpen && (
-            <div className="absolute inset-0 lg:relative lg:inset-auto lg:w-[420px] lg:flex-shrink-0 bg-slate-950">
-              <BrandDocPreview />
-            </div>
-          )}
+          <div className={`${
+            mobilePreviewOpen ? 'absolute inset-0' : 'hidden'
+          } lg:relative lg:inset-auto lg:block lg:w-[400px] lg:flex-shrink-0`}>
+            <BrandDocPreview />
+          </div>
         </main>
       </div>
     </div>

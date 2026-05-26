@@ -14,10 +14,21 @@
 
 import { createJSONStorage } from 'zustand/middleware'
 
-let _userId: string | null = null
+const CACHE_KEY = 'fieldkit-current-user'
+
+// Initialise synchronously from the cached userId so stores read the correct
+// scoped key immediately on page load — before Clerk has finished loading.
+let _userId: string | null =
+  typeof window !== 'undefined' ? (localStorage.getItem(CACHE_KEY) ?? null) : null
 
 export function setCurrentUserId(id: string | null) {
   _userId = id
+  if (typeof window === 'undefined') return
+  if (id) {
+    localStorage.setItem(CACHE_KEY, id)
+  } else {
+    localStorage.removeItem(CACHE_KEY)
+  }
 }
 
 export function getCurrentUserId() {

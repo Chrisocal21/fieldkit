@@ -26,18 +26,18 @@ export default function DocumentStyleEditor({ mode }: { mode?: 'quote' | 'invoic
     <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 max-w-2xl">
 
       {/* Mode title */}
-      {mode && (
-        <div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {mode === 'quote' ? 'Quote Layout' : 'Invoice Layout'}
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {mode === 'quote'
-              ? 'Customise how your quotes and estimates look when sent to clients.'
-              : 'Customise how your invoices and bills look when sent to clients.'}
-          </p>
-        </div>
-      )}
+      <div>
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+          {mode === 'quote' ? 'Quote Layout' : mode === 'invoice' ? 'Invoice Layout' : 'Document Style'}
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          {mode === 'quote'
+            ? 'Customise how your quotes and estimates look when sent to clients.'
+            : mode === 'invoice'
+            ? 'Customise how your invoices and bills look when sent to clients.'
+            : 'Customise how your quotes and invoices look when sent to clients.'}
+        </p>
+      </div>
 
       {/* Preset selector */}
       <div>

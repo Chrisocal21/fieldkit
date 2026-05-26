@@ -106,7 +106,7 @@ export default function BrandIdentityEditor() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 px-4 py-4 lg:px-6">
+    <div className="max-w-3xl mx-auto space-y-4 px-4 py-4 lg:px-6">
       {/* Header */}
       <div>
         <h3 className="text-xl font-semibold text-white mb-2">Brand Identity</h3>
@@ -116,8 +116,8 @@ export default function BrandIdentityEditor() {
       </div>
 
       {/* Logo Upload Section */}
-      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-6">
-        <label className="block text-sm font-medium text-slate-300 mb-3">
+      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-4">
+        <label className="block text-sm font-medium text-slate-300 mb-2">
           Company Logo
         </label>
         
@@ -125,7 +125,7 @@ export default function BrandIdentityEditor() {
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+          className={`border-2 border-dashed rounded-lg p-5 text-center transition-all ${
             isDragging
               ? 'border-blue-500 bg-blue-500/10'
               : 'border-slate-700 hover:border-slate-600'
@@ -157,7 +157,11 @@ export default function BrandIdentityEditor() {
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="text-5xl">🖼️</div>
+              <div className="flex justify-center">
+                <svg className="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
               <div>
                 <p className="text-slate-300 font-medium mb-1">
                   Drop your logo here or click to upload
@@ -190,8 +194,8 @@ export default function BrandIdentityEditor() {
 
       {/* Extracted Colors from Logo */}
       {extractedColors.length > 0 && (
-        <div className="bg-slate-900/50 backdrop-blur border border-emerald-800/50 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-3">
+        <div className="bg-slate-900/50 backdrop-blur border border-emerald-800/50 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
             <div>
               <h4 className="text-sm font-semibold text-white">Colors detected in your logo</h4>
               <p className="text-xs text-slate-400 mt-0.5">Apply these to your brand palette</p>
@@ -225,13 +229,13 @@ export default function BrandIdentityEditor() {
       )}
 
       {/* Company Information */}
-      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-6">
-        <h4 className="text-lg font-semibold text-white mb-4">Company Information</h4>
+      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-4">
+        <h4 className="text-sm font-semibold text-white mb-3">Company Information</h4>
         
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Business Name */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-xs font-medium text-slate-400 mb-1">
               Business Name <span className="text-red-400">*</span>
             </label>
             <input
@@ -240,13 +244,13 @@ export default function BrandIdentityEditor() {
               onChange={(e) => setBusinessName(e.target.value)}
               onBlur={handleSave}
               placeholder="Your business name"
-              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
             />
           </div>
 
           {/* Tagline */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-xs font-medium text-slate-400 mb-1">
               Tagline
             </label>
             <input
@@ -255,14 +259,14 @@ export default function BrandIdentityEditor() {
               onChange={(e) => setTagline(e.target.value)}
               onBlur={handleSave}
               placeholder="Your tagline or slogan"
-              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
             />
           </div>
 
           {/* Email & Phone */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-xs font-medium text-slate-400 mb-1">
                 Email
               </label>
               <input
@@ -270,12 +274,12 @@ export default function BrandIdentityEditor() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onBlur={handleSave}
-                placeholder="Business email address"
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                placeholder="Business email"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-xs font-medium text-slate-400 mb-1">
                 Phone
               </label>
               <input
@@ -283,15 +287,15 @@ export default function BrandIdentityEditor() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 onBlur={handleSave}
-                placeholder="Business phone number"
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                placeholder="Business phone"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
               />
             </div>
           </div>
 
           {/* Website */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-xs font-medium text-slate-400 mb-1">
               Website
             </label>
             <input
@@ -300,38 +304,38 @@ export default function BrandIdentityEditor() {
               onChange={(e) => setWebsite(e.target.value)}
               onBlur={handleSave}
               placeholder="https://yourbusiness.com"
-              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
             />
           </div>
 
           {/* Address */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Business Address
+            <label className="block text-xs font-medium text-slate-400 mb-1">
+              Address
             </label>
             <textarea
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               onBlur={handleSave}
               placeholder="Street address&#10;City, State ZIP"
-              rows={3}
-              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
+              rows={2}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all resize-none"
             />
           </div>
 
           {/* Brand Voice */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-slate-400 mb-1">
               Brand Voice
             </label>
-            <p className="text-xs text-slate-500 mb-2">Describe your brand's tone and personality — used to guide asset copy</p>
+            <p className="text-xs text-slate-600 mb-1">Tone and personality — used to guide asset copy</p>
             <textarea
               value={brandVoice}
               onChange={(e) => setBrandVoice(e.target.value)}
               onBlur={handleSave}
-              placeholder="e.g. Professional and approachable, focused on quality and reliability. We speak plainly and never oversell."
-              rows={3}
-              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all resize-none"
+              placeholder="e.g. Professional and approachable, focused on quality and reliability."
+              rows={2}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 outline-none transition-all resize-none"
             />
           </div>
         </div>
@@ -346,9 +350,9 @@ export default function BrandIdentityEditor() {
       </div>
 
       {/* Quick Preview */}
-      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-6">
-        <h4 className="text-lg font-semibold text-white mb-4">Brand Preview</h4>
-        <div className="bg-white p-8 rounded-lg">
+      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-4">
+        <h4 className="text-sm font-semibold text-white mb-3">Preview</h4>
+        <div className="bg-white p-5 rounded-lg">
           {currentPreset.logoUrl && (
             <img
               src={currentPreset.logoUrl}
@@ -362,10 +366,10 @@ export default function BrandIdentityEditor() {
           {tagline && (
             <p className="text-slate-600 mb-4">{tagline}</p>
           )}
-          <div className="text-sm text-slate-700 space-y-1">
-            {email && <div>✉️ {email}</div>}
-            {phone && <div>📞 {phone}</div>}
-            {website && <div>🌐 {website}</div>}
+          <div className="text-sm text-slate-500 space-y-0.5">
+            {email && <div>{email}</div>}
+            {phone && <div>{phone}</div>}
+            {website && <div>{website}</div>}
           </div>
         </div>
       </div>

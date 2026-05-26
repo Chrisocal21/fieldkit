@@ -24,19 +24,18 @@ const MOCK = {
   taxRate: 0.08,
 }
 
-type DocTab = 'quote' | 'invoice'
 
 export default function BrandDocPreview() {
-  const [tab, setTab] = useState<DocTab>('quote')
   const preset = useBrandingStore(s => s.getDefaultPreset())
+  const [docMode, setDocMode] = useState<'quote' | 'invoice'>('quote')
 
   const subtotal = MOCK.items.reduce((s, i) => s + i.qty * i.price, 0)
   const tax = subtotal * MOCK.taxRate
   const total = subtotal + tax
 
   const headerStyle = preset.headerStyle || 'standard'
-  const docLabel = tab === 'quote' ? (preset.quoteLabel || 'QUOTE') : (preset.invoiceLabel || 'INVOICE')
-  const docNum = tab === 'quote' ? MOCK.quoteNum : MOCK.invoiceNum
+  const docLabel = docMode === 'invoice' ? (preset.invoiceLabel || 'INVOICE') : (preset.quoteLabel || 'QUOTE')
+  const docNum = docMode === 'invoice' ? MOCK.invoiceNum : MOCK.quoteNum
   const fontFamily = preset.fontFamily || 'Helvetica'
   const fontClass = fontFamily === 'Georgia' || fontFamily === 'Times' ? 'font-serif' : fontFamily === 'Courier' ? 'font-mono' : 'font-sans'
   const c = preset.colors
@@ -51,19 +50,19 @@ export default function BrandDocPreview() {
           </svg>
           Live Preview
         </span>
-        <div className="flex rounded-md overflow-hidden border border-slate-700 text-xs">
+        <div className="flex items-center gap-0.5 bg-slate-800 rounded-lg p-0.5">
           <button
-            onClick={() => setTab('quote')}
-            className={`px-3 py-1 font-medium transition-colors ${tab === 'quote' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white bg-transparent'}`}
-          >
-            {preset.quoteLabel || 'Quote'}
-          </button>
+            onClick={() => setDocMode('quote')}
+            className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+              docMode === 'quote' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >Quote</button>
           <button
-            onClick={() => setTab('invoice')}
-            className={`px-3 py-1 font-medium transition-colors ${tab === 'invoice' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white bg-transparent'}`}
-          >
-            {preset.invoiceLabel || 'Invoice'}
-          </button>
+            onClick={() => setDocMode('invoice')}
+            className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+              docMode === 'invoice' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >Invoice</button>
         </div>
       </div>
 

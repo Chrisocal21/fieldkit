@@ -1,6 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { userScopedStorage } from '@/lib/userStorage'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
 export type WidgetId =
   | 'jobStatus'
@@ -62,7 +61,7 @@ export const useDashboardStore = create<DashboardState>()(
     }),
     {
       name: 'fieldkit-dashboard',
-      storage: userScopedStorage,
+      storage: createJSONStorage(() => localStorage),
     }
   )
 )

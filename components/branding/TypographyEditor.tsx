@@ -24,14 +24,14 @@ export default function TypographyEditor() {
   }
 
   const fontPairings: {
-    personality: string; desc: string; icon: string; fontFamily: FontFamily
+    personality: string; desc: string; fontFamily: FontFamily
     fontSize: { title: number; heading: number; body: number; small: number }
   }[] = [
-    { personality: 'Professional & Clean', desc: 'Trust-building, corporate, organized', icon: '🏢', fontFamily: 'Arial', fontSize: { title: 22, heading: 12, body: 10, small: 8 } },
-    { personality: 'Bold & Impactful',      desc: 'Confident, energetic, stands out',   icon: '⚡', fontFamily: 'Helvetica', fontSize: { title: 28, heading: 14, body: 11, small: 9 } },
-    { personality: 'Classic & Established', desc: 'Heritage, expertise, credibility',   icon: '📜', fontFamily: 'Times', fontSize: { title: 22, heading: 12, body: 10, small: 8 } },
-    { personality: 'Elegant & Premium',     desc: 'Sophisticated, refined, high-end',   icon: '✨', fontFamily: 'Georgia', fontSize: { title: 24, heading: 13, body: 10, small: 8 } },
-    { personality: 'Technical & Precise',   desc: 'Detail-oriented, modern, systematic',icon: '⚙️', fontFamily: 'Courier', fontSize: { title: 20, heading: 11, body: 9, small: 7 } },
+    { personality: 'Professional & Clean', desc: 'Trust-building, corporate, organized', fontFamily: 'Arial', fontSize: { title: 22, heading: 12, body: 10, small: 8 } },
+    { personality: 'Bold & Impactful',      desc: 'Confident, energetic, stands out',   fontFamily: 'Helvetica', fontSize: { title: 28, heading: 14, body: 11, small: 9 } },
+    { personality: 'Classic & Established', desc: 'Heritage, expertise, credibility',   fontFamily: 'Times', fontSize: { title: 22, heading: 12, body: 10, small: 8 } },
+    { personality: 'Elegant & Premium',     desc: 'Sophisticated, refined, high-end',   fontFamily: 'Georgia', fontSize: { title: 24, heading: 13, body: 10, small: 8 } },
+    { personality: 'Technical & Precise',   desc: 'Detail-oriented, modern, systematic',fontFamily: 'Courier', fontSize: { title: 20, heading: 11, body: 9, small: 7 } },
   ]
 
   const applyPairing = (p: typeof fontPairings[number]) => {
@@ -81,7 +81,7 @@ export default function TypographyEditor() {
   ]
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 px-4 py-4 lg:px-6">
+    <div className="max-w-3xl mx-auto space-y-4 px-4 py-4 lg:px-6">
       {/* Header */}
       <div>
         <h3 className="text-xl font-semibold text-white mb-2">Typography Settings</h3>
@@ -91,24 +91,22 @@ export default function TypographyEditor() {
       </div>
 
       {/* Font Personality Pairings */}
-      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-6">
-        <h4 className="text-lg font-semibold text-white mb-1">Brand Personality</h4>
-        <p className="text-sm text-slate-400 mb-4">Choose a style that matches your brand</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-4">
+        <h4 className="text-sm font-semibold text-white mb-3">Style Presets</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {fontPairings.map((p) => {
             const active = fontFamily === p.fontFamily
             return (
               <button
                 key={p.personality}
                 onClick={() => applyPairing(p)}
-                className={`text-left p-4 rounded-xl border-2 overflow-hidden transition-all ${
+                className={`text-left p-3 rounded-lg border-2 overflow-hidden transition-all ${
                   active
                     ? 'border-purple-500 bg-purple-500/10'
                     : 'border-slate-700 hover:border-slate-600 hover:bg-slate-800/50'
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl leading-none mt-0.5 flex-shrink-0">{p.icon}</span>
                   <div className="min-w-0">
                     <p className={`text-sm font-semibold ${active ? 'text-purple-300' : 'text-white'}`}>{p.personality}</p>
                     <p className="text-xs text-slate-500 mt-0.5">{p.desc}</p>
@@ -122,60 +120,52 @@ export default function TypographyEditor() {
       </div>
 
       {/* Font Family Selection */}
-      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-6">
-        <h4 className="text-lg font-semibold text-white mb-4">Font Family</h4>
-        <div className="space-y-2">
+      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-4">
+        <h4 className="text-sm font-semibold text-white mb-3">Font Family</h4>
+        <div className="space-y-1.5">
           {fontFamilies.map((font) => (
             <button
               key={font.value}
               onClick={() => handleFontFamilyChange(font.value)}
-              className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border-2 transition-all ${
                 fontFamily === font.value
                   ? 'border-blue-600 bg-blue-500/10'
                   : 'border-slate-700 hover:border-slate-600 hover:bg-slate-800/50'
               }`}
             >
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <div className="flex-shrink-0">
                   {fontFamily === font.value ? (
-                    <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center">
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center">
+                      <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
                   ) : (
-                    <div className="w-5 h-5 rounded-full border-2 border-slate-600" />
+                    <div className="w-4 h-4 rounded-full border-2 border-slate-600" />
                   )}
                 </div>
                 <div className="text-left">
-                  <div className={`text-lg font-medium text-white ${font.style}`}>
-                    {font.label}
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    {font.description}
-                  </div>
+                  <div className={`text-sm font-medium text-white ${font.style}`}>{font.label}</div>
+                  <div className="text-xs text-slate-500">{font.description}</div>
                 </div>
               </div>
-              <div className={`text-2xl text-slate-400 ${font.style}`}>
-                Aa
-              </div>
+              <div className={`text-lg text-slate-400 ${font.style}`}>Aa</div>
             </button>
           ))}
         </div>
       </div>
 
       {/* Font Size Scale */}
-      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-6">
-        <h4 className="text-lg font-semibold text-white mb-4">Font Size Scale</h4>
-        <div className="space-y-6">
+      <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-xl p-4">
+        <h4 className="text-sm font-semibold text-white mb-3">Size Scale</h4>
+        <div className="space-y-4">
           {fontSizes.map((size) => (
             <div key={size.key}>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1.5">
                 <div>
-                  <label className="text-sm font-medium text-slate-300">
-                    {size.label}
-                  </label>
-                  <p className="text-xs text-slate-500">{size.description}</p>
+                  <label className="text-sm font-medium text-slate-300">{size.label}</label>
+                  <p className="text-xs text-slate-600">{size.description}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-slate-400 text-sm font-mono">
