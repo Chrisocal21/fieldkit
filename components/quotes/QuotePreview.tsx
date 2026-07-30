@@ -214,8 +214,11 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
           </div>
         )}
 
-        {/* Business Info */}
-        {(preset.businessName || preset.businessAddress || preset.businessPhone || preset.businessEmail) && (
+        {/* Business Info — only for Standard headers; Banner and Accent Bar
+            headers already show business identity themselves, so this would
+            otherwise duplicate it. */}
+        {(!preset.headerStyle || preset.headerStyle === 'standard') &&
+          (preset.businessName || preset.businessAddress || preset.businessPhone || preset.businessEmail) && (
           <div className="mb-6">
             <h2
               className="text-sm font-semibold uppercase mb-2"
