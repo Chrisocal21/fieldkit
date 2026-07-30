@@ -11,16 +11,16 @@ function hexToRgb(hex: string): [number, number, number] {
     : [0, 0, 0]
 }
 
-export function generateQuotePDF(quote: Quote, presetId?: string) {
-  const preset = presetId 
-    ? useBrandingStore.getState().getPresetById(presetId) 
+export function generateQuotePDF(quote: Quote, presetId?: string, mode: 'quote' | 'invoice' = 'quote') {
+  const preset = presetId
+    ? useBrandingStore.getState().getPresetById(presetId)
     : useBrandingStore.getState().getDefaultPreset()
-  
+
   if (!preset) {
     throw new Error('No branding preset found')
   }
-  
-  generateDocumentPDF('quote', quote, preset)
+
+  generateDocumentPDF(mode, quote, preset)
 }
 
 export function generateInvoicePDF(invoice: Invoice, presetId?: string) {
@@ -72,7 +72,7 @@ function generateDocumentPDF(
   doc.setFontSize(preset.fontSize.title)
   doc.setFont('helvetica', 'bold')
   
-  const docTitle = type === 'quote' ? 'QUOTE' : 'INVOICE'
+  const docTitle = type === 'quote' ? (preset.quoteLabel || 'QUOTE') : (preset.invoiceLabel || 'INVOICE')
   const docNumber = type === 'quote' 
     ? (document as Quote).quoteNumber 
     : (document as Invoice).invoiceNumber

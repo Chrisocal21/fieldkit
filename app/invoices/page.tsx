@@ -311,7 +311,7 @@ export default function InvoicesPage() {
 
                   {/* Download PDF */}
                   <button
-                    onClick={() => generateQuotePDF(row.quote)}
+                    onClick={() => generateQuotePDF(row.quote, undefined, 'invoice')}
                     title="Download PDF"
                     className="p-1.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                   >
@@ -370,7 +370,7 @@ export default function InvoicesPage() {
                   {copiedId === previewQuote.id ? 'Copied!' : 'Copy Link'}
                 </button>
                 <button
-                  onClick={() => generateQuotePDF(previewQuote)}
+                  onClick={() => generateQuotePDF(previewQuote, undefined, 'invoice')}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -389,7 +389,7 @@ export default function InvoicesPage() {
               </div>
             </div>
             <div className="p-6 overflow-y-auto max-h-[70vh]">
-              <QuotePreview quote={previewQuote} />
+              <QuotePreview quote={previewQuote} mode="invoice" />
             </div>
           </div>
         </div>
