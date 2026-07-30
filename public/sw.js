@@ -1,8 +1,12 @@
 // FIELDKIT Service Worker - Offline Caching & PWA Support
 
-const CACHE_NAME = 'fieldkit-v2'
-const STATIC_CACHE_NAME = 'fieldkit-static-v2'
-const API_CACHE_NAME = 'fieldkit-api-v2'
+// Bumped to v3 to force existing installs to purge the v2 caches below —
+// those caches served the app shell cache-first with no revalidation, so a
+// device that had ever loaded the app kept running that exact cached build
+// forever, silently ignoring every subsequent deploy.
+const CACHE_NAME = 'fieldkit-v3'
+const STATIC_CACHE_NAME = 'fieldkit-static-v3'
+const API_CACHE_NAME = 'fieldkit-api-v3'
 const API_ORIGIN = 'https://fieldkit-api.recipeer-cbv.workers.dev'
 
 // Assets to cache immediately on install
@@ -75,6 +79,28 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
+  // Navigation (HTML page) requests: always prefer the network so a new
+  // deploy is picked up immediately. These URLs are stable across builds
+  // (unlike hashed JS/CSS chunks below), so cache-first here would mean a
+  // device that cached the app once never sees any later deploy again.
+  // Cache is only used as an offline fallback.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache))
+          }
+          return response
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
+    )
+    return
+  }
+
+  // Everything else same-origin (hashed /_next/static/ chunks, images, etc.)
+  // — content-hashed filenames change per build, so cache-first is safe and fast.
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -95,12 +121,7 @@ self.addEventListener('fetch', (event) => {
         })
 
         return response
-      }).catch(() => {
-        // If both cache and network fail, return offline page for navigation requests
-        if (request.mode === 'navigate') {
-          return caches.match('/')
-        }
-      })
+      }).catch(() => undefined)
     })
   )
 })
