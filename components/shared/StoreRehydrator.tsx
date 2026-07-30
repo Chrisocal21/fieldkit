@@ -16,6 +16,7 @@ import { useBrandingStore } from '@/store/brandingStore'
 import { useBusinessCardStore } from '@/store/businessCardStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useBoardSettingsStore } from '@/store/boardSettingsStore'
+import { useNoteStore } from '@/store/noteStore'
 import { syncWithCloud } from '@/lib/sync'
 
 function rehydrateAll() {
@@ -32,6 +33,7 @@ function rehydrateAll() {
   useBusinessCardStore.persist.rehydrate()
   useSettingsStore.persist.rehydrate()
   useBoardSettingsStore.persist.rehydrate()
+  useNoteStore.persist.rehydrate()
 }
 
 /**

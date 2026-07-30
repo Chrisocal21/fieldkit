@@ -167,6 +167,24 @@ CREATE TABLE IF NOT EXISTS time_entries (
   updated_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS note_folders (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS notes (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  folder_id TEXT,
+  title TEXT NOT NULL DEFAULT '',
+  body TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
 -- Indexes for fast per-user queries
 CREATE INDEX IF NOT EXISTS idx_jobs_user ON jobs(user_id);
 CREATE INDEX IF NOT EXISTS idx_quotes_user ON quotes(user_id);
@@ -183,3 +201,6 @@ CREATE INDEX IF NOT EXISTS idx_expenses_user ON expenses(user_id);
 CREATE INDEX IF NOT EXISTS idx_job_materials_job ON job_materials(job_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_job ON time_entries(job_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_user ON time_entries(user_id);
+CREATE INDEX IF NOT EXISTS idx_note_folders_user ON note_folders(user_id);
+CREATE INDEX IF NOT EXISTS idx_notes_user ON notes(user_id);
+CREATE INDEX IF NOT EXISTS idx_notes_folder ON notes(folder_id);

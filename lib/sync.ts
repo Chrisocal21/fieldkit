@@ -17,6 +17,7 @@ import { useInvoiceStore } from '@/store/invoiceStore'
 import { useMaterialCostStore } from '@/store/materialCostStore'
 import { useExpenseStore } from '@/store/expenseStore'
 import { useTimeEntryStore } from '@/store/timeEntryStore'
+import { useNoteStore } from '@/store/noteStore'
 
 function isSameOriginWorker(): boolean {
   const raw = (process.env.NEXT_PUBLIC_WORKER_URL ?? '').trim()
@@ -62,6 +63,8 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
   const localExpenses    = useExpenseStore.getState().expenses
   const localMaterials   = useMaterialCostStore.getState().jobMaterials
   const localEntries     = useTimeEntryStore.getState().entries
+  const localNoteFolders = useNoteStore.getState().folders
+  const localNotes       = useNoteStore.getState().notes
 
   let ok = true
   let reason: string | undefined
@@ -72,7 +75,7 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
   const attemptedPush: Record<string, number> = {}
 
   try {
-    const [jobs, clients, team, inventory, invoices, expenses, materials, timeEntries] =
+    const [jobs, clients, team, inventory, invoices, expenses, materials, timeEntries, noteFolders, notes] =
       await Promise.all([
         api.jobs.list(),
         api.clients.list(),
@@ -82,13 +85,15 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
         api.expenses.list(),
         api.materials.list(),
         api.timeEntries.list(),
+        api.noteFolders.list(),
+        api.notes.list(),
       ])
 
     // If every resource came back null, the worker call itself failed (network,
     // auth, or CORS) rather than the account simply having no data yet — don't
     // report success in that case, or devices will look "synced" while nothing
     // actually moved.
-    if ([jobs, clients, team, inventory, invoices, expenses, materials, timeEntries].every(r => r === null)) {
+    if ([jobs, clients, team, inventory, invoices, expenses, materials, timeEntries, noteFolders, notes].every(r => r === null)) {
       reason = await diagnoseSyncIssue() ?? 'Cloud requests all failed (network or authorization error) — see console for details'
       console.error(`[fieldkit:sync] syncWithCloud() aborted: ${reason}`)
       return { ok: false, pushed: {}, reason }
@@ -155,6 +160,20 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
     if (teResult) {
       if (teResult.merged.length) useTimeEntryStore.setState({ entries: teResult.merged })
       if (teResult.missing.length) { syncPayload.timeEntries = teResult.missing; attemptedPush.timeEntries = teResult.missing.length }
+    }
+
+    // ── Note folders ─────────────────────────────────────────────────────────
+    const noteFolderResult = mergeById(noteFolders, localNoteFolders)
+    if (noteFolderResult) {
+      if (noteFolderResult.merged.length) useNoteStore.setState({ folders: noteFolderResult.merged })
+      if (noteFolderResult.missing.length) { syncPayload.noteFolders = noteFolderResult.missing; attemptedPush.noteFolders = noteFolderResult.missing.length }
+    }
+
+    // ── Notes ────────────────────────────────────────────────────────────────
+    const noteResult = mergeById(notes, localNotes)
+    if (noteResult) {
+      if (noteResult.merged.length) useNoteStore.setState({ notes: noteResult.merged })
+      if (noteResult.missing.length) { syncPayload.notes = noteResult.missing; attemptedPush.notes = noteResult.missing.length }
     }
 
     // Push all missing local items in one batch — only report them as pushed

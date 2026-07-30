@@ -169,6 +169,22 @@ const api = {
     delete: (id: string) => request<{ ok: boolean }>('DELETE', `/api/time-entries/${id}`),
   },
 
+  // ── Note folders ────────────────────────────────────────────────────────────
+  noteFolders: {
+    list: () => request<any[]>('GET', '/api/note-folders'),
+    create: (data: any) => request<{ id: string }>('POST', '/api/note-folders', data),
+    update: (id: string, data: any) => request<{ ok: boolean }>('PATCH', `/api/note-folders/${id}`, data),
+    delete: (id: string) => request<{ ok: boolean }>('DELETE', `/api/note-folders/${id}`),
+  },
+
+  // ── Notes ───────────────────────────────────────────────────────────────────
+  notes: {
+    list: () => request<any[]>('GET', '/api/notes'),
+    create: (data: any) => request<{ id: string }>('POST', '/api/notes', data),
+    update: (id: string, data: any) => request<{ ok: boolean }>('PATCH', `/api/notes/${id}`, data),
+    delete: (id: string) => request<{ ok: boolean }>('DELETE', `/api/notes/${id}`),
+  },
+
   // ── Bulk sync (push localStorage data to D1 on first sign-in) ─────────────────
   sync: (payload: {
     jobs?: any[]
@@ -179,6 +195,8 @@ const api = {
     expenses?: any[]
     materials?: any[]
     timeEntries?: any[]
+    noteFolders?: any[]
+    notes?: any[]
   }) => request<{ ok: boolean; synced: Record<string, number> }>('POST', '/api/sync', payload),
 }
 

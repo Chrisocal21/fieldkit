@@ -635,6 +635,91 @@ export default {
       }
     }
 
+    // ── /api/note-folders ─────────────────────────────────────────────────────
+    if (path === '/api/note-folders' && method === 'GET') {
+      const rows = await env.DB.prepare(
+        'SELECT * FROM note_folders WHERE user_id = ? ORDER BY name ASC'
+      ).bind(userId).all()
+      return json((rows.results as any[]).map(r => noteFolderFromRow(r)))
+    }
+
+    if (path === '/api/note-folders' && method === 'POST') {
+      const body = await request.json() as any
+      const id = body.id ?? nanoid()
+      await env.DB.prepare(`
+        INSERT INTO note_folders (id, user_id, name, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(
+        id, userId, body.name ?? '',
+        body.createdAt ?? Date.now(), body.updatedAt ?? Date.now()
+      ).run()
+      return json({ id })
+    }
+
+    const noteFolderMatch = path.match(/^\/api\/note-folders\/([^/]+)$/)
+    if (noteFolderMatch) {
+      const folderId = noteFolderMatch[1]
+
+      if (method === 'PUT' || method === 'PATCH') {
+        const body = await request.json() as any
+        await env.DB.prepare(`
+          UPDATE note_folders SET name=?, updated_at=?
+          WHERE id = ? AND user_id = ?
+        `).bind(body.name ?? '', Date.now(), folderId, userId).run()
+        return json({ ok: true })
+      }
+
+      if (method === 'DELETE') {
+        // Unfile rather than delete the notes that were in this folder
+        await env.DB.prepare('UPDATE notes SET folder_id = NULL WHERE folder_id = ? AND user_id = ?').bind(folderId, userId).run()
+        await env.DB.prepare('DELETE FROM note_folders WHERE id = ? AND user_id = ?').bind(folderId, userId).run()
+        return json({ ok: true })
+      }
+    }
+
+    // ── /api/notes ────────────────────────────────────────────────────────────
+    if (path === '/api/notes' && method === 'GET') {
+      const rows = await env.DB.prepare(
+        'SELECT * FROM notes WHERE user_id = ? ORDER BY updated_at DESC'
+      ).bind(userId).all()
+      return json((rows.results as any[]).map(r => noteFromRow(r)))
+    }
+
+    if (path === '/api/notes' && method === 'POST') {
+      const body = await request.json() as any
+      const id = body.id ?? nanoid()
+      await env.DB.prepare(`
+        INSERT INTO notes (id, user_id, folder_id, title, body, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        id, userId, body.folderId ?? null, body.title ?? '', body.body ?? '',
+        body.createdAt ?? Date.now(), body.updatedAt ?? Date.now()
+      ).run()
+      return json({ id })
+    }
+
+    const noteMatch = path.match(/^\/api\/notes\/([^/]+)$/)
+    if (noteMatch) {
+      const noteId = noteMatch[1]
+
+      if (method === 'PUT' || method === 'PATCH') {
+        const body = await request.json() as any
+        await env.DB.prepare(`
+          UPDATE notes SET folder_id=?, title=?, body=?, updated_at=?
+          WHERE id = ? AND user_id = ?
+        `).bind(
+          body.folderId ?? null, body.title ?? '', body.body ?? '',
+          Date.now(), noteId, userId
+        ).run()
+        return json({ ok: true })
+      }
+
+      if (method === 'DELETE') {
+        await env.DB.prepare('DELETE FROM notes WHERE id = ? AND user_id = ?').bind(noteId, userId).run()
+        return json({ ok: true })
+      }
+    }
+
     // ── /api/sync (bulk push from localStorage on first login) ───────────────
     if (path === '/api/sync' && method === 'POST') {
       const body = await request.json() as any
@@ -801,6 +886,33 @@ export default {
         results.timeEntries = body.timeEntries.length
       }
 
+      // Note folders (before notes, since notes can reference them)
+      if (Array.isArray(body.noteFolders)) {
+        for (const f of body.noteFolders) {
+          await env.DB.prepare(`
+            INSERT OR IGNORE INTO note_folders (id, user_id, name, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+          `).bind(
+            f.id, userId, f.name ?? '', f.createdAt ?? Date.now(), f.updatedAt ?? Date.now()
+          ).run()
+        }
+        results.noteFolders = body.noteFolders.length
+      }
+
+      // Notes
+      if (Array.isArray(body.notes)) {
+        for (const n of body.notes) {
+          await env.DB.prepare(`
+            INSERT OR IGNORE INTO notes (id, user_id, folder_id, title, body, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            n.id, userId, n.folderId ?? null, n.title ?? '', n.body ?? '',
+            n.createdAt ?? Date.now(), n.updatedAt ?? Date.now()
+          ).run()
+        }
+        results.notes = body.notes.length
+      }
+
       return json({ ok: true, synced: results })
     }
 
@@ -914,6 +1026,20 @@ function inventoryItemFromRow(r: any) {
     id: r.id, name: r.name, category: r.category, unit: r.unit,
     currentStock: r.current_stock, lowStockThreshold: r.low_stock_threshold,
     notes: r.notes, createdAt: r.created_at, updatedAt: r.updated_at,
+  }
+}
+
+function noteFolderFromRow(r: any) {
+  return {
+    id: r.id, name: r.name,
+    createdAt: r.created_at, updatedAt: r.updated_at,
+  }
+}
+
+function noteFromRow(r: any) {
+  return {
+    id: r.id, folderId: r.folder_id, title: r.title, body: r.body,
+    createdAt: r.created_at, updatedAt: r.updated_at,
   }
 }
 
