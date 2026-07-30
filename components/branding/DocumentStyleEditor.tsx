@@ -4,10 +4,11 @@ import { useState } from 'react'
 import { useBrandingStore, DocumentHeaderStyle, BrandingPreset } from '@/store/brandingStore'
 
 export default function DocumentStyleEditor({ mode }: { mode?: 'quote' | 'invoice' }) {
-  const { presets, getDefaultPreset, updatePreset } = useBrandingStore()
+  const { presets, getDefaultPreset, updatePreset, setDefaultPreset } = useBrandingStore()
   const defaultPreset = getDefaultPreset()
   const [selectedId, setSelectedId] = useState(defaultPreset.id)
   const preset = presets.find((p) => p.id === selectedId) || defaultPreset
+  const isEditingDefault = preset.id === defaultPreset.id
 
   const update = (updates: Partial<BrandingPreset>) => updatePreset(selectedId, updates)
 
@@ -42,17 +43,34 @@ export default function DocumentStyleEditor({ mode }: { mode?: 'quote' | 'invoic
       {/* Preset selector */}
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Editing Preset</label>
-        <select
-          value={selectedId}
-          onChange={(e) => setSelectedId(e.target.value)}
-          className={inputCls}
-        >
-          {presets.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name} {p.isDefault ? '(Default)' : ''}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedId}
+            onChange={(e) => setSelectedId(e.target.value)}
+            className={inputCls}
+          >
+            {presets.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} {p.isDefault ? '(Default)' : ''}
+              </option>
+            ))}
+          </select>
+          {!isEditingDefault && (
+            <button
+              type="button"
+              onClick={() => setDefaultPreset(selectedId)}
+              className="flex-shrink-0 whitespace-nowrap px-3 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            >
+              Use on Quotes &amp; Invoices
+            </button>
+          )}
+        </div>
+        {!isEditingDefault && (
+          <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+            You&apos;re editing &quot;{preset.name}&quot;, not your active style. Changes here won&apos;t appear on real
+            quotes or invoices until you click &quot;Use on Quotes &amp; Invoices&quot; above — your documents currently use &quot;{defaultPreset.name}&quot;.
+          </p>
+        )}
       </div>
 
       {/* ── Document Labels ── */}
