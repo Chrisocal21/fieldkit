@@ -20,6 +20,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('appearance')
   const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle')
   const [syncResult, setSyncResult] = useState<Record<string, number>>({})
+  const [syncError, setSyncError] = useState<string | undefined>(undefined)
 
   // Appearance
   const theme = useSettingsStore((s) => s.theme)
@@ -336,9 +337,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       onClick={async () => {
                         setSyncState('syncing')
                         setSyncResult({})
+                        setSyncError(undefined)
                         const result = await syncWithCloud()
                         setSyncState(result.ok ? 'done' : 'error')
                         setSyncResult(result.pushed)
+                        setSyncError(result.reason)
                         setTimeout(() => setSyncState('idle'), 4000)
                       }}
                       disabled={syncState === 'syncing'}
@@ -370,7 +373,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             : syncState === 'done'
                             ? 'Everything is up to date'
                             : syncState === 'error'
-                            ? 'Could not reach cloud — check your connection'
+                            ? (syncError ?? 'Could not reach cloud — check your connection')
                             : 'Upload any local-only data to your cloud account'
                           }
                         </span>

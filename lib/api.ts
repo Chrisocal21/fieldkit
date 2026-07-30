@@ -4,16 +4,28 @@
  * so the app falls back to localStorage-only mode during local dev.
  */
 
-const _rawWorkerUrl = process.env.NEXT_PUBLIC_WORKER_URL ?? ''
+// .trim() guards against a stray trailing newline in the Vercel env var value
+// (seen in production — copy/paste artifact), which otherwise silently rides
+// along inside BASE_URL.
+const _rawWorkerUrl = (process.env.NEXT_PUBLIC_WORKER_URL ?? '').trim()
 // Treat the URL as unconfigured if it points to the same origin as the Next.js
 // app (i.e. the env var was accidentally set to the Vercel deployment URL).
 function resolvedBaseUrl(): string {
-  if (!_rawWorkerUrl) return ''
+  if (!_rawWorkerUrl) {
+    console.warn('[fieldkit:sync] NEXT_PUBLIC_WORKER_URL is not set — cloud sync is disabled')
+    return ''
+  }
   if (typeof window !== 'undefined') {
     try {
       const workerOrigin = new URL(_rawWorkerUrl).origin
-      if (workerOrigin === window.location.origin) return ''
+      if (workerOrigin === window.location.origin) {
+        console.warn(
+          `[fieldkit:sync] NEXT_PUBLIC_WORKER_URL ("${_rawWorkerUrl}") resolves to this app's own origin — treating cloud sync as unconfigured`
+        )
+        return ''
+      }
     } catch {
+      console.warn(`[fieldkit:sync] NEXT_PUBLIC_WORKER_URL ("${_rawWorkerUrl}") is not a valid URL — cloud sync is disabled`)
       return ''
     }
   }
@@ -21,16 +33,32 @@ function resolvedBaseUrl(): string {
 }
 const BASE_URL = resolvedBaseUrl()
 
+/** Returns a human-readable reason cloud sync can't run right now, or null if it should work. */
+export async function diagnoseSyncIssue(): Promise<string | null> {
+  if (!BASE_URL) return 'Cloud worker URL is not configured for this deployment'
+  if (typeof window === 'undefined') return null
+  const clerk = (window as any).Clerk
+  if (!clerk) return 'Clerk has not loaded yet'
+  const token = await clerk.session?.getToken().catch(() => null)
+  if (!token) return 'No active Clerk session token — user may not be signed in'
+  return null
+}
+
 async function getToken(): Promise<string | null> {
   try {
     // Clerk exposes the session token on the window via the Clerk JS SDK.
     // __clerk_db_jwt is available after ClerkProvider mounts.
     if (typeof window === 'undefined') return null
     const clerk = (window as any).Clerk
-    if (!clerk) return null
+    if (!clerk) {
+      console.warn('[fieldkit:sync] window.Clerk is not available — cannot attach auth token to cloud request')
+      return null
+    }
     const token = await clerk.session?.getToken()
+    if (!token) console.warn('[fieldkit:sync] Clerk session has no token — request will go out unauthenticated')
     return token ?? null
-  } catch {
+  } catch (e) {
+    console.error('[fieldkit:sync] Failed to get Clerk token', e)
     return null
   }
 }
@@ -51,9 +79,13 @@ async function request<T>(
       },
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     })
-    if (!res.ok) return null
+    if (!res.ok) {
+      console.error(`[fieldkit:sync] ${method} ${path} failed: HTTP ${res.status}`)
+      return null
+    }
     return res.json() as Promise<T>
-  } catch {
+  } catch (e) {
+    console.error(`[fieldkit:sync] ${method} ${path} threw`, e)
     return null
   }
 }

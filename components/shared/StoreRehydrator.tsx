@@ -54,7 +54,9 @@ export default function StoreRehydrator() {
 
     if (userId) {
       // Sync with Cloudflare D1 after local rehydration
-      syncWithCloud()
+      syncWithCloud().then((result) => {
+        if (!result.ok) console.warn(`[fieldkit:sync] Post-login sync failed: ${result.reason ?? 'unknown reason'}`)
+      })
     }
   }, [userId, isLoaded])
 

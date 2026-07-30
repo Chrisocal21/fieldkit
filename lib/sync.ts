@@ -8,7 +8,7 @@
  *     and any local items not found in D1 are pushed up (new items created offline).
  */
 
-import api from '@/lib/api'
+import api, { diagnoseSyncIssue } from '@/lib/api'
 import { useJobStore } from '@/store/jobStore'
 import { useClientStore } from '@/store/clientStore'
 import { useTeamStore } from '@/store/teamStore'
@@ -19,7 +19,7 @@ import { useExpenseStore } from '@/store/expenseStore'
 import { useTimeEntryStore } from '@/store/timeEntryStore'
 
 function isSameOriginWorker(): boolean {
-  const raw = process.env.NEXT_PUBLIC_WORKER_URL ?? ''
+  const raw = (process.env.NEXT_PUBLIC_WORKER_URL ?? '').trim()
   if (!raw) return true
   try {
     return new URL(raw).origin === window.location.origin
@@ -42,9 +42,14 @@ function mergeById<T extends { id: string }>(
   return { merged: [...d1, ...missing], missing }
 }
 
-export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<string, number> }> {
-  if (typeof window === 'undefined' || isSameOriginWorker()) {
+export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<string, number>; reason?: string }> {
+  if (typeof window === 'undefined') {
     return { ok: false, pushed: {} }
+  }
+  if (isSameOriginWorker()) {
+    const reason = await diagnoseSyncIssue() ?? 'Cloud worker URL is not configured for this deployment'
+    console.warn(`[fieldkit:sync] syncWithCloud() skipped: ${reason}`)
+    return { ok: false, pushed: {}, reason }
   }
 
   // Snapshot local stores BEFORE any cloud overwrites
@@ -59,6 +64,7 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
   const localEntries     = useTimeEntryStore.getState().entries
 
   let ok = true
+  let reason: string | undefined
   const pushed: Record<string, number> = {}
 
   try {
@@ -73,6 +79,16 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
         api.materials.list(),
         api.timeEntries.list(),
       ])
+
+    // If every resource came back null, the worker call itself failed (network,
+    // auth, or CORS) rather than the account simply having no data yet — don't
+    // report success in that case, or devices will look "synced" while nothing
+    // actually moved.
+    if ([jobs, clients, team, inventory, invoices, expenses, materials, timeEntries].every(r => r === null)) {
+      reason = await diagnoseSyncIssue() ?? 'Cloud requests all failed (network or authorization error) — see console for details'
+      console.error(`[fieldkit:sync] syncWithCloud() aborted: ${reason}`)
+      return { ok: false, pushed: {}, reason }
+    }
 
     const syncPayload: Parameters<typeof api.sync>[0] = {}
 
@@ -141,9 +157,11 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
     if (Object.keys(syncPayload).length > 0) {
       await api.sync(syncPayload)
     }
-  } catch {
+  } catch (e) {
+    console.error('[fieldkit:sync] syncWithCloud() threw', e)
     ok = false
+    reason = e instanceof Error ? e.message : 'Unknown sync error — see console for details'
   }
 
-  return { ok, pushed }
+  return { ok, pushed, reason }
 }
