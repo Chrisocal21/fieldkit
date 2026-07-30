@@ -374,7 +374,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             ? 'Everything is up to date'
                             : syncState === 'error'
                             ? (syncError ?? 'Could not reach cloud — check your connection')
-                            : 'Upload any local-only data to your cloud account'
+                            : 'Pulls the latest from the cloud and uploads any local changes (this also happens automatically in the background)'
                           }
                         </span>
                       </span>

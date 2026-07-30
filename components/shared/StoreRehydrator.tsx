@@ -60,5 +60,38 @@ export default function StoreRehydrator() {
     }
   }, [userId, isLoaded])
 
+  // Keep devices converged without requiring a manual "Sync to Cloud" tap:
+  // re-sync whenever the app regains focus/visibility (switching back from
+  // another app/tab, waking the laptop, reopening the PWA) and on a background
+  // interval while it stays open and signed in.
+  useEffect(() => {
+    if (!userId) return
+
+    let syncing = false
+    const runSync = () => {
+      if (syncing) return
+      syncing = true
+      syncWithCloud()
+        .then((result) => {
+          if (!result.ok) console.warn(`[fieldkit:sync] Background sync failed: ${result.reason ?? 'unknown reason'}`)
+        })
+        .finally(() => { syncing = false })
+    }
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') runSync()
+    }
+
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', runSync)
+    const interval = setInterval(runSync, 60_000)
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', runSync)
+      clearInterval(interval)
+    }
+  }, [userId])
+
   return null
 }
