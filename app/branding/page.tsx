@@ -333,7 +333,7 @@ export default function BrandingStudioPage() {
           </div>
           <div className={`${
             mobilePreviewOpen ? 'absolute inset-0' : 'hidden'
-          } lg:relative lg:inset-auto lg:block lg:w-[400px] lg:flex-shrink-0`}>
+          } lg:relative lg:inset-auto lg:block lg:w-[560px] xl:w-[720px] lg:flex-shrink-0`}>
             <BrandDocPreview />
           </div>
         </main>

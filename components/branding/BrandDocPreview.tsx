@@ -60,7 +60,7 @@ export default function BrandDocPreview() {
       {/* Scrollable document — renders the exact same component real quotes and
           invoices use, so this preview can never drift from what clients actually see. */}
       <div className="flex-1 overflow-auto p-4 bg-slate-900/30">
-        <div className="origin-top" style={{ zoom: 0.65 }}>
+        <div className="origin-top" style={{ zoom: 0.8 }}>
           <QuotePreview quote={MOCK_QUOTE} presetId={preset.id} mode={docMode} hideControls />
         </div>
       </div>
