@@ -65,7 +65,11 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
 
   let ok = true
   let reason: string | undefined
-  const pushed: Record<string, number> = {}
+  // Counts of local-only items found during merge — these are only "attempted"
+  // pushes until api.sync() actually confirms the write; reporting these as
+  // final `pushed` counts before that confirmation was the bug that made the
+  // UI say "pushed 1 job" even when the upload had failed.
+  const attemptedPush: Record<string, number> = {}
 
   try {
     const [jobs, clients, team, inventory, invoices, expenses, materials, timeEntries] =
@@ -96,21 +100,21 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
     const jobResult = mergeById(jobs, localJobs)
     if (jobResult) {
       if (jobResult.merged.length) useJobStore.setState({ jobs: jobResult.merged })
-      if (jobResult.missing.length) { syncPayload.jobs = jobResult.missing; pushed.jobs = jobResult.missing.length }
+      if (jobResult.missing.length) { syncPayload.jobs = jobResult.missing; attemptedPush.jobs = jobResult.missing.length }
     }
 
     // ── Clients ─────────────────────────────────────────────────────────────
     const clientResult = mergeById(clients, localClients)
     if (clientResult) {
       if (clientResult.merged.length) useClientStore.setState({ clients: clientResult.merged })
-      if (clientResult.missing.length) { syncPayload.clients = clientResult.missing; pushed.clients = clientResult.missing.length }
+      if (clientResult.missing.length) { syncPayload.clients = clientResult.missing; attemptedPush.clients = clientResult.missing.length }
     }
 
     // ── Team ────────────────────────────────────────────────────────────────
     const teamResult = mergeById(team, localTeam)
     if (teamResult) {
       if (teamResult.merged.length) useTeamStore.setState({ members: teamResult.merged })
-      if (teamResult.missing.length) { syncPayload.team = teamResult.missing; pushed.team = teamResult.missing.length }
+      if (teamResult.missing.length) { syncPayload.team = teamResult.missing; attemptedPush.team = teamResult.missing.length }
     }
 
     // ── Inventory ────────────────────────────────────────────────────────────
@@ -122,46 +126,58 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
       const mergedItems = itemResult?.merged ?? d1Items
       const mergedAdjs  = adjResult?.merged  ?? d1Adjs
       useInventoryStore.setState({ items: mergedItems, adjustments: mergedAdjs })
-      if (itemResult?.missing.length) { syncPayload.inventory = itemResult.missing; pushed.inventory = itemResult.missing.length }
+      if (itemResult?.missing.length) { syncPayload.inventory = itemResult.missing; attemptedPush.inventory = itemResult.missing.length }
     }
 
     // ── Invoices ─────────────────────────────────────────────────────────────
     const invResult = mergeById(invoices, localInvoices)
     if (invResult) {
       if (invResult.merged.length) useInvoiceStore.setState({ invoices: invResult.merged })
-      if (invResult.missing.length) { syncPayload.invoices = invResult.missing; pushed.invoices = invResult.missing.length }
+      if (invResult.missing.length) { syncPayload.invoices = invResult.missing; attemptedPush.invoices = invResult.missing.length }
     }
 
     // ── Expenses ─────────────────────────────────────────────────────────────
     const expResult = mergeById(expenses, localExpenses)
     if (expResult) {
       if (expResult.merged.length) useExpenseStore.setState({ expenses: expResult.merged })
-      if (expResult.missing.length) { syncPayload.expenses = expResult.missing; pushed.expenses = expResult.missing.length }
+      if (expResult.missing.length) { syncPayload.expenses = expResult.missing; attemptedPush.expenses = expResult.missing.length }
     }
 
     // ── Materials ────────────────────────────────────────────────────────────
     const matResult = mergeById(materials, localMaterials)
     if (matResult) {
       if (matResult.merged.length) useMaterialCostStore.setState({ jobMaterials: matResult.merged })
-      if (matResult.missing.length) { syncPayload.materials = matResult.missing; pushed.materials = matResult.missing.length }
+      if (matResult.missing.length) { syncPayload.materials = matResult.missing; attemptedPush.materials = matResult.missing.length }
     }
 
     // ── Time entries ─────────────────────────────────────────────────────────
     const teResult = mergeById(timeEntries, localEntries)
     if (teResult) {
       if (teResult.merged.length) useTimeEntryStore.setState({ entries: teResult.merged })
-      if (teResult.missing.length) { syncPayload.timeEntries = teResult.missing; pushed.timeEntries = teResult.missing.length }
+      if (teResult.missing.length) { syncPayload.timeEntries = teResult.missing; attemptedPush.timeEntries = teResult.missing.length }
     }
 
-    // Push all missing local items in one batch
+    // Push all missing local items in one batch — only report them as pushed
+    // once the server actually confirms the write.
+    let pushed: Record<string, number> = {}
     if (Object.keys(syncPayload).length > 0) {
-      await api.sync(syncPayload)
+      const syncResult = await api.sync(syncPayload)
+      if (syncResult?.ok) {
+        pushed = attemptedPush
+      } else {
+        ok = false
+        reason = 'Cloud rejected the push — see console for details'
+        console.error('[fieldkit:sync] api.sync() did not confirm the push', syncResult)
+      }
     }
+
+    return { ok, pushed, reason }
   } catch (e) {
     console.error('[fieldkit:sync] syncWithCloud() threw', e)
-    ok = false
-    reason = e instanceof Error ? e.message : 'Unknown sync error — see console for details'
+    return {
+      ok: false,
+      pushed: {},
+      reason: e instanceof Error ? e.message : 'Unknown sync error — see console for details',
+    }
   }
-
-  return { ok, pushed, reason }
 }
