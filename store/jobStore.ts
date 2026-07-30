@@ -30,7 +30,7 @@ export interface Job {
 
 interface JobState {
   jobs: Job[]
-  addJob: (job: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'archived' | 'quotes'>) => void
+  addJob: (job: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'archived' | 'quotes'>) => string
   updateJob: (id: string, updates: Partial<Job>) => void
   archiveJob: (id: string) => void
   getJobById: (id: string) => Job | undefined
@@ -51,7 +51,10 @@ export const useJobStore = create<JobState>()(
       addJob: (jobData) => {
         const newJob: Job = {
           ...jobData,
-          id: `JOB-${String(get().jobs.length + 1).padStart(4, '0')}`,
+          // Globally unique, not derived from local array length — a length-based
+          // sequence collides across devices (e.g. two devices both producing
+          // "JOB-0001"), and cloud sync then silently overwrites one with the other.
+          id: `JOB-${nanoid(8)}`,
           quotes: [],  // Initialize with empty quotes array
           archived: false,
           createdAt: Date.now(),
@@ -59,6 +62,7 @@ export const useJobStore = create<JobState>()(
         }
         set((state) => ({ jobs: [...state.jobs, newJob] }))
         api.jobs.create(newJob)
+        return newJob.id
       },
       
       updateJob: (id, updates) => {

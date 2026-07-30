@@ -138,9 +138,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
 
     if (!targetJobId) {
       // Auto-create a job using the client name as the title
-      const currentJobs = useJobStore.getState().jobs
-      targetJobId = `JOB-${String(currentJobs.length + 1).padStart(4, '0')}`
-      addJob({
+      targetJobId = addJob({
         title: formData.clientName.trim() || 'New Quote',
         clientId: selectedClientId || undefined,
         clientName: formData.clientName,
