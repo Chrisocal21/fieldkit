@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useBrandingStore, DocumentHeaderStyle, BrandingPreset } from '@/store/brandingStore'
 
-export default function DocumentStyleEditor({ mode }: { mode?: 'quote' | 'invoice' }) {
+export default function DocumentStyleEditor({ mode, onPreviewChange }: { mode?: 'quote' | 'invoice'; onPreviewChange?: (id: string | null) => void }) {
   const { presets, getDefaultPreset, updatePreset, setDefaultPreset } = useBrandingStore()
   const defaultPreset = getDefaultPreset()
   const [selectedId, setSelectedId] = useState(defaultPreset.id)
@@ -42,26 +42,33 @@ export default function DocumentStyleEditor({ mode }: { mode?: 'quote' | 'invoic
 
       {/* Preset selector */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Editing Preset</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Try a style preset</label>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Pick one to preview it live — click &ldquo;Use this style&rdquo; to apply it to your documents.</p>
         <div className="flex items-center gap-2">
           <select
             value={selectedId}
-            onChange={(e) => setSelectedId(e.target.value)}
+            onChange={(e) => {
+              setSelectedId(e.target.value)
+              onPreviewChange?.(e.target.value)
+            }}
             className={inputCls}
           >
             {presets.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} {p.isDefault ? '(Default)' : ''}
+                {p.name} {p.isDefault ? '(current)' : ''}
               </option>
             ))}
           </select>
           {!isEditingDefault && (
             <button
               type="button"
-              onClick={() => setDefaultPreset(selectedId)}
+              onClick={() => {
+                setDefaultPreset(selectedId)
+                onPreviewChange?.(null)
+              }}
               className="flex-shrink-0 whitespace-nowrap px-3 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
             >
-              Use on Quotes &amp; Invoices
+              Use this style
             </button>
           )}
         </div>

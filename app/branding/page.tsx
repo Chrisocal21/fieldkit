@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useBrandingStore } from '@/store/brandingStore'
 import BrandIdentityEditor from '@/components/branding/BrandIdentityEditor'
 import ColorPaletteEditor from '@/components/branding/ColorPaletteEditor'
@@ -115,21 +115,25 @@ const toolIcons: Record<BrandingTool, React.ReactNode> = {
 }
 
 const toolList: { id: BrandingTool; name: string; category: string }[] = [
+  { id: 'identity',        name: 'Business Info',   category: 'Your Brand' },
+  { id: 'colors',          name: 'Brand Colors',    category: 'Your Brand' },
+  { id: 'typography',      name: 'Font & Text',     category: 'Your Brand' },
   { id: 'documents',       name: 'Document Style',  category: 'Documents' },
-  { id: 'identity',        name: 'Brand Identity',  category: 'Brand' },
-  { id: 'colors',          name: 'Color Palette',   category: 'Brand' },
-  { id: 'typography',      name: 'Typography',      category: 'Brand' },
-  { id: 'email-signature', name: 'Email Signature', category: 'Assets' },
-  { id: 'letterhead',      name: 'Letterhead',      category: 'Assets' },
-  { id: 'business-card',   name: 'Business Card',   category: 'Assets' },
-  { id: 'qr-code',         name: 'QR Code',         category: 'Assets' },
+  { id: 'email-signature', name: 'Email Signature', category: 'Download' },
+  { id: 'letterhead',      name: 'Letterhead',      category: 'Download' },
+  { id: 'business-card',   name: 'Business Card',   category: 'Download' },
+  { id: 'qr-code',         name: 'QR Code',         category: 'Download' },
 ]
 
 export default function BrandingStudioPage() {
   const router = useRouter()
-  const [activeTool, setActiveTool] = useState<BrandingTool>('documents')
+  const [activeTool, setActiveTool] = useState<BrandingTool>('identity')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
+  const [previewPresetId, setPreviewPresetId] = useState<string | null>(null)
+  // Defer store-derived values so SSR and client render the same initial HTML
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const getDefaultPreset = useBrandingStore(state => state.getDefaultPreset)
   const sidebarCollapsed = useSettingsStore(s => s.sidebarCollapsed)
   const currentPreset = getDefaultPreset()
@@ -142,7 +146,7 @@ export default function BrandingStudioPage() {
       case 'documents':
         return (
           <div className="h-full overflow-auto">
-            <DocumentStyleEditor />
+            <DocumentStyleEditor onPreviewChange={setPreviewPresetId} />
           </div>
         )
       case 'identity':
@@ -208,7 +212,7 @@ export default function BrandingStudioPage() {
             <div>
               <h1 className="text-lg font-bold text-white">Branding Studio</h1>
               <p className="text-xs text-slate-400 hidden sm:block">
-                {currentPreset.businessName || 'Your Brand'}
+                {mounted ? (currentPreset.businessName || 'Your Brand') : 'Your Brand'}
               </p>
             </div>
           </div>
@@ -280,6 +284,7 @@ export default function BrandingStudioPage() {
                       key={tool.id}
                       onClick={() => {
                         setActiveTool(tool.id)
+                        if (tool.id !== 'documents') setPreviewPresetId(null)
                         if (window.innerWidth < 1024) setSidebarOpen(false)
                       }}
                       className={`
@@ -305,14 +310,14 @@ export default function BrandingStudioPage() {
               <span className="text-xs text-slate-500">Brand Health</span>
               <span className={`text-xs font-bold ${
                 health.score >= 80 ? 'text-emerald-400' : health.score >= 50 ? 'text-yellow-400' : 'text-red-400'
-              }`}>{health.score}%</span>
+              }`}>{mounted ? health.score : 0}%</span>
             </div>
             <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
                   health.score >= 80 ? 'bg-emerald-500' : health.score >= 50 ? 'bg-yellow-500' : 'bg-red-500'
                 }`}
-                style={{ width: `${health.score}%` }}
+                style={{ width: `${mounted ? health.score : 0}%` }}
               />
             </div>
           </div>
@@ -334,7 +339,7 @@ export default function BrandingStudioPage() {
           <div className={`${
             mobilePreviewOpen ? 'absolute inset-0' : 'hidden'
           } lg:relative lg:inset-auto lg:block lg:w-[560px] xl:w-[720px] lg:flex-shrink-0`}>
-            <BrandDocPreview />
+            <BrandDocPreview previewPresetId={previewPresetId} />
           </div>
         </main>
       </div>

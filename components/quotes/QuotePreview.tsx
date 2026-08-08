@@ -2,7 +2,7 @@
 
 import { Quote } from '@/store/quoteStore'
 import { useBrandingStore, BrandingPreset } from '@/store/brandingStore'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import BrandingModal from '@/components/branding/BrandingModal'
 
 interface QuotePreviewProps {
@@ -20,6 +20,11 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
     presetId || getDefaultPreset().id
   )
   const [brandingOpen, setBrandingOpen] = useState(false)
+
+  // Sync when the Branding Studio switches which preset to preview
+  useEffect(() => {
+    if (presetId) setSelectedPresetId(presetId)
+  }, [presetId])
 
   const preset = getPresetById(selectedPresetId) || getDefaultPreset()
   const docLabel = mode === 'invoice' ? (preset.invoiceLabel || 'INVOICE') : (preset.quoteLabel || 'QUOTE')

@@ -4,33 +4,14 @@ import { useState, useRef } from 'react'
 import { useBrandingStore } from '@/store/brandingStore'
 
 export default function BrandIdentityEditor() {
-  const { presets, getDefaultPreset, updatePreset, updateLogo, removeLogo } = useBrandingStore()
-  const currentPreset = getDefaultPreset()
-  
-  const [businessName, setBusinessName] = useState(currentPreset.businessName || '')
-  const [tagline, setTagline] = useState(currentPreset.footerText || '')
-  const [email, setEmail] = useState(currentPreset.businessEmail || '')
-  const [phone, setPhone] = useState(currentPreset.businessPhone || '')
-  const [website, setWebsite] = useState(currentPreset.businessWebsite || '')
-  const [address, setAddress] = useState(currentPreset.businessAddress || '')
-  const [brandVoice, setBrandVoice] = useState(currentPreset.brandVoice || '')
-  
+  const { updatePreset, updateLogo, removeLogo } = useBrandingStore()
+  // Read directly from the store so every keystroke updates the live preview
+  const currentPreset = useBrandingStore(s => s.presets.find(p => p.isDefault) ?? s.presets[0])
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [extractedColors, setExtractedColors] = useState<string[]>([])
   const [colorsApplied, setColorsApplied] = useState(false)
-
-  const handleSave = () => {
-    updatePreset(currentPreset.id, {
-      businessName,
-      footerText: tagline,
-      businessEmail: email,
-      businessPhone: phone,
-      businessWebsite: website,
-      businessAddress: address,
-      brandVoice,
-    })
-  }
 
   const extractColorsFromImage = (dataUrl: string) => {
     const img = new Image()
@@ -111,7 +92,7 @@ export default function BrandIdentityEditor() {
       <div>
         <h3 className="text-xl font-semibold text-white mb-2">Brand Identity</h3>
         <p className="text-slate-400 text-sm">
-          Define your company information and upload your logo
+          Fill in your company details — they'll appear on every quote and invoice you send.
         </p>
       </div>
 
@@ -238,11 +219,11 @@ export default function BrandIdentityEditor() {
             <label className="block text-xs font-medium text-slate-400 mb-1">
               Business Name <span className="text-red-400">*</span>
             </label>
+            <p className="text-xs text-slate-600 mb-1">Shows at the top of every document you send to clients</p>
             <input
               type="text"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              onBlur={handleSave}
+              value={currentPreset.businessName || ''}
+              onChange={(e) => updatePreset(currentPreset.id, { businessName: e.target.value })}
               placeholder="Your business name"
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
             />
@@ -253,12 +234,12 @@ export default function BrandIdentityEditor() {
             <label className="block text-xs font-medium text-slate-400 mb-1">
               Tagline
             </label>
+            <p className="text-xs text-slate-600 mb-1">A short phrase that sums up what you do — shown in document footers</p>
             <input
               type="text"
-              value={tagline}
-              onChange={(e) => setTagline(e.target.value)}
-              onBlur={handleSave}
-              placeholder="Your tagline or slogan"
+              value={currentPreset.footerText || ''}
+              onChange={(e) => updatePreset(currentPreset.id, { footerText: e.target.value })}
+              placeholder="e.g. Quality work, every time."
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
             />
           </div>
@@ -271,9 +252,8 @@ export default function BrandIdentityEditor() {
               </label>
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onBlur={handleSave}
+                value={currentPreset.businessEmail || ''}
+                onChange={(e) => updatePreset(currentPreset.id, { businessEmail: e.target.value })}
                 placeholder="Business email"
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
               />
@@ -284,9 +264,8 @@ export default function BrandIdentityEditor() {
               </label>
               <input
                 type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                onBlur={handleSave}
+                value={currentPreset.businessPhone || ''}
+                onChange={(e) => updatePreset(currentPreset.id, { businessPhone: e.target.value })}
                 placeholder="Business phone"
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
               />
@@ -300,9 +279,8 @@ export default function BrandIdentityEditor() {
             </label>
             <input
               type="url"
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-              onBlur={handleSave}
+              value={currentPreset.businessWebsite || ''}
+              onChange={(e) => updatePreset(currentPreset.id, { businessWebsite: e.target.value })}
               placeholder="https://yourbusiness.com"
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
             />
@@ -314,9 +292,8 @@ export default function BrandIdentityEditor() {
               Address
             </label>
             <textarea
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              onBlur={handleSave}
+              value={currentPreset.businessAddress || ''}
+              onChange={(e) => updatePreset(currentPreset.id, { businessAddress: e.target.value })}
               placeholder="Street address&#10;City, State ZIP"
               rows={2}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all resize-none"
@@ -326,13 +303,12 @@ export default function BrandIdentityEditor() {
           {/* Brand Voice */}
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">
-              Brand Voice
+              Brand Description
             </label>
-            <p className="text-xs text-slate-600 mb-1">Tone and personality — used to guide asset copy</p>
+            <p className="text-xs text-slate-600 mb-1">How would you describe your business in a few words? e.g. "Reliable, affordable, family-owned plumbing"</p>
             <textarea
-              value={brandVoice}
-              onChange={(e) => setBrandVoice(e.target.value)}
-              onBlur={handleSave}
+              value={currentPreset.brandVoice || ''}
+              onChange={(e) => updatePreset(currentPreset.id, { brandVoice: e.target.value })}
               placeholder="e.g. Professional and approachable, focused on quality and reliability."
               rows={2}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 outline-none transition-all resize-none"
@@ -361,15 +337,15 @@ export default function BrandIdentityEditor() {
             />
           )}
           <h3 className="text-2xl font-bold text-slate-900 mb-1">
-            {businessName || 'Your Business Name'}
+            {currentPreset.businessName || 'Your Business Name'}
           </h3>
-          {tagline && (
-            <p className="text-slate-600 mb-4">{tagline}</p>
+          {currentPreset.footerText && (
+            <p className="text-slate-600 mb-4">{currentPreset.footerText}</p>
           )}
           <div className="text-sm text-slate-500 space-y-0.5">
-            {email && <div>{email}</div>}
-            {phone && <div>{phone}</div>}
-            {website && <div>{website}</div>}
+            {currentPreset.businessEmail && <div>{currentPreset.businessEmail}</div>}
+            {currentPreset.businessPhone && <div>{currentPreset.businessPhone}</div>}
+            {currentPreset.businessWebsite && <div>{currentPreset.businessWebsite}</div>}
           </div>
         </div>
       </div>

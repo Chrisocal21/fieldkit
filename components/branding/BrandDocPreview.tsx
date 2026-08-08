@@ -27,8 +27,12 @@ const MOCK_QUOTE: Quote = {
   updatedAt: Date.now(),
 }
 
-export default function BrandDocPreview() {
-  const preset = useBrandingStore((s) => s.getDefaultPreset())
+export default function BrandDocPreview({ previewPresetId }: { previewPresetId?: string | null }) {
+  // When a preset is being previewed from the Document Style picker, show it; otherwise show the default
+  const preset = useBrandingStore(s => {
+    const previewing = previewPresetId ? s.presets.find(p => p.id === previewPresetId) : null
+    return previewing ?? s.presets.find(p => p.isDefault) ?? s.presets[0]
+  })
   const [docMode, setDocMode] = useState<'quote' | 'invoice'>('quote')
 
   return (
