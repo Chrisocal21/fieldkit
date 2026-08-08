@@ -4,9 +4,9 @@
 // those caches served the app shell cache-first with no revalidation, so a
 // device that had ever loaded the app kept running that exact cached build
 // forever, silently ignoring every subsequent deploy.
-const CACHE_NAME = 'fieldkit-v3'
-const STATIC_CACHE_NAME = 'fieldkit-static-v3'
-const API_CACHE_NAME = 'fieldkit-api-v3'
+const CACHE_NAME = 'fieldkit-v4'
+const STATIC_CACHE_NAME = 'fieldkit-static-v4'
+const API_CACHE_NAME = 'fieldkit-api-v4'
 const API_ORIGIN = 'https://fieldkit-api.recipeer-cbv.workers.dev'
 
 // Assets to cache immediately on install
@@ -55,21 +55,22 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Stale-while-revalidate for Cloudflare API (GET only)
+  // Network-first for Cloudflare API — fresh data is required for cross-device sync.
+  // Stale-while-revalidate would return cached data to syncWithCloud() before the
+  // network response arrives, causing each device to see its own old snapshot.
   if (request.url.startsWith(API_ORIGIN)) {
     event.respondWith(
-      caches.open(API_CACHE_NAME).then((cache) => {
-        return cache.match(request).then((cachedResponse) => {
-          const fetchPromise = fetch(request).then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              cache.put(request, networkResponse.clone())
-            }
-            return networkResponse
-          }).catch(() => cachedResponse)
-          // Return stale immediately while revalidating in background
-          return cachedResponse || fetchPromise
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(API_CACHE_NAME).then((cache) => cache.put(request, networkResponse.clone()))
+          }
+          return networkResponse
         })
-      })
+        .catch(() =>
+          // Offline fallback only
+          caches.open(API_CACHE_NAME).then((cache) => cache.match(request))
+        )
     )
     return
   }
