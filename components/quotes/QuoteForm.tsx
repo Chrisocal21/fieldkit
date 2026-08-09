@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { nanoid } from 'nanoid'
 import { Quote, QuoteLineItem } from '@/store/quoteStore'
 import { useJobStore } from '@/store/jobStore'
@@ -31,6 +31,9 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
   // Get the job to pre-fill client information
   const job = jobs.find(j => j.id === jobId)
 
+  // Draft key is scoped to this specific quote (or 'new' for unsaved quotes)
+  const draftKey = `fk-qdraft-${jobId ?? 'standalone'}-${quote?.id ?? 'new'}`
+
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>()
   const [siteAddress, setSiteAddress] = useState('')
 
@@ -48,6 +51,12 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>([])
   const [previewOpen, setPreviewOpen] = useState(false)
 
+  // Refs for synchronous flush on pagehide/beforeunload (closures capture stale state)
+  const formDataRef = useRef(formData)
+  const lineItemsRef = useRef(lineItems)
+  useEffect(() => { formDataRef.current = formData }, [formData])
+  useEffect(() => { lineItemsRef.current = lineItems }, [lineItems])
+
   const handleClientSelect = (clientId: string) => {
     const client = getClientById(clientId)
     if (client) {
@@ -62,7 +71,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
     }
   }
 
-  // Reset form when modal opens or quote changes
+  // Reset form when modal opens or quote changes, then restore any saved draft
   useEffect(() => {
     if (isOpen) {
       if (quote) {
@@ -114,8 +123,50 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
         setSelectedClientId(undefined)
         setSiteAddress('')
       }
+
+      // Restore draft after defaults — overrides if the user had unsaved work
+      try {
+        const saved = localStorage.getItem(draftKey)
+        if (saved) {
+          const draft = JSON.parse(saved)
+          if (draft.formData && (draft.formData.clientName || draft.lineItems?.length > 0)) {
+            setFormData(draft.formData)
+            setLineItems(draft.lineItems ?? [])
+            if (draft.selectedClientId !== undefined) setSelectedClientId(draft.selectedClientId)
+            if (draft.siteAddress !== undefined) setSiteAddress(draft.siteAddress)
+          }
+        }
+      } catch {}
     }
   }, [isOpen, quote, job])
+
+  // Debounced draft save — persists in-progress form to localStorage every 500 ms
+  useEffect(() => {
+    if (!isOpen) return
+    const timer = setTimeout(() => {
+      localStorage.setItem(draftKey, JSON.stringify({ formData, lineItems, selectedClientId, siteAddress }))
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [formData, lineItems, selectedClientId, siteAddress, isOpen, draftKey])
+
+  // Synchronous flush — fires on hard refresh, SW update reload, or tab close
+  useEffect(() => {
+    if (!isOpen) return
+    const flush = () => {
+      localStorage.setItem(draftKey, JSON.stringify({
+        formData: formDataRef.current,
+        lineItems: lineItemsRef.current,
+        selectedClientId,
+        siteAddress,
+      }))
+    }
+    window.addEventListener('pagehide', flush)
+    window.addEventListener('beforeunload', flush)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      window.removeEventListener('beforeunload', flush)
+    }
+  }, [isOpen, draftKey, selectedClientId, siteAddress])
 
   const submitQuote = (status: Quote['status']) => {
     if (!formData.clientName.trim()) return
@@ -157,6 +208,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
       addQuoteToJob(targetJobId, quoteData)
     }
 
+    localStorage.removeItem(draftKey)
     onClose()
   }
 
