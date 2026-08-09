@@ -1,11 +1,12 @@
 ﻿'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import BrandIdentityEditor from './BrandIdentityEditor'
 import ColorPaletteEditor from './ColorPaletteEditor'
 import TypographyEditor from './TypographyEditor'
 import AssetGeneratorPanel from './AssetGeneratorPanel'
 import { useBrandingStore } from '@/store/brandingStore'
+import { syncWithCloud } from '@/lib/sync'
 
 interface BrandingModalProps {
   isOpen: boolean
@@ -170,6 +171,31 @@ colors: {
 export default function BrandingModal({ isOpen, onClose }: BrandingModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('identity')
   const { presets } = useBrandingStore()
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'unsaved' | 'saving' | 'saved'>('idle')
+  const isFirstRender = useRef(true)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const triggerSave = async () => {
+    setSaveStatus('saving')
+    await syncWithCloud().catch(() => {})
+    setSaveStatus('saved')
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000)
+  }
+
+  // Auto-save 1.5 s after any preset change
+  useEffect(() => {
+    if (!isOpen) return
+    if (isFirstRender.current) { isFirstRender.current = false; return }
+    setSaveStatus('unsaved')
+    const timer = setTimeout(triggerSave, 1500)
+    return () => clearTimeout(timer)
+  }, [presets, isOpen])
+
+  // Reset first-render flag when modal opens
+  useEffect(() => {
+    if (isOpen) isFirstRender.current = true
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -238,16 +264,52 @@ export default function BrandingModal({ isOpen, onClose }: BrandingModalProps) {
           </div>
 
           {/* Footer */}
-          <div className="flex-shrink-0 px-6 py-4 bg-slate-900/50 border-t border-slate-800 flex justify-between items-center">
-            <div className="text-xs text-slate-500">
-              {presets.length} preset{presets.length !== 1 ? 's' : ''} configured
+          <div className="flex-shrink-0 px-6 py-4 bg-slate-900/50 border-t border-slate-800 flex justify-between items-center gap-4">
+            {/* Save status */}
+            <div className="flex items-center gap-2 text-xs">
+              {saveStatus === 'idle' && (
+                <span className="text-slate-500">{presets.length} preset{presets.length !== 1 ? 's' : ''} configured</span>
+              )}
+              {saveStatus === 'unsaved' && (
+                <span className="text-yellow-400 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+                  Unsaved changes
+                </span>
+              )}
+              {saveStatus === 'saving' && (
+                <span className="text-blue-400 flex items-center gap-1.5">
+                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Saving…
+                </span>
+              )}
+              {saveStatus === 'saved' && (
+                <span className="text-green-400 flex items-center gap-1.5">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Saved
+                </span>
+              )}
             </div>
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105 active:scale-95"
-            >
-              Done
-            </button>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={triggerSave}
+                disabled={saveStatus === 'saving'}
+                className="px-4 py-2 border border-slate-600 hover:border-blue-500 text-slate-300 hover:text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+              >
+                Save
+              </button>
+              <button
+                onClick={onClose}
+                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105 active:scale-95"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       </div>
