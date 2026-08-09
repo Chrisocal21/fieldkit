@@ -84,13 +84,19 @@ export default function StoreRehydrator() {
       if (document.visibilityState === 'visible') runSync()
     }
 
+    // pagehide fires when the PWA is backgrounded or the tab is closed — the
+    // last reliable opportunity to flush before the process is suspended/killed.
+    const onPageHide = () => { runSync() }
+
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('focus', runSync)
+    window.addEventListener('pagehide', onPageHide)
     const interval = setInterval(runSync, 60_000)
 
     return () => {
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('focus', runSync)
+      window.removeEventListener('pagehide', onPageHide)
       clearInterval(interval)
     }
   }, [userId])
