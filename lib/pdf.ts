@@ -213,6 +213,16 @@ function generateDocumentPDF(
     doc.text(`$${item.unitPrice.toFixed(2)}`, 145, yPos)
     doc.text(`$${lineTotal.toFixed(2)}`, 190, yPos, { align: 'right' })
     yPos += 6
+
+    // Tags sub-line
+    if (item.tags && item.tags.length > 0) {
+      doc.setFontSize(preset.fontSize.small)
+      doc.setTextColor(...hexToRgb(preset.colors.textLight))
+      doc.text(item.tags.join(' · '), 20, yPos)
+      doc.setFontSize(preset.fontSize.body)
+      doc.setTextColor(...hexToRgb(preset.colors.text))
+      yPos += 5
+    }
     
     if (yPos > 250) { doc.addPage(); yPos = 20 }
   })

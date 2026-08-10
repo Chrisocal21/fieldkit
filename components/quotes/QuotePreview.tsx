@@ -384,12 +384,19 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
                     }}
                   >
                     <div>{item.description}</div>
-                    <div
-                      className="text-xs capitalize"
-                      style={{ color: preset.colors.textLight }}
-                    >
-                      {item.type}
-                    </div>
+                    {(item.tags ?? []).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-0.5">
+                        {(item.tags ?? []).map(tag => (
+                          <span
+                            key={tag}
+                            className="text-xs px-1.5 py-0.5 rounded-full"
+                            style={{ backgroundColor: preset.colors.border, color: preset.colors.textLight }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </td>
                   <td
                     className="py-3 text-right"
