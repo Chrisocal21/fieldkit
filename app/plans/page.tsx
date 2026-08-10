@@ -1,10 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useSubscriptionStore, PLAN_LIMITS } from '@/store/subscriptionStore'
 import Link from 'next/link'
+import SettingsModal from '@/components/shared/SettingsModal'
 
 export default function PlansPage() {
   const { currentPlan, isLifetime } = useSubscriptionStore()
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const plans = [
     {
@@ -202,12 +205,12 @@ export default function PlansPage() {
             <p className="text-gray-600 dark:text-gray-400">
               Redeem your promotional code in Settings to unlock premium features
             </p>
-            <Link
-              href="/dashboard"
+            <button
+              onClick={() => setSettingsOpen(true)}
               className="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold transition-colors"
             >
               Go to Settings
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -218,6 +221,13 @@ export default function PlansPage() {
           </p>
         </div>
       </div>
+
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={settingsOpen} 
+        onClose={() => setSettingsOpen(false)} 
+        initialTab="subscription"
+      />
     </div>
   )
 }

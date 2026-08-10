@@ -16,11 +16,12 @@ type SettingsTab = 'appearance' | 'profile' | 'documents' | 'notifications' | 's
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
+  initialTab?: SettingsTab
 }
 
-export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export default function SettingsModal({ isOpen, onClose, initialTab = 'appearance' }: SettingsModalProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<SettingsTab>('appearance')
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab)
   const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle')
   const [syncResult, setSyncResult] = useState<Record<string, number>>({})
   const [promoModalOpen, setPromoModalOpen] = useState(false)
