@@ -198,6 +198,15 @@ CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_job ON invoices(job_id);
 CREATE INDEX IF NOT EXISTS idx_payments_invoice ON payments(invoice_id);
 CREATE INDEX IF NOT EXISTS idx_expenses_user ON expenses(user_id);
+
+-- Generic per-user key-value blobs (branding presets, settings, board layout)
+CREATE TABLE IF NOT EXISTS user_blobs (
+  user_id TEXT NOT NULL,
+  key TEXT NOT NULL,
+  value TEXT NOT NULL DEFAULT '{}',
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, key)
+);
 CREATE INDEX IF NOT EXISTS idx_job_materials_job ON job_materials(job_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_job ON time_entries(job_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_user ON time_entries(user_id);

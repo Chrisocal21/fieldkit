@@ -916,6 +916,30 @@ export default {
       return json({ ok: true, synced: results })
     }
 
+    // ── /api/user-blobs/:key (branding presets, settings, board layout) ───────
+    const blobMatch = path.match(/^\/api\/user-blobs\/([^/]+)$/)
+    if (blobMatch) {
+      const key = decodeURIComponent(blobMatch[1])
+
+      if (method === 'GET') {
+        const row = await env.DB.prepare(
+          'SELECT value, updated_at FROM user_blobs WHERE user_id = ? AND key = ?'
+        ).bind(userId, key).first() as any
+        if (!row) return json(null)
+        return json({ value: JSON.parse(row.value), updatedAt: row.updated_at })
+      }
+
+      if (method === 'PUT') {
+        const body = await request.json() as any
+        await env.DB.prepare(`
+          INSERT INTO user_blobs (user_id, key, value, updated_at)
+          VALUES (?, ?, ?, ?)
+          ON CONFLICT (user_id, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+        `).bind(userId, key, JSON.stringify(body.value), Date.now()).run()
+        return json({ ok: true })
+      }
+    }
+
     return err('Not found', 404)
   },
 }

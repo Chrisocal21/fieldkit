@@ -18,6 +18,9 @@ import { useMaterialCostStore } from '@/store/materialCostStore'
 import { useExpenseStore } from '@/store/expenseStore'
 import { useTimeEntryStore } from '@/store/timeEntryStore'
 import { useNoteStore } from '@/store/noteStore'
+import { useBrandingStore } from '@/store/brandingStore'
+import { useSettingsStore } from '@/store/settingsStore'
+import { useBoardSettingsStore } from '@/store/boardSettingsStore'
 
 function isSameOriginWorker(): boolean {
   const raw = (process.env.NEXT_PUBLIC_WORKER_URL ?? '').trim()
@@ -188,6 +191,36 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
         reason = 'Cloud rejected the push — see console for details'
         console.error('[fieldkit:sync] api.sync() did not confirm the push', syncResult)
       }
+    }
+
+    // ── Branding presets ──────────────────────────────────────────────────────
+    // Always push local presets to cloud; restore from cloud if local is empty.
+    const localPresets = useBrandingStore.getState().presets
+    const cloudBranding = await api.userBlobs.get('branding-presets')
+    if (cloudBranding?.value?.presets?.length && localPresets.length === 0) {
+      useBrandingStore.setState({ presets: cloudBranding.value.presets })
+    } else {
+      await api.userBlobs.set('branding-presets', { presets: localPresets })
+    }
+
+    // ── Settings ──────────────────────────────────────────────────────────────
+    const localSettings = (({ theme, defaultTaxRate, defaultPaymentTerms, defaultQuoteExpiry,
+      invoicePrefix, quotePrefix, currency, notifications }) =>
+      ({ theme, defaultTaxRate, defaultPaymentTerms, defaultQuoteExpiry,
+        invoicePrefix, quotePrefix, currency, notifications }))(useSettingsStore.getState())
+    const cloudSettings = await api.userBlobs.get('user-settings')
+    if (cloudSettings?.value && Object.keys(cloudSettings.value).length > 0) {
+      useSettingsStore.setState(cloudSettings.value)
+    }
+    await api.userBlobs.set('user-settings', localSettings)
+
+    // ── Board settings ────────────────────────────────────────────────────────
+    const localColumns = useBoardSettingsStore.getState().columns
+    const cloudBoard = await api.userBlobs.get('board-settings')
+    if (cloudBoard?.value?.columns?.length && localColumns.length === 0) {
+      useBoardSettingsStore.setState({ columns: cloudBoard.value.columns })
+    } else {
+      await api.userBlobs.set('board-settings', { columns: localColumns })
     }
 
     return { ok, pushed, reason }

@@ -185,6 +185,14 @@ const api = {
     delete: (id: string) => request<{ ok: boolean }>('DELETE', `/api/notes/${id}`),
   },
 
+  // ── User blobs (branding presets, settings, board layout) ─────────────────
+  userBlobs: {
+    get: (key: string) =>
+      request<{ value: any; updatedAt: number } | null>('GET', `/api/user-blobs/${encodeURIComponent(key)}`),
+    set: (key: string, value: any) =>
+      request<{ ok: boolean }>('PUT', `/api/user-blobs/${encodeURIComponent(key)}`, { value }),
+  },
+
   // ── Bulk sync (push localStorage data to D1 on first sign-in) ─────────────────
   sync: (payload: {
     jobs?: any[]
