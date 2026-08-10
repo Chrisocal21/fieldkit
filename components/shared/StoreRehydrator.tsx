@@ -15,6 +15,7 @@ import { useInventoryStore } from '@/store/inventoryStore'
 import { useBrandingStore } from '@/store/brandingStore'
 import { useBusinessCardStore } from '@/store/businessCardStore'
 import { useSettingsStore } from '@/store/settingsStore'
+import { useSubscriptionStore } from '@/store/subscriptionStore'
 import { useBoardSettingsStore } from '@/store/boardSettingsStore'
 import { useNoteStore } from '@/store/noteStore'
 import { syncWithCloud } from '@/lib/sync'
@@ -32,6 +33,7 @@ function rehydrateAll() {
   useBrandingStore.persist.rehydrate()
   useBusinessCardStore.persist.rehydrate()
   useSettingsStore.persist.rehydrate()
+  useSubscriptionStore.persist.rehydrate()
   useBoardSettingsStore.persist.rehydrate()
   useNoteStore.persist.rehydrate()
 }
@@ -80,12 +82,12 @@ export default function StoreRehydrator() {
         .finally(() => { syncing = false })
     }
 
-    // Debounced mutation sync — fires 3 s after any store change so every
+    // Debounced mutation sync — fires 1 s after any store change so every
     // user edit reaches the cloud without hammering the API on every keystroke.
     let mutationTimer: ReturnType<typeof setTimeout> | null = null
     const scheduleSync = () => {
       if (mutationTimer) clearTimeout(mutationTimer)
-      mutationTimer = setTimeout(runSync, 3_000)
+      mutationTimer = setTimeout(runSync, 1_000)
     }
 
     const unsubs = [
@@ -98,6 +100,8 @@ export default function StoreRehydrator() {
       useTimeEntryStore.subscribe(scheduleSync),
       useNoteStore.subscribe(scheduleSync),
       useTeamStore.subscribe(scheduleSync),
+      useSettingsStore.subscribe(scheduleSync),
+      useSubscriptionStore.subscribe(scheduleSync),
     ]
 
     const onVisible = () => {
@@ -111,7 +115,7 @@ export default function StoreRehydrator() {
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('focus', runSync)
     window.addEventListener('pagehide', onPageHide)
-    const interval = setInterval(runSync, 60_000)
+    const interval = setInterval(runSync, 30_000) // Sync every 30 seconds for faster cross-device updates
 
     return () => {
       unsubs.forEach(u => u())
