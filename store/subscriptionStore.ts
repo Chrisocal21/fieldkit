@@ -116,7 +116,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           return
         }
         set({ currentPlan: plan, isTrialActive: false, trialEndsAt: null })
-        syncToCloud({ currentPlan: plan, isTrialActive: false, trialEndsAt: null, isLifetime: false })
+        syncToCloud({ currentPlan: plan, isTrialActive: false, trialEndsAt: null, isLifetime })
       },
 
       startTrial: (plan, days = 14) => {
@@ -127,7 +127,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         }
         const endsAt = Date.now() + days * 24 * 60 * 60 * 1000
         set({ currentPlan: plan, trialEndsAt: endsAt, isTrialActive: true })
-        syncToCloud({ currentPlan: plan, trialEndsAt: endsAt, isTrialActive: true, isLifetime: false })
+        syncToCloud({ currentPlan: plan, trialEndsAt: endsAt, isTrialActive: true, isLifetime })
       },
 
       endTrial: () => {
@@ -135,7 +135,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         if (isLifetime) return // Don't downgrade lifetime subs
         if (trialEndsAt && Date.now() > trialEndsAt) {
           set({ currentPlan: 'free', isTrialActive: false })
-          syncToCloud({ currentPlan: 'free', isTrialActive: false, trialEndsAt: null, isLifetime: false })
+          syncToCloud({ currentPlan: 'free', isTrialActive: false, trialEndsAt: null, isLifetime })
         }
       },
 
