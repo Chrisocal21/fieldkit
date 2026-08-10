@@ -4,3 +4,6 @@ node_modules/
 .DS_Store
 .env*.local
 .vercel
+
+# Admin documentation (private - contains promo code generation commands)
+PROMO_CODES.md

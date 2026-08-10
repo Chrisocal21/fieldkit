@@ -4,9 +4,11 @@ import { useState, useEffect, useMemo } from 'react'
 import { useJobStore } from '@/store/jobStore'
 import { useClientStore } from '@/store/clientStore'
 import { useInvoiceStore } from '@/store/invoiceStore'
+import { useSubscriptionStore } from '@/store/subscriptionStore'
 import { Quote } from '@/store/quoteStore'
 import QuotePreview from '@/components/quotes/QuotePreview'
 import QuoteForm from '@/components/quotes/QuoteForm'
+import UpgradeModal from '@/components/shared/UpgradeModal'
 import { generateQuotePDF } from '@/lib/pdf'
 
 type FilterTab = 'all' | 'unpaid' | 'overdue' | 'paid'
@@ -27,7 +29,10 @@ export default function InvoicesPage() {
   const [previewQuote, setPreviewQuote] = useState<Quote | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [isNewInvoiceOpen, setIsNewInvoiceOpen] = useState(false)
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
 
+  const hasInvoicesFeature = useSubscriptionStore((state) => state.hasFeature('hasInvoices'))
+  const currentPlan = useSubscriptionStore((state) => state.currentPlan)
 
   const jobs = useJobStore(s => s.jobs)
   const { clients } = useClientStore()
@@ -37,7 +42,11 @@ export default function InvoicesPage() {
   useEffect(() => {
     setMounted(true)
     markOverdueInvoices()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    // Check if user has access to invoices
+    if (!hasInvoicesFeature) {
+      setIsUpgradeModalOpen(true)
+    }
+  }, [hasInvoicesFeature]) // eslint-disable-line react-hooks/exhaustive-deps
   const billableRows = useMemo(() => {
     if (!mounted) return []
     const rows: Array<{
@@ -398,6 +407,15 @@ export default function InvoicesPage() {
       <QuoteForm
         isOpen={isNewInvoiceOpen}
         onClose={() => setIsNewInvoiceOpen(false)}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        feature="Invoices & Payments"
+        requiredPlan="starter"
+        description="Invoices are available on the Starter plan and above. Upgrade to create and manage invoices, track payments, and get paid faster."
       />
     </div>
   )

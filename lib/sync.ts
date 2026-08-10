@@ -21,6 +21,7 @@ import { useNoteStore } from '@/store/noteStore'
 import { useBrandingStore } from '@/store/brandingStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useBoardSettingsStore } from '@/store/boardSettingsStore'
+import { useSubscriptionStore } from '@/store/subscriptionStore'
 
 function isSameOriginWorker(): boolean {
   const raw = (process.env.NEXT_PUBLIC_WORKER_URL ?? '').trim()
@@ -68,6 +69,8 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
   const localEntries     = useTimeEntryStore.getState().entries
   const localNoteFolders = useNoteStore.getState().folders
   const localNotes       = useNoteStore.getState().notes
+  const localSettings    = useSettingsStore.getState()
+  const localSubscription = useSubscriptionStore.getState()
 
   let ok = true
   let reason: string | undefined
@@ -78,7 +81,7 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
   const attemptedPush: Record<string, number> = {}
 
   try {
-    const [jobs, clients, team, inventory, invoices, expenses, materials, timeEntries, noteFolders, notes] =
+    const [jobs, clients, team, inventory, invoices, expenses, materials, timeEntries, noteFolders, notes, cloudSettings, cloudSubscription] =
       await Promise.all([
         api.jobs.list(),
         api.clients.list(),
@@ -90,13 +93,15 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
         api.timeEntries.list(),
         api.noteFolders.list(),
         api.notes.list(),
+        api.settings.get(),
+        api.subscription.get(),
       ])
 
     // If every resource came back null, the worker call itself failed (network,
     // auth, or CORS) rather than the account simply having no data yet — don't
     // report success in that case, or devices will look "synced" while nothing
     // actually moved.
-    if ([jobs, clients, team, inventory, invoices, expenses, materials, timeEntries, noteFolders, notes].every(r => r === null)) {
+    if ([jobs, clients, team, inventory, invoices, expenses, materials, timeEntries, noteFolders, notes, cloudSettings, cloudSubscription].every(r => r === null)) {
       reason = await diagnoseSyncIssue() ?? 'Cloud requests all failed (network or authorization error) — see console for details'
       console.error(`[fieldkit:sync] syncWithCloud() aborted: ${reason}`)
       return { ok: false, pushed: {}, reason }
@@ -179,6 +184,58 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
       if (noteResult.missing.length) { syncPayload.notes = noteResult.missing; attemptedPush.notes = noteResult.missing.length }
     }
 
+    // ── Settings ──────────────────────────────────────────────────────────────
+    // Settings are a single object per user, not an array
+    if (cloudSettings) {
+      // Cloud has settings - merge with local (cloud takes precedence)
+      useSettingsStore.setState({
+        theme: cloudSettings.theme ?? localSettings.theme,
+        defaultTaxRate: cloudSettings.defaultTaxRate ?? localSettings.defaultTaxRate,
+        defaultPaymentTerms: cloudSettings.defaultPaymentTerms ?? localSettings.defaultPaymentTerms,
+        defaultQuoteExpiry: cloudSettings.defaultQuoteExpiry ?? localSettings.defaultQuoteExpiry,
+        invoicePrefix: cloudSettings.invoicePrefix ?? localSettings.invoicePrefix,
+        quotePrefix: cloudSettings.quotePrefix ?? localSettings.quotePrefix,
+        currency: cloudSettings.currency ?? localSettings.currency,
+        notifications: cloudSettings.notifications ?? localSettings.notifications,
+      })
+    } else {
+      // No cloud settings - push local
+      syncPayload.settings = {
+        theme: localSettings.theme,
+        defaultTaxRate: localSettings.defaultTaxRate,
+        defaultPaymentTerms: localSettings.defaultPaymentTerms,
+        defaultQuoteExpiry: localSettings.defaultQuoteExpiry,
+        invoicePrefix: localSettings.invoicePrefix,
+        quotePrefix: localSettings.quotePrefix,
+        currency: localSettings.currency,
+        notifications: localSettings.notifications,
+      }
+      attemptedPush.settings = 1
+    }
+
+    // ── Subscription ──────────────────────────────────────────────────────────
+    // Subscription is a single object per user, not an array
+    if (cloudSubscription) {
+      // Cloud has subscription - use it (cloud is source of truth)
+      useSubscriptionStore.setState({
+        currentPlan: cloudSubscription.currentPlan ?? localSubscription.currentPlan,
+        trialEndsAt: cloudSubscription.trialEndsAt ?? localSubscription.trialEndsAt,
+        isTrialActive: cloudSubscription.isTrialActive ?? localSubscription.isTrialActive,
+        isLifetime: cloudSubscription.isLifetime ?? localSubscription.isLifetime,
+      })
+    } else {
+      // No cloud subscription - push local
+      syncPayload.subscription = {
+        currentPlan: localSubscription.currentPlan,
+        trialEndsAt: localSubscription.trialEndsAt,
+        isTrialActive: localSubscription.isTrialActive,
+        isLifetime: localSubscription.isLifetime,
+      }
+      attemptedPush.subscription = 1
+    }
+
+    // 
+
     // Push all missing local items in one batch — only report them as pushed
     // once the server actually confirms the write.
     let pushed: Record<string, number> = {}
@@ -202,17 +259,6 @@ export async function syncWithCloud(): Promise<{ ok: boolean; pushed: Record<str
     } else {
       await api.userBlobs.set('branding-presets', { presets: localPresets })
     }
-
-    // ── Settings ──────────────────────────────────────────────────────────────
-    const localSettings = (({ theme, defaultTaxRate, defaultPaymentTerms, defaultQuoteExpiry,
-      invoicePrefix, quotePrefix, currency, notifications }) =>
-      ({ theme, defaultTaxRate, defaultPaymentTerms, defaultQuoteExpiry,
-        invoicePrefix, quotePrefix, currency, notifications }))(useSettingsStore.getState())
-    const cloudSettings = await api.userBlobs.get('user-settings')
-    if (cloudSettings?.value && Object.keys(cloudSettings.value).length > 0) {
-      useSettingsStore.setState(cloudSettings.value)
-    }
-    await api.userBlobs.set('user-settings', localSettings)
 
     // ── Board settings ────────────────────────────────────────────────────────
     const localColumns = useBoardSettingsStore.getState().columns

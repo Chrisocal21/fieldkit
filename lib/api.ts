@@ -205,7 +205,22 @@ const api = {
     timeEntries?: any[]
     noteFolders?: any[]
     notes?: any[]
+    settings?: any
+    subscription?: any
   }) => request<{ ok: boolean; synced: Record<string, number> }>('POST', '/api/sync', payload),
+
+  // ── Settings ────────────────────────────────────────────────────────────────
+  settings: {
+    get: () => request<any>('GET', '/api/settings'),
+    update: (data: any) => request<{ ok: boolean }>('PUT', '/api/settings', data),
+  },
+
+  // ── Subscription ────────────────────────────────────────────────────────────
+  subscription: {
+    get: () => request<any>('GET', '/api/subscription'),
+    update: (data: any) => request<{ ok: boolean }>('PUT', '/api/subscription', data),
+    redeemPromoCode: (code: string) => request<{ success: boolean; message: string }>('POST', '/api/subscription/redeem', { code }),
+  },
 }
 
 export default api

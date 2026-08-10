@@ -9,7 +9,7 @@ import SettingsModal from './SettingsModal'
 const primaryNavItems = [
   {
     name: 'Home',
-    href: '/',
+    href: '/dashboard',
     icon: (active: boolean) => (
       <svg
         className={`w-6 h-6 ${active ? 'text-slate-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}

@@ -2,13 +2,16 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useSettingsStore, Theme, NotificationSettings } from '@/store/settingsStore'
 import { useBrandingStore } from '@/store/brandingStore'
+import { useSubscriptionStore, PLAN_LIMITS } from '@/store/subscriptionStore'
 import { syncWithCloud } from '@/lib/sync'
 import QRCodeGeneratorModal from './QRCodeGeneratorModal'
 import ShortURLGeneratorModal from './ShortURLGeneratorModal'
+import PromoCodeModal from './PromoCodeModal'
 
-type SettingsTab = 'appearance' | 'profile' | 'documents' | 'notifications' | 'tools' | 'data' | 'about'
+type SettingsTab = 'appearance' | 'profile' | 'documents' | 'notifications' | 'subscription' | 'tools' | 'data' | 'about'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -20,6 +23,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('appearance')
   const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle')
   const [syncResult, setSyncResult] = useState<Record<string, number>>({})
+  const [promoModalOpen, setPromoModalOpen] = useState(false)
   const [syncError, setSyncError] = useState<string | undefined>(undefined)
 
   // Appearance
@@ -80,6 +84,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     { id: 'profile',       label: 'Business',      icon: <BuildingIcon /> },
     { id: 'documents',     label: 'Documents',     icon: <DocIcon /> },
     { id: 'notifications', label: 'Notifications', icon: <BellIcon /> },
+    { id: 'subscription',  label: 'Plan',          icon: <CreditCardIcon /> },
     { id: 'tools',         label: 'Tools',         icon: <ToolsIcon /> },
     { id: 'data',          label: 'Data',          icon: <DataIcon /> },
   ]
@@ -298,6 +303,184 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
               )}
 
+              {/* ── SUBSCRIPTION & PLAN ── */}
+              {activeTab === 'subscription' && (() => {
+                const { currentPlan, trialEndsAt, isTrialActive } = useSubscriptionStore.getState()
+                const limits = PLAN_LIMITS[currentPlan]
+                const planName = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)
+                
+                let trialDaysLeft = 0
+                if (isTrialActive && trialEndsAt) {
+                  trialDaysLeft = Math.ceil((trialEndsAt - Date.now()) / (1000 * 60 * 60 * 24))
+                }
+
+                const planPrices: Record<typeof currentPlan, string> = {
+                  free: '$0',
+                  starter: '$29',
+                  professional: '$79',
+                  enterprise: '$199',
+                }
+
+                const planColors: Record<typeof currentPlan, string> = {
+                  free: 'gray',
+                  starter: 'blue',
+                  professional: 'violet',
+                  enterprise: 'amber',
+                }
+
+                return (
+                  <div className="space-y-5">
+                    <TabHeading>Subscription & Plan</TabHeading>
+                    
+                    {/* Current Plan Card */}
+                    <div className={`border-2 rounded-xl p-5 bg-gradient-to-br ${
+                      currentPlan === 'free' 
+                        ? 'border-gray-200 dark:border-gray-700 from-gray-50 to-white dark:from-gray-800 dark:to-gray-900'
+                        : currentPlan === 'starter'
+                        ? 'border-blue-200 dark:border-blue-800 from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900'
+                        : currentPlan === 'professional'
+                        ? 'border-violet-200 dark:border-violet-800 from-violet-50 to-white dark:from-violet-900/20 dark:to-gray-900'
+                        : 'border-amber-200 dark:border-amber-800 from-amber-50 to-white dark:from-amber-900/20 dark:to-gray-900'
+                    }`}>
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{planName} Plan</h3>
+                            {isTrialActive && (
+                              <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-full">
+                                Trial
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                            {planPrices[currentPlan]}<span className="text-sm font-normal text-gray-500">/month</span>
+                          </p>
+                        </div>
+                        {currentPlan === 'free' && (
+                          <button
+                            onClick={() => setPromoModalOpen(true)}
+                            className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-sm font-medium rounded-lg transition-all"
+                          >
+                            🎟️ Promo Code
+                          </button>
+                        )}
+                        {currentPlan !== 'enterprise' && currentPlan !== 'free' && (
+                          <Link
+                            href="/sign-up"
+                            onClick={onClose}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                          >
+                            Upgrade
+                          </Link>
+                        )}
+                      </div>
+
+                      {isTrialActive && trialEndsAt && (
+                        <div className="mb-4 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            <span className="font-semibold">{trialDaysLeft} {trialDaysLeft === 1 ? 'day' : 'days'} left</span> in your trial
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            Add payment before {new Date(trialEndsAt).toLocaleDateString()} to continue
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Plan Limits */}
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Your Plan Includes</p>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Active Jobs</span>
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {limits.maxJobs === null ? 'Unlimited' : limits.maxJobs}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Clients</span>
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {limits.maxClients === null ? 'Unlimited' : limits.maxClients}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Team Members</span>
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {limits.maxTeamMembers === null ? 'Unlimited' : limits.maxTeamMembers || 'Not available'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Invoices</span>
+                            <span className={`font-medium ${limits.hasInvoices ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
+                              {limits.hasInvoices ? '✓ Enabled' : '✗ Locked'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Inventory</span>
+                            <span className={`font-medium ${limits.hasInventory ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
+                              {limits.hasInventory ? '✓ Enabled' : '✗ Locked'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Time Tracking</span>
+                            <span className={`font-medium ${limits.hasTimeTracking ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
+                              {limits.hasTimeTracking ? '✓ Enabled' : '✗ Locked'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Other Plans */}
+                    {currentPlan !== 'enterprise' && (
+                      <div className="space-y-3">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Available Plans</p>
+                        {(['starter', 'professional', 'enterprise'] as const).filter(p => p !== currentPlan).map((plan) => {
+                          const planLimits = PLAN_LIMITS[plan]
+                          const name = plan.charAt(0).toUpperCase() + plan.slice(1)
+                          return (
+                            <div key={plan} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <h4 className="font-semibold text-gray-900 dark:text-white">{name}</h4>
+                                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                                    {planPrices[plan]}<span className="text-sm font-normal text-gray-500">/month</span>
+                                  </p>
+                                </div>
+                                <Link
+                                  href="/sign-up"
+                                  onClick={onClose}
+                                  className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
+                                >
+                                  Select
+                                </Link>
+                              </div>
+                              <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                                {planLimits.maxJobs === null && <li>• Unlimited jobs</li>}
+                                {planLimits.maxTeamMembers !== null && planLimits.maxTeamMembers > 0 && <li>• Up to {planLimits.maxTeamMembers} team members</li>}
+                                {planLimits.maxTeamMembers === null && <li>• Unlimited team members</li>}
+                                {planLimits.hasInvoices && <li>• Invoices & payments</li>}
+                                {planLimits.hasInventory && <li>• Inventory management</li>}
+                                {planLimits.hasAdvancedReporting && <li>• Advanced reporting</li>}
+                                {planLimits.hasCustomBranding && <li>• Custom branding</li>}
+                                {planLimits.hasApiAccess && <li>• API access</li>}
+                              </ul>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {currentPlan === 'enterprise' && (
+                      <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                        <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                          You're on the Enterprise plan with full access to all features.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
               {/* ── TOOLS ── */}
               {activeTab === 'tools' && (
                 <div className="space-y-5">
@@ -476,6 +659,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       {/* Tool sub-modals */}
       <QRCodeGeneratorModal isOpen={showQRCode} onClose={() => setShowQRCode(false)} />
       <ShortURLGeneratorModal isOpen={showShortURL} onClose={() => setShowShortURL(false)} />
+      <PromoCodeModal isOpen={promoModalOpen} onClose={() => setPromoModalOpen(false)} />
     </>
   )
 }
@@ -571,6 +755,14 @@ function BellIcon() {
   return (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    </svg>
+  )
+}
+
+function CreditCardIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
     </svg>
   )
 }

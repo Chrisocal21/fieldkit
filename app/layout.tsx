@@ -1,13 +1,11 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { ClerkProvider } from '@clerk/nextjs'
-import Sidebar from '@/components/shared/Sidebar'
-import BottomNav from '@/components/shared/BottomNav'
-import MainContent from '@/components/shared/MainContent'
 import ServiceWorkerRegistration from '@/components/shared/ServiceWorkerRegistration'
 import InstallPrompt from '@/components/shared/InstallPrompt'
 import GlobalSearch from '@/components/shared/GlobalSearch'
 import StoreRehydrator from '@/components/shared/StoreRehydrator'
+import ConditionalLayout from '@/components/shared/ConditionalLayout'
 
 // All pages use Clerk auth — never statically prerender
 export const dynamic = 'force-dynamic'
@@ -65,9 +63,7 @@ export default function RootLayout({
           <GlobalSearch />
           <StoreRehydrator />
           <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-            <Sidebar />
-            <MainContent>{children}</MainContent>
-            <BottomNav />
+            <ConditionalLayout>{children}</ConditionalLayout>
           </div>
         </body>
       </html>

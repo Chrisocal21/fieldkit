@@ -2,6 +2,17 @@
 
 A free, lightweight operations PWA for small service businesses.
 
+## 🌐 Data Storage
+
+**All data is stored in your Cloudflare D1 database** (cloud storage), not just in the browser. LocalStorage is only used as a cache for offline access.
+
+- ✅ **Multi-device sync** - Access your data from any device
+- ✅ **Offline support** - Works without internet, syncs when reconnected
+- ✅ **Secure & private** - Data stored in your Cloudflare account
+- ✅ **Real-time subscription sync** - Trial status and plan updates sync across all devices
+
+See [DATA_STORAGE.md](DATA_STORAGE.md) for full architecture details.
+
 ## Tech Stack
 
 - **Frontend:** Next.js 14 (App Router) + Tailwind CSS + Zustand

@@ -913,7 +913,239 @@ export default {
         results.notes = body.notes.length
       }
 
+      // Settings (single object per user)
+      if (body.settings) {
+        const s = body.settings
+        await env.DB.prepare(`
+          INSERT INTO user_settings (user_id, theme, default_tax_rate, default_payment_terms,
+            default_quote_expiry, invoice_prefix, quote_prefix, currency,
+            notifications_job_updates, notifications_quote_activity, notifications_team_activity,
+            notifications_low_stock, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT (user_id) DO UPDATE SET
+            theme = excluded.theme,
+            default_tax_rate = excluded.default_tax_rate,
+            default_payment_terms = excluded.default_payment_terms,
+            default_quote_expiry = excluded.default_quote_expiry,
+            invoice_prefix = excluded.invoice_prefix,
+            quote_prefix = excluded.quote_prefix,
+            currency = excluded.currency,
+            notifications_job_updates = excluded.notifications_job_updates,
+            notifications_quote_activity = excluded.notifications_quote_activity,
+            notifications_team_activity = excluded.notifications_team_activity,
+            notifications_low_stock = excluded.notifications_low_stock,
+            updated_at = excluded.updated_at
+        `).bind(
+          userId,
+          s.theme ?? 'system',
+          s.defaultTaxRate ?? 0,
+          s.defaultPaymentTerms ?? 'Net 30',
+          s.defaultQuoteExpiry ?? 30,
+          s.invoicePrefix ?? 'INV',
+          s.quotePrefix ?? 'QT',
+          s.currency ?? 'USD',
+          s.notifications?.jobUpdates !== false ? 1 : 0,
+          s.notifications?.quoteActivity !== false ? 1 : 0,
+          s.notifications?.teamActivity !== false ? 1 : 0,
+          s.notifications?.lowStock !== false ? 1 : 0,
+          Date.now()
+        ).run()
+        results.settings = 1
+      }
+
+      // Subscription (single object per user)
+      if (body.subscription) {
+        const sub = body.subscription
+        await env.DB.prepare(`
+          INSERT INTO user_subscription (user_id, current_plan, trial_ends_at, is_trial_active, is_lifetime, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+          ON CONFLICT (user_id) DO UPDATE SET
+            current_plan = excluded.current_plan,
+            trial_ends_at = excluded.trial_ends_at,
+            is_trial_active = excluded.is_trial_active,
+            is_lifetime = excluded.is_lifetime,
+            updated_at = excluded.updated_at
+        `).bind(
+          userId,
+          sub.currentPlan ?? 'free',
+          sub.trialEndsAt ?? null,
+          sub.isTrialActive ? 1 : 0,
+          sub.isLifetime ? 1 : 0,
+          Date.now()
+        ).run()
+        results.subscription = 1
+      }
+
       return json({ ok: true, synced: results })
+    }
+
+    // ── /api/settings ─────────────────────────────────────────────────────────
+    if (path === '/api/settings' && method === 'GET') {
+      const row = await env.DB.prepare(
+        'SELECT * FROM user_settings WHERE user_id = ?'
+      ).bind(userId).first() as any
+      if (!row) return json(null)
+      return json({
+        theme: row.theme,
+        defaultTaxRate: row.default_tax_rate,
+        defaultPaymentTerms: row.default_payment_terms,
+        defaultQuoteExpiry: row.default_quote_expiry,
+        invoicePrefix: row.invoice_prefix,
+        quotePrefix: row.quote_prefix,
+        currency: row.currency,
+        notifications: {
+          jobUpdates: row.notifications_job_updates === 1,
+          quoteActivity: row.notifications_quote_activity === 1,
+          teamActivity: row.notifications_team_activity === 1,
+          lowStock: row.notifications_low_stock === 1,
+        },
+        updatedAt: row.updated_at,
+      })
+    }
+
+    if (path === '/api/settings' && method === 'PUT') {
+      const body = await request.json() as any
+      await env.DB.prepare(`
+        INSERT INTO user_settings (user_id, theme, default_tax_rate, default_payment_terms,
+          default_quote_expiry, invoice_prefix, quote_prefix, currency,
+          notifications_job_updates, notifications_quote_activity, notifications_team_activity,
+          notifications_low_stock, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (user_id) DO UPDATE SET
+          theme = excluded.theme,
+          default_tax_rate = excluded.default_tax_rate,
+          default_payment_terms = excluded.default_payment_terms,
+          default_quote_expiry = excluded.default_quote_expiry,
+          invoice_prefix = excluded.invoice_prefix,
+          quote_prefix = excluded.quote_prefix,
+          currency = excluded.currency,
+          notifications_job_updates = excluded.notifications_job_updates,
+          notifications_quote_activity = excluded.notifications_quote_activity,
+          notifications_team_activity = excluded.notifications_team_activity,
+          notifications_low_stock = excluded.notifications_low_stock,
+          updated_at = excluded.updated_at
+      `).bind(
+        userId,
+        body.theme ?? 'system',
+        body.defaultTaxRate ?? 0,
+        body.defaultPaymentTerms ?? 'Net 30',
+        body.defaultQuoteExpiry ?? 30,
+        body.invoicePrefix ?? 'INV',
+        body.quotePrefix ?? 'QT',
+        body.currency ?? 'USD',
+        body.notifications?.jobUpdates !== false ? 1 : 0,
+        body.notifications?.quoteActivity !== false ? 1 : 0,
+        body.notifications?.teamActivity !== false ? 1 : 0,
+        body.notifications?.lowStock !== false ? 1 : 0,
+        Date.now()
+      ).run()
+      return json({ ok: true })
+    }
+
+    // ── /api/subscription ─────────────────────────────────────────────────────
+    if (path === '/api/subscription' && method === 'GET') {
+      const row = await env.DB.prepare(
+        'SELECT * FROM user_subscription WHERE user_id = ?'
+      ).bind(userId).first() as any
+      if (!row) return json(null)
+      return json({
+        currentPlan: row.current_plan,
+        trialEndsAt: row.trial_ends_at,
+        isTrialActive: row.is_trial_active === 1,
+        isLifetime: row.is_lifetime === 1,
+        updatedAt: row.updated_at,
+      })
+    }
+
+    if (path === '/api/subscription' && method === 'PUT') {
+      const body = await request.json() as any
+      await env.DB.prepare(`
+        INSERT INTO user_subscription (user_id, current_plan, trial_ends_at, is_trial_active, is_lifetime, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT (user_id) DO UPDATE SET
+          current_plan = excluded.current_plan,
+          trial_ends_at = excluded.trial_ends_at,
+          is_trial_active = excluded.is_trial_active,
+          is_lifetime = excluded.is_lifetime,
+          updated_at = excluded.updated_at
+      `).bind(
+        userId,
+        body.currentPlan ?? 'free',
+        body.trialEndsAt ?? null,
+        body.isTrialActive ? 1 : 0,
+        body.isLifetime ? 1 : 0,
+        Date.now()
+      ).run()
+      return json({ ok: true })
+    }
+
+    // ── /api/subscription/redeem ──────────────────────────────────────────────
+    if (path === '/api/subscription/redeem' && method === 'POST') {
+      const body = await request.json() as any
+      const code = body.code?.trim().toUpperCase()
+      if (!code) return json({ success: false, message: 'Please enter a promo code' })
+
+      // Check if code exists and is valid
+      const promoRow = await env.DB.prepare(
+        'SELECT * FROM promo_codes WHERE code = ?'
+      ).bind(code).first() as any
+
+      if (!promoRow) {
+        return json({ success: false, message: 'Invalid promo code' })
+      }
+
+      // Check expiration
+      if (promoRow.expires_at && Date.now() > promoRow.expires_at) {
+        return json({ success: false, message: 'This promo code has expired' })
+      }
+
+      // Check max uses
+      if (promoRow.max_uses && promoRow.current_uses >= promoRow.max_uses) {
+        return json({ success: false, message: 'This promo code has reached its usage limit' })
+      }
+
+      // Check if user already redeemed this code
+      const alreadyRedeemed = await env.DB.prepare(
+        'SELECT id FROM promo_code_redemptions WHERE user_id = ? AND code = ?'
+      ).bind(userId, code).first()
+
+      if (alreadyRedeemed) {
+        return json({ success: false, message: 'You have already used this promo code' })
+      }
+
+      // Apply the promo code
+      await env.DB.prepare(`
+        INSERT INTO user_subscription (user_id, current_plan, is_lifetime, is_trial_active, trial_ends_at, updated_at)
+        VALUES (?, ?, ?, 0, NULL, ?)
+        ON CONFLICT (user_id) DO UPDATE SET
+          current_plan = excluded.current_plan,
+          is_lifetime = excluded.is_lifetime,
+          is_trial_active = 0,
+          trial_ends_at = NULL,
+          updated_at = excluded.updated_at
+      `).bind(
+        userId,
+        promoRow.plan,
+        promoRow.is_lifetime,
+        Date.now()
+      ).run()
+
+      // Record redemption
+      await env.DB.prepare(
+        'INSERT INTO promo_code_redemptions (id, user_id, code, redeemed_at) VALUES (?, ?, ?, ?)'
+      ).bind(nanoid(), userId, code, Date.now()).run()
+
+      // Increment usage count
+      await env.DB.prepare(
+        'UPDATE promo_codes SET current_uses = current_uses + 1 WHERE code = ?'
+      ).bind(code).run()
+
+      const planName = promoRow.plan.charAt(0).toUpperCase() + promoRow.plan.slice(1)
+      const lifetimeText = promoRow.is_lifetime ? ' (Lifetime)' : ''
+      return json({ 
+        success: true, 
+        message: `🎉 Welcome to ${planName}${lifetimeText}! Your account has been upgraded.`
+      })
     }
 
     // ── /api/user-blobs/:key (branding presets, settings, board layout) ───────

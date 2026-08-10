@@ -3,22 +3,28 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Job, useJobStore } from '@/store/jobStore'
+import { useSubscriptionStore } from '@/store/subscriptionStore'
 import EmptyState from '@/components/shared/EmptyState'
 import JobBoard from '@/components/jobs/JobBoard'
 import JobList from '@/components/jobs/JobList'
 import CreateJobModal from '@/components/jobs/CreateJobModal'
 import JobDrawer from '@/components/jobs/JobDrawer'
+import UpgradeModal from '@/components/shared/UpgradeModal'
 
 type ViewMode = 'list' | 'board'
 
 export default function JobsPage() {
   const allJobs = useJobStore((state) => state.jobs)
   const getJobById = useJobStore((state) => state.getJobById)
+  const canAddJob = useSubscriptionStore((state) => state.canAddJob)
+  const currentPlan = useSubscriptionStore((state) => state.currentPlan)
+  const getRemainingJobs = useSubscriptionStore((state) => state.getRemainingJobs)
   const searchParams = useSearchParams()
   
   const [mounted, setMounted] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('board')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
 
   // Always derive from live store so mutations (quotes, etc.) reflect instantly
@@ -37,6 +43,15 @@ export default function JobsPage() {
   }, [mounted, searchParams])
 
   const jobs = mounted ? allJobs.filter((job) => !job.archived) : []
+  
+  // Check if user can create a new job
+  const handleCreateClick = () => {
+    if (!canAddJob(jobs.length)) {
+      setIsUpgradeModalOpen(true)
+      return
+    }
+    setIsCreateModalOpen(true)
+  }
 
   const handleJobClick = (job: Job) => {
     setSelectedJobId(job.id)
@@ -50,12 +65,23 @@ export default function JobsPage() {
           description="Create your first job to start tracking work orders and projects."
           action={{
             label: 'Create Job',
-            onClick: () => setIsCreateModalOpen(true),
+            onClick: handleCreateClick,
           }}
         />
         <CreateJobModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
+        />
+        <UpgradeModal
+          isOpen={isUpgradeModalOpen}
+          onClose={() => setIsUpgradeModalOpen(false)}
+          feature="Additional Jobs"
+          requiredPlan={currentPlan === 'free' ? 'starter' : 'professional'}
+          description={
+            currentPlan === 'free'
+              ? 'You\'ve reached the limit of 5 active jobs on the Free plan. Upgrade to Starter for up to 50 jobs.'
+              : 'You\'ve reached the limit of 50 active jobs on the Starter plan. Upgrade to Professional for unlimited jobs.'
+          }
         />
       </>
     )
@@ -69,6 +95,11 @@ export default function JobsPage() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Jobs</h1>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
             Track work orders from creation to completion
+            {getRemainingJobs(jobs.length) !== null && (
+              <span className="ml-2 text-blue-600 dark:text-blue-400 font-medium">
+                ({jobs.length}/{getRemainingJobs(jobs.length)! + jobs.length} used)
+              </span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -104,7 +135,7 @@ export default function JobsPage() {
 
           {/* Create Button */}
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={handleCreateClick}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
           >
             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,6 +162,17 @@ export default function JobsPage() {
         job={selectedJob}
         isOpen={!!selectedJobId}
         onClose={() => setSelectedJobId(null)}
+      />
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        feature="Additional Jobs"
+        requiredPlan={currentPlan === 'free' ? 'starter' : 'professional'}
+        description={
+          currentPlan === 'free'
+            ? 'You\'ve reached the limit of 5 active jobs on the Free plan. Upgrade to Starter for up to 50 jobs.'
+            : 'You\'ve reached the limit of 50 active jobs on the Starter plan. Upgrade to Professional for unlimited jobs.'
+        }
       />
     </div>
   )

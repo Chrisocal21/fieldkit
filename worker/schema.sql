@@ -185,6 +185,54 @@ CREATE TABLE IF NOT EXISTS notes (
   updated_at INTEGER NOT NULL
 );
 
+-- User settings (per-user configuration)
+CREATE TABLE IF NOT EXISTS user_settings (
+  user_id TEXT PRIMARY KEY,
+  theme TEXT NOT NULL DEFAULT 'system',
+  default_tax_rate REAL NOT NULL DEFAULT 0,
+  default_payment_terms TEXT NOT NULL DEFAULT 'Net 30',
+  default_quote_expiry INTEGER NOT NULL DEFAULT 30,
+  invoice_prefix TEXT NOT NULL DEFAULT 'INV',
+  quote_prefix TEXT NOT NULL DEFAULT 'QT',
+  currency TEXT NOT NULL DEFAULT 'USD',
+  notifications_job_updates INTEGER NOT NULL DEFAULT 1,
+  notifications_quote_activity INTEGER NOT NULL DEFAULT 1,
+  notifications_team_activity INTEGER NOT NULL DEFAULT 1,
+  notifications_low_stock INTEGER NOT NULL DEFAULT 1,
+  updated_at INTEGER NOT NULL
+);
+
+-- User subscription (per-user plan and trial status)
+CREATE TABLE IF NOT EXISTS user_subscription (
+  user_id TEXT PRIMARY KEY,
+  current_plan TEXT NOT NULL DEFAULT 'free',
+  trial_ends_at INTEGER,
+  is_trial_active INTEGER NOT NULL DEFAULT 0,
+  is_lifetime INTEGER NOT NULL DEFAULT 0, -- 1 = lifetime, can't be downgraded
+  updated_at INTEGER NOT NULL
+);
+
+-- Promo codes for lifetime subscriptions
+CREATE TABLE IF NOT EXISTS promo_codes (
+  code TEXT PRIMARY KEY,
+  plan TEXT NOT NULL, -- which plan this code grants
+  is_lifetime INTEGER NOT NULL DEFAULT 1, -- whether this grants lifetime access
+  max_uses INTEGER, -- null = unlimited
+  current_uses INTEGER NOT NULL DEFAULT 0,
+  expires_at INTEGER, -- null = never expires
+  created_at INTEGER NOT NULL,
+  notes TEXT -- internal notes (who it's for, why created, etc.)
+);
+
+-- Track who used which promo code
+CREATE TABLE IF NOT EXISTS promo_code_redemptions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  code TEXT NOT NULL,
+  redeemed_at INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES user_subscription(user_id)
+);
+
 -- Indexes for fast per-user queries
 CREATE INDEX IF NOT EXISTS idx_jobs_user ON jobs(user_id);
 CREATE INDEX IF NOT EXISTS idx_quotes_user ON quotes(user_id);

@@ -2,26 +2,35 @@
 
 import { useState, useEffect } from 'react'
 import { InventoryItem, useInventoryStore } from '@/store/inventoryStore'
+import { useSubscriptionStore } from '@/store/subscriptionStore'
 import EmptyState from '@/components/shared/EmptyState'
 import ItemFormModal from '@/components/inventory/ItemFormModal'
 import AdjustmentLog from '@/components/inventory/AdjustmentLog'
 import QuickAdjustModal from '@/components/inventory/QuickAdjustModal'
+import UpgradeModal from '@/components/shared/UpgradeModal'
 
 export default function InventoryPage() {
   const allItems = useInventoryStore((state) => state.items)
   const adjustStock = useInventoryStore((state) => state.adjustStock)
+  const hasInventoryFeature = useSubscriptionStore((state) => state.hasFeature('hasInventory'))
+  const currentPlan = useSubscriptionStore((state) => state.currentPlan)
 
   const [mounted, setMounted] = useState(false)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isLogOpen, setIsLogOpen] = useState(false)
   const [isAdjustOpen, setIsAdjustOpen] = useState(false)
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
   const [adjustDelta, setAdjustDelta] = useState(1)
 
   // Prevent hydration mismatch by waiting for client-side mount
   useEffect(() => {
     setMounted(true)
-  }, [])
+    // Check if user has access to inventory
+    if (!hasInventoryFeature) {
+      setIsUpgradeModalOpen(true)
+    }
+  }, [hasInventoryFeature])
 
   const items = mounted ? allItems : []
 
@@ -230,6 +239,15 @@ export default function InventoryPage() {
         }}
         onConfirm={handleConfirmAdjust}
         defaultDelta={adjustDelta}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        feature="Inventory Management"
+        requiredPlan="professional"
+        description="Inventory management is available on the Professional plan and above. Track stock levels, materials, and costs across all your jobs."
       />
     </div>
   )

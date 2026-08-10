@@ -2,14 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import { useTeamStore, TeamMember } from '@/store/teamStore'
+import { useSubscriptionStore } from '@/store/subscriptionStore'
 import EmptyState from '@/components/shared/EmptyState'
+import UpgradeModal from '@/components/shared/UpgradeModal'
 
 export default function TeamPage() {
   const { members, addMember, updateMember, deleteMember, toggleActive, searchMembers } = useTeamStore()
+  const canAddTeamMember = useSubscriptionStore((state) => state.canAddTeamMember)
+  const currentPlan = useSubscriptionStore((state) => state.currentPlan)
+  const getRemainingTeamMembers = useSubscriptionStore((state) => state.getRemainingTeamMembers)
+  const hasTeamFeature = currentPlan === 'professional' || currentPlan === 'enterprise'
+
   const [mounted, setMounted] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showInactive, setShowInactive] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
@@ -24,7 +32,11 @@ export default function TeamPage() {
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    // Check if user has access to team feature
+    if (!hasTeamFeature) {
+      setIsUpgradeModalOpen(true)
+    }
+  }, [hasTeamFeature])
 
   if (!mounted) {
     return null
@@ -620,6 +632,15 @@ export default function TeamPage() {
           </div>
         </div>
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        feature="Team Management"
+        requiredPlan="professional"
+        description="Team management is available on the Professional plan and above. Collaborate with up to 10 team members and track their work."
+      />
     </div>
   )
 }
