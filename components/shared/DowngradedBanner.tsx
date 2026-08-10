@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useSubscriptionStore } from '@/store/subscriptionStore'
 
 export default function DowngradedBanner() {
-  const { currentPlan, isTrialActive } = useSubscriptionStore()
+  const { currentPlan, isTrialActive, isLifetime } = useSubscriptionStore()
   const [mounted, setMounted] = useState(false)
   const [wasDowngraded, setWasDowngraded] = useState(false)
   const [dismissed, setDismissed] = useState(false)
@@ -14,14 +14,14 @@ export default function DowngradedBanner() {
     setMounted(true)
     // Check if user was just downgraded from a trial
     const lastPlan = localStorage.getItem('fieldkit-last-plan')
-    if (lastPlan && lastPlan !== 'free' && currentPlan === 'free' && !isTrialActive) {
+    if (lastPlan && lastPlan !== 'free' && currentPlan === 'free' && !isTrialActive && !isLifetime) {
       setWasDowngraded(true)
     }
     // Store current plan for future comparison
     localStorage.setItem('fieldkit-last-plan', currentPlan)
-  }, [currentPlan, isTrialActive])
+  }, [currentPlan, isTrialActive, isLifetime])
 
-  if (!mounted || !wasDowngraded || dismissed) {
+  if (!mounted || !wasDowngraded || dismissed || isLifetime) {
     return null
   }
 

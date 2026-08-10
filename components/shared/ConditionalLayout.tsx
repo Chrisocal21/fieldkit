@@ -23,9 +23,11 @@ export default function ConditionalLayout({
 
   return (
     <>
-      <TrialBanner />
-      <DowngradedBanner />
       <Sidebar />
+      <div className="md:pl-64">
+        <TrialBanner />
+        <DowngradedBanner />
+      </div>
       <MainContent>{children}</MainContent>
       <BottomNav />
     </>

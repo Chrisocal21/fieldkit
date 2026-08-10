@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useSubscriptionStore } from '@/store/subscriptionStore'
 
 export default function TrialBanner() {
-  const { currentPlan, trialEndsAt, isTrialActive, endTrial } = useSubscriptionStore()
+  const { currentPlan, trialEndsAt, isTrialActive, isLifetime, endTrial } = useSubscriptionStore()
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null)
   const [mounted, setMounted] = useState(false)
 
@@ -36,7 +36,7 @@ export default function TrialBanner() {
     return () => clearInterval(interval)
   }, [mounted, isTrialActive, trialEndsAt, endTrial])
 
-  if (!mounted || !isTrialActive || currentPlan === 'free' || daysRemaining === null) {
+  if (!mounted || !isTrialActive || currentPlan === 'free' || daysRemaining === null || isLifetime) {
     return null
   }
 
