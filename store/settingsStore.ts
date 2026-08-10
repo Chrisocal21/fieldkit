@@ -84,6 +84,8 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'fieldkit-settings',
       storage: userScopedStorage,
+      version: 1,
+      migrate: (state: any) => state,
       onRehydrateStorage: () => (state) => {
         if (state) {
           applyTheme(state.theme)

@@ -92,6 +92,8 @@ export const useInventoryStore = create<InventoryState>()(
     {
       name: 'fieldkit-inventory',
       storage: userScopedStorage,
+      version: 1,
+      migrate: (state: any) => state,
     }
   )
 )

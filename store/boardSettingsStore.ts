@@ -68,6 +68,8 @@ export const useBoardSettingsStore = create<BoardSettingsState>()(
     {
       name: 'fieldkit-board-settings',
       storage: userScopedStorage,
+      version: 1,
+      migrate: (state: any) => state,
     }
   )
 )

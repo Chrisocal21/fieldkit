@@ -330,6 +330,8 @@ export const useBrandingStore = create<BrandingState>()(
     {
       name: 'fieldkit-branding',
       storage: userScopedStorage,
+      version: 1,
+      migrate: (state: any) => state,
     }
   )
 )

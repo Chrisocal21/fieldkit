@@ -121,6 +121,8 @@ export const useNoteStore = create<NoteState>()(
     {
       name: 'fieldkit-notes',
       storage: userScopedStorage,
+      version: 1,
+      migrate: (state: any) => state,
     }
   )
 )

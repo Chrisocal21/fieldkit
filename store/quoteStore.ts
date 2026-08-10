@@ -91,6 +91,8 @@ export const useQuoteStore = create<QuoteState>()(
     {
       name: 'fieldkit-quotes',
       storage: userScopedStorage,
+      version: 1,
+      migrate: (state: any) => state,
     }
   )
 )

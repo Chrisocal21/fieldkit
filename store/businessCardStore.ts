@@ -63,6 +63,8 @@ export const useBusinessCardStore = create<BusinessCardState>()(
     {
       name: 'fieldkit-business-cards',
       storage: userScopedStorage,
+      version: 1,
+      migrate: (state: any) => state,
     }
   )
 )

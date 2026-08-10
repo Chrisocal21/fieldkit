@@ -80,6 +80,26 @@ export default function StoreRehydrator() {
         .finally(() => { syncing = false })
     }
 
+    // Debounced mutation sync — fires 3 s after any store change so every
+    // user edit reaches the cloud without hammering the API on every keystroke.
+    let mutationTimer: ReturnType<typeof setTimeout> | null = null
+    const scheduleSync = () => {
+      if (mutationTimer) clearTimeout(mutationTimer)
+      mutationTimer = setTimeout(runSync, 3_000)
+    }
+
+    const unsubs = [
+      useJobStore.subscribe(scheduleSync),
+      useClientStore.subscribe(scheduleSync),
+      useInvoiceStore.subscribe(scheduleSync),
+      useInventoryStore.subscribe(scheduleSync),
+      useExpenseStore.subscribe(scheduleSync),
+      useMaterialCostStore.subscribe(scheduleSync),
+      useTimeEntryStore.subscribe(scheduleSync),
+      useNoteStore.subscribe(scheduleSync),
+      useTeamStore.subscribe(scheduleSync),
+    ]
+
     const onVisible = () => {
       if (document.visibilityState === 'visible') runSync()
     }
@@ -94,6 +114,8 @@ export default function StoreRehydrator() {
     const interval = setInterval(runSync, 60_000)
 
     return () => {
+      unsubs.forEach(u => u())
+      if (mutationTimer) clearTimeout(mutationTimer)
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('focus', runSync)
       window.removeEventListener('pagehide', onPageHide)

@@ -91,6 +91,8 @@ export const useClientStore = create<ClientState>()(
     {
       name: 'fieldkit-clients',
       storage: userScopedStorage,
+      version: 1,
+      migrate: (state: any) => state,
     }
   )
 )
