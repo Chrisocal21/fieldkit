@@ -2,6 +2,22 @@ export interface Env {
   DB: D1Database
 }
 
+const ALLOWED_SITES = new Set(['fieldkit', 'chrisocphoto', 'probablyfinestudios'])
+const PUBLIC_SUBMIT_SITES = new Set(['fieldkit', 'probablyfinestudios'])
+const SITE_ALLOWED_ORIGINS: Record<string, string[]> = {
+  fieldkit: [
+    'http://localhost:3000',
+    'https://fieldkit.app',
+    'https://www.fieldkit.app',
+  ],
+  probablyfinestudios: [
+    'http://localhost:3000',
+    'https://probablyfinestudios.com',
+    'https://www.probablyfinestudios.com',
+  ],
+}
+const SHARED_INBOX_PUBLIC_ENDPOINT = 'https://mail.probablyfinestudios.com/api/public/messages'
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function json(data: unknown, status = 200) {
@@ -52,6 +68,42 @@ function getUserId(request: Request): string | null {
   }
 }
 
+async function submitToSharedInbox(site: string, payload: Record<string, unknown>, request: Request) {
+  if (!ALLOWED_SITES.has(site)) {
+    throw new Error('Site not allowed')
+  }
+
+  if (!PUBLIC_SUBMIT_SITES.has(site)) {
+    throw new Error('Public submissions are not enabled for this site')
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  const origin = request.headers.get('origin')
+  const referer = request.headers.get('referer')
+  if (origin) headers.Origin = origin
+  if (referer) headers.Referer = referer
+  if (origin) headers['X-Forwarded-Origin'] = origin
+
+  const response = await fetch(SHARED_INBOX_PUBLIC_ENDPOINT, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      source_site: site,
+      ...payload,
+    }),
+  })
+
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new Error((data as any)?.error ?? 'Unable to deliver message to shared inbox')
+  }
+
+  return data
+}
+
 // ── router ────────────────────────────────────────────────────────────────────
 
 export default {
@@ -94,6 +146,47 @@ export default {
         createdAt: q.created_at,
         updatedAt: q.updated_at,
       })
+    }
+
+    if (path === '/api/public/messages' && method === 'POST') {
+      const body = await request.json().catch(() => null) as any
+      if (!body || typeof body !== 'object') {
+        return err('Invalid request body', 400)
+      }
+
+      const sourceSite = typeof body.source_site === 'string' ? body.source_site : ''
+      const name = typeof body.name === 'string' ? body.name.trim() : ''
+      const email = typeof body.email === 'string' ? body.email.trim() : ''
+      const message = typeof body.message === 'string' ? body.message.trim() : ''
+      const company = typeof body.company === 'string' ? body.company.trim() : ''
+
+      if (!sourceSite || !ALLOWED_SITES.has(sourceSite)) {
+        return err('Site not allowed', 403)
+      }
+
+      if (!PUBLIC_SUBMIT_SITES.has(sourceSite)) {
+        return err('Public submissions are not enabled for this site', 403)
+      }
+
+      if (!name || !email || !message) {
+        return err('Missing required fields', 400)
+      }
+
+      if (company) {
+        return err('Company field must remain empty', 400)
+      }
+
+      try {
+        await submitToSharedInbox(sourceSite, {
+          name,
+          email,
+          message,
+          company: '',
+        }, request)
+        return json({ success: true, message: 'Message received.' }, 201)
+      } catch (error) {
+        return err(error instanceof Error ? error.message : 'Unable to submit message', 500)
+      }
     }
 
     const userId = getUserId(request)
@@ -1162,6 +1255,17 @@ export default {
         INSERT INTO contact_sales (id, user_id, name, email, company, phone, plan, message, status, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)
       `).bind(id, userId, name, email, company || null, phone || null, plan, message, Date.now()).run()
+
+      try {
+        await submitToSharedInbox('fieldkit', {
+          name,
+          email,
+          message,
+          company: company || '',
+        }, request)
+      } catch {
+        // Keep the local record even if the shared inbox delivery is unavailable.
+      }
 
       return json({ success: true, message: 'Thank you! We will get back to you within 24 hours.' })
     }

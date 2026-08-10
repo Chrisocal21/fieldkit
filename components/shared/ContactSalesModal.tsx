@@ -27,16 +27,25 @@ export default function ContactSalesModal({ isOpen, onClose, selectedPlan }: Con
     setErrorMessage('')
 
     try {
-      const response = await fetch('/api/contact-sales', {
+      const response = await fetch('https://mail.probablyfinestudios.com/api/public/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Origin: window.location.origin,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          source_site: 'fieldkit',
+          name: formData.name,
+          email: formData.email,
+          message: formData.message,
+          company: '',
+        }),
       })
 
+      const payload = await response.json().catch(() => null)
+
       if (!response.ok) {
-        throw new Error('Failed to send message')
+        throw new Error(payload?.error ?? 'Failed to send message')
       }
 
       setStatus('success')
@@ -128,6 +137,14 @@ export default function ContactSalesModal({ isOpen, onClose, selectedPlan }: Con
               onChange={handleChange}
               className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Acme Inc."
+            />
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              className="absolute left-[-9999px] opacity-0"
+              aria-hidden="true"
             />
           </div>
 
