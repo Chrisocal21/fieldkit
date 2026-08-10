@@ -105,15 +105,17 @@ export default function PlansPage() {
                 key={plan.tier}
                 className={`relative rounded-2xl border-2 p-8 shadow-sm transition-all ${
                   plan.highlighted
-                    ? 'border-blue-600 dark:border-blue-500 shadow-xl scale-105'
+                    ? 'border-blue-600 dark:border-blue-500 shadow-xl'
                     : 'border-gray-200 dark:border-gray-700 hover:shadow-lg'
                 } bg-white dark:bg-gray-800`}
               >
                 {plan.highlighted && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                      Most Popular
-                    </span>
+                  <div className="mb-4 -mx-8 -mt-8 px-8 pt-3 pb-2 bg-blue-600 dark:bg-blue-500 rounded-t-2xl">
+                    <div className="text-center">
+                      <span className="text-white text-sm font-semibold">
+                        ⭐ Most Popular
+                      </span>
+                    </div>
                   </div>
                 )}
 
