@@ -1148,6 +1148,24 @@ export default {
       })
     }
 
+    // ── /api/contact-sales ────────────────────────────────────────────────────
+    if (path === '/api/contact-sales' && method === 'POST') {
+      const body = await request.json() as any
+      const { name, email, company, phone, plan, message } = body
+
+      if (!name || !email || !plan || !message) {
+        return err('Missing required fields')
+      }
+
+      const id = `CS-${nanoid(10)}`
+      await env.DB.prepare(`
+        INSERT INTO contact_sales (id, user_id, name, email, company, phone, plan, message, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)
+      `).bind(id, userId, name, email, company || null, phone || null, plan, message, Date.now()).run()
+
+      return json({ success: true, message: 'Thank you! We will get back to you within 24 hours.' })
+    }
+
     // ── /api/user-blobs/:key (branding presets, settings, board layout) ───────
     const blobMatch = path.match(/^\/api\/user-blobs\/([^/]+)$/)
     if (blobMatch) {

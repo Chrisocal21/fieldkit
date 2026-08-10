@@ -258,6 +258,21 @@ CREATE TABLE IF NOT EXISTS user_blobs (
 CREATE INDEX IF NOT EXISTS idx_job_materials_job ON job_materials(job_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_job ON time_entries(job_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_user ON time_entries(user_id);
+
+-- Contact sales form submissions
+CREATE TABLE IF NOT EXISTS contact_sales (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  company TEXT,
+  phone TEXT,
+  plan TEXT NOT NULL,
+  message TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'new', -- new, contacted, closed
+  created_at INTEGER NOT NULL,
+  notes TEXT -- admin notes
+);
 CREATE INDEX IF NOT EXISTS idx_note_folders_user ON note_folders(user_id);
 CREATE INDEX IF NOT EXISTS idx_notes_user ON notes(user_id);
 CREATE INDEX IF NOT EXISTS idx_notes_folder ON notes(folder_id);

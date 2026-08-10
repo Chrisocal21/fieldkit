@@ -4,10 +4,13 @@ import { useState } from 'react'
 import { useSubscriptionStore, PLAN_LIMITS } from '@/store/subscriptionStore'
 import Link from 'next/link'
 import SettingsModal from '@/components/shared/SettingsModal'
+import ContactSalesModal from '@/components/shared/ContactSalesModal'
 
 export default function PlansPage() {
   const { currentPlan, isLifetime } = useSubscriptionStore()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [contactSalesOpen, setContactSalesOpen] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState('')
 
   const plans = [
     {
@@ -174,16 +177,19 @@ export default function PlansPage() {
                       ✨ Lifetime Access
                     </div>
                   ) : (
-                    <Link
-                      href="/dashboard"
-                      className={`block w-full py-3 px-4 rounded-lg text-center font-semibold transition-colors ${
+                    <button
+                      onClick={() => {
+                        setSelectedPlan(plan.name)
+                        setContactSalesOpen(true)
+                      }}
+                      className={`w-full py-3 px-4 rounded-lg text-center font-semibold transition-colors ${
                         plan.highlighted
                           ? 'bg-blue-600 hover:bg-blue-700 text-white'
                           : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white'
                       }`}
                     >
                       Contact Sales
-                    </Link>
+                    </button>
                   )}
                 </div>
               </div>
@@ -227,6 +233,13 @@ export default function PlansPage() {
         isOpen={settingsOpen} 
         onClose={() => setSettingsOpen(false)} 
         initialTab="subscription"
+      />
+
+      {/* Contact Sales Modal */}
+      <ContactSalesModal
+        isOpen={contactSalesOpen}
+        onClose={() => setContactSalesOpen(false)}
+        selectedPlan={selectedPlan}
       />
     </div>
   )
