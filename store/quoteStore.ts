@@ -10,6 +10,7 @@ export interface QuoteLineItem {
   quantity: number
   unitPrice: number
   type: 'material' | 'labor' | 'other' | 'discount' | 'deposit'
+  tags?: string[]           // user-defined multi-labels (e.g. Labor, Material, Travel)
   sortOrder: number
   inventoryItemId?: string
 }
