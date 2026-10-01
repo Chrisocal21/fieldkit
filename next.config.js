@@ -24,11 +24,14 @@ const nextConfig = {
         ],
       },
       {
+        // The manifest's URL never changes, so it must revalidate. Marking it
+        // immutable for a year meant icon and color updates never reached
+        // anyone who had already loaded it.
         source: '/manifest.json',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=0, must-revalidate',
           },
         ],
       },

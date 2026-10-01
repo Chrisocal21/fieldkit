@@ -1,5 +1,6 @@
 'use client'
 
+import { formatMoney } from '@/lib/format'
 import { Quote } from '@/store/quoteStore'
 import { useBrandingStore, BrandingPreset } from '@/store/brandingStore'
 import { useState, useEffect } from 'react'
@@ -77,9 +78,9 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
         </>
       )}
 
-      {/* Document Preview */}
+      {/* Document Preview — `paper` keeps it light, in a document font, in both app themes */}
       <div
-        className="border rounded-lg p-6 sm:p-8 max-w-4xl mx-auto"
+        className="paper border rounded-lg p-4 sm:p-8 max-w-4xl mx-auto"
         style={{
           backgroundColor: preset.colors.background,
           borderColor: preset.colors.border,
@@ -174,12 +175,12 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
               <span
                 className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                   quote.status === 'Accepted'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                    ? 'bg-green-100 text-green-800'
                     : quote.status === 'Declined'
-                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                    ? 'bg-red-100 text-red-800'
                     : quote.status === 'Sent'
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-gray-100 text-gray-800'
                 }`}
               >
                 {quote.status}
@@ -339,7 +340,7 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
                   Description
                 </th>
                 <th
-                  className="text-right py-2 font-semibold w-20"
+                  className="text-right py-2 font-semibold w-10 sm:w-20"
                   style={{
                     fontSize: `${preset.fontSize.small}px`,
                     color: preset.colors.text,
@@ -348,7 +349,7 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
                   Qty
                 </th>
                 <th
-                  className="text-right py-2 font-semibold w-24"
+                  className="text-right py-2 font-semibold w-16 sm:w-24"
                   style={{
                     fontSize: `${preset.fontSize.small}px`,
                     color: preset.colors.text,
@@ -357,7 +358,7 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
                   Price
                 </th>
                 <th
-                  className="text-right py-2 font-semibold w-28"
+                  className="text-right py-2 font-semibold w-20 sm:w-28"
                   style={{
                     fontSize: `${preset.fontSize.small}px`,
                     color: preset.colors.text,
@@ -414,7 +415,7 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
                       color: preset.colors.text,
                     }}
                   >
-                    ${item.unitPrice.toFixed(2)}
+                    ${formatMoney(item.unitPrice)}
                   </td>
                   <td
                     className="py-3 text-right font-medium"
@@ -423,7 +424,7 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
                       color: preset.colors.text,
                     }}
                   >
-                    ${(item.quantity * item.unitPrice).toFixed(2)}
+                    ${formatMoney(item.quantity * item.unitPrice)}
                   </td>
                 </tr>
               ))}
@@ -450,13 +451,13 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
                   color: preset.colors.text,
                 }}
               >
-                ${subtotal.toFixed(2)}
+                ${formatMoney(subtotal)}
               </span>
             </div>
             {discountTotal > 0 && (
               <div className="flex justify-between">
                 <span style={{ fontSize: `${preset.fontSize.body}px`, color: '#d97706' }}>Discount:</span>
-                <span className="font-medium" style={{ fontSize: `${preset.fontSize.body}px`, color: '#d97706' }}>−${discountTotal.toFixed(2)}</span>
+                <span className="font-medium" style={{ fontSize: `${preset.fontSize.body}px`, color: '#d97706' }}>−${formatMoney(discountTotal)}</span>
               </div>
             )}
             <div className="flex justify-between">
@@ -475,7 +476,7 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
                   color: preset.colors.text,
                 }}
               >
-                ${tax.toFixed(2)}
+                ${formatMoney(tax)}
               </span>
             </div>
             {roundingAdjustment > 0 && (
@@ -495,7 +496,7 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
                     color: preset.colors.text,
                   }}
                 >
-                  +${roundingAdjustment.toFixed(2)}
+                  +${formatMoney(roundingAdjustment)}
                 </span>
               </div>
             )}
@@ -520,14 +521,14 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
                   color: preset.accentColor,
                 }}
               >
-                ${total.toFixed(2)}
+                ${formatMoney(total)}
               </span>
             </div>
             {depositTotal > 0 && (
               <>
                 <div className="flex justify-between">
                   <span style={{ fontSize: `${preset.fontSize.body}px`, color: '#16a34a' }}>Deposit received:</span>
-                  <span className="font-medium" style={{ fontSize: `${preset.fontSize.body}px`, color: '#16a34a' }}>−${depositTotal.toFixed(2)}</span>
+                  <span className="font-medium" style={{ fontSize: `${preset.fontSize.body}px`, color: '#16a34a' }}>−${formatMoney(depositTotal)}</span>
                 </div>
                 <div
                   className="flex justify-between font-bold pt-2"
@@ -537,7 +538,7 @@ export default function QuotePreview({ quote, presetId, mode = 'quote', hideCont
                   }}
                 >
                   <span style={{ fontSize: `${preset.fontSize.heading}px`, color: preset.accentColor }}>AMOUNT DUE:</span>
-                  <span style={{ fontSize: `${preset.fontSize.heading}px`, color: preset.accentColor }}>${amountDue.toFixed(2)}</span>
+                  <span style={{ fontSize: `${preset.fontSize.heading}px`, color: preset.accentColor }}>${formatMoney(amountDue)}</span>
                 </div>
               </>
             )}

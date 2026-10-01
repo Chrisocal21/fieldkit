@@ -6,6 +6,7 @@ import BottomNav from '@/components/shared/BottomNav'
 import MainContent from '@/components/shared/MainContent'
 import TrialBanner from '@/components/shared/TrialBanner'
 import DowngradedBanner from '@/components/shared/DowngradedBanner'
+import { isPublicPath } from '@/lib/routes'
 
 export default function ConditionalLayout({
   children,
@@ -13,22 +14,25 @@ export default function ConditionalLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  
-  // Public routes that don't need the app layout
-  const isPublicRoute = pathname === '/' || pathname?.startsWith('/sign-in') || pathname?.startsWith('/sign-up')
 
-  if (isPublicRoute) {
+  // Public routes (landing, auth, shared quotes) render without the app shell
+  if (isPublicPath(pathname)) {
     return <>{children}</>
   }
 
   return (
     <>
       <Sidebar />
-      <div className="md:pl-64">
-        <TrialBanner />
-        <DowngradedBanner />
-      </div>
-      <MainContent>{children}</MainContent>
+      <MainContent
+        banners={
+          <>
+            <TrialBanner />
+            <DowngradedBanner />
+          </>
+        }
+      >
+        {children}
+      </MainContent>
       <BottomNav />
     </>
   )

@@ -7,67 +7,54 @@ interface StatusBadgeProps {
   className?: string
 }
 
-const statusConfig: Record<JobStatus | QuoteStatus, { bg: string; text: string; border: string }> = {
-  'Draft': {
-    bg: 'bg-gray-50 dark:bg-gray-900',
-    text: 'text-gray-600 dark:text-gray-400',
-    border: 'border-gray-200 dark:border-gray-700',
-  },
+const neutral = {
+  dot: 'bg-gray-400 dark:bg-gray-500',
+  pill: 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700',
+}
+const info = {
+  dot: 'bg-blue-500 dark:bg-blue-400',
+  pill: 'bg-blue-50 dark:bg-blue-400/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-400/30',
+}
+const success = {
+  dot: 'bg-green-500 dark:bg-green-400',
+  pill: 'bg-green-50 dark:bg-green-400/10 text-green-700 dark:text-green-300 border-green-200 dark:border-green-400/30',
+}
+const danger = {
+  dot: 'bg-red-500 dark:bg-red-400',
+  pill: 'bg-red-50 dark:bg-red-400/10 text-red-700 dark:text-red-300 border-red-200 dark:border-red-400/30',
+}
+
+const statusConfig: Record<JobStatus | QuoteStatus, { dot: string; pill: string }> = {
+  'Draft': neutral,
   'Quoted': {
-    bg: 'bg-gray-100 dark:bg-gray-800',
-    text: 'text-gray-700 dark:text-gray-300',
-    border: 'border-gray-300 dark:border-gray-600',
+    dot: 'bg-gray-500 dark:bg-gray-300',
+    pill: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600',
   },
-  'Scheduled': {
-    bg: 'bg-blue-100 dark:bg-blue-900/30',
-    text: 'text-blue-700 dark:text-blue-300',
-    border: 'border-blue-300 dark:border-blue-600',
-  },
+  'Scheduled': info,
   'In Progress': {
-    bg: 'bg-amber-100 dark:bg-amber-900/30',
-    text: 'text-amber-700 dark:text-amber-300',
-    border: 'border-amber-300 dark:border-amber-600',
+    dot: 'bg-amber-500 dark:bg-amber-400',
+    pill: 'bg-amber-50 dark:bg-amber-400/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-400/30',
   },
-  'Completed': {
-    bg: 'bg-green-100 dark:bg-green-900/30',
-    text: 'text-green-700 dark:text-green-300',
-    border: 'border-green-300 dark:border-green-600',
-  },
-  'Cancelled': {
-    bg: 'bg-red-100 dark:bg-red-900/30',
-    text: 'text-red-700 dark:text-red-300',
-    border: 'border-red-300 dark:border-red-600',
-  },
+  'Completed': success,
+  'Cancelled': danger,
   // Quote-specific statuses
-  'Sent': {
-    bg: 'bg-blue-100 dark:bg-blue-900/30',
-    text: 'text-blue-700 dark:text-blue-300',
-    border: 'border-blue-300 dark:border-blue-600',
-  },
-  'Accepted': {
-    bg: 'bg-green-100 dark:bg-green-900/30',
-    text: 'text-green-700 dark:text-green-300',
-    border: 'border-green-300 dark:border-green-600',
-  },
-  'Declined': {
-    bg: 'bg-red-100 dark:bg-red-900/30',
-    text: 'text-red-700 dark:text-red-300',
-    border: 'border-red-300 dark:border-red-600',
-  },
+  'Sent': info,
+  'Accepted': success,
+  'Declined': danger,
   'Revised': {
-    bg: 'bg-purple-100 dark:bg-purple-900/30',
-    text: 'text-purple-700 dark:text-purple-300',
-    border: 'border-purple-300 dark:border-purple-600',
+    dot: 'bg-purple-500 dark:bg-purple-400',
+    pill: 'bg-purple-50 dark:bg-purple-400/10 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-400/30',
   },
 }
 
 export default function StatusBadge({ status, className = '' }: StatusBadgeProps) {
-  const config = statusConfig[status]
-  
+  const config = statusConfig[status] ?? neutral
+
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.bg} ${config.text} ${config.border} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${config.pill} ${className}`}
     >
+      <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} aria-hidden="true" />
       {status}
     </span>
   )

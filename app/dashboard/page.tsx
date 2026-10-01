@@ -13,6 +13,7 @@ import { useExpenseStore } from '@/store/expenseStore'
 import { useDashboardStore, WIDGET_META, WidgetId } from '@/store/dashboardStore'
 import StatusBadge from '@/components/shared/StatusBadge'
 import SkeletonLoader from '@/components/shared/SkeletonLoader'
+import { formatMoney } from '@/lib/format'
 
 const calculateQuoteTotal = (quote: any) => {
   const regular = (quote.lineItems || []).filter((i: any) => i.type !== 'discount' && i.type !== 'deposit')
@@ -23,6 +24,9 @@ const calculateQuoteTotal = (quote: any) => {
   const gross = taxable + taxable * (quote.taxRate || 0) + (quote.roundingAdjustment ?? 0)
   return gross - depositAmt
 }
+
+// The dashboard shows whole dollars, e.g. 15349 -> "15,349"
+const money = (value: number) => formatMoney(value, 0)
 
 const WIDGET_ORDER: WidgetId[] = [
   'quickActions',
@@ -252,34 +256,34 @@ export default function DashboardPage() {
       </div>
 
       {/* Hero: 3 key numbers */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
         <div
           onClick={() => router.push('/jobs')}
-          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 cursor-pointer hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
+          className="min-w-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 cursor-pointer hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
         >
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Active Jobs</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">{activeJobs.length}</p>
+          <p className="truncate font-display text-lg sm:text-3xl font-bold tracking-tight tabular-nums text-gray-900 dark:text-white">{activeJobs.length}</p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">{inProgressJobs.length} in progress</p>
         </div>
         <div
           onClick={() => router.push('/quotes')}
-          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 cursor-pointer hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
+          className="min-w-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 cursor-pointer hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
         >
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Pipeline</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">${pipelineValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
+          <p className="truncate font-display text-lg sm:text-3xl font-bold tracking-tight tabular-nums text-gray-900 dark:text-white">${money(pipelineValue)}</p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">{quotedJobs.length + scheduledJobs.length + inProgressJobs.length} jobs</p>
         </div>
         <div
           onClick={() => router.push('/jobs')}
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 cursor-pointer transition-colors ${
+          className={`min-w-0 bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 cursor-pointer transition-colors ${
             getTotalOutstanding() > 0
               ? 'border border-rose-200 dark:border-rose-800/50 hover:border-rose-400 dark:hover:border-rose-600'
               : 'border border-gray-200 dark:border-gray-700 hover:border-slate-400 dark:hover:border-slate-500'
           }`}
         >
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Outstanding</p>
-          <p className={`text-3xl font-bold ${getTotalOutstanding() > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'}`}>
-            ${getTotalOutstanding().toLocaleString('en-US', { maximumFractionDigits: 0 })}
+          <p className={`truncate font-display text-lg sm:text-3xl font-bold tracking-tight tabular-nums ${getTotalOutstanding() > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'}`}>
+            ${money(getTotalOutstanding())}
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
             {unpaidInvoices.length} invoice{unpaidInvoices.length !== 1 ? 's' : ''}
@@ -291,19 +295,21 @@ export default function DashboardPage() {
       {widgets.quickActions && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
-            { label: 'New Job',     icon: 'M12 4v16m8-8H4',                                                                                                                href: '/jobs',      color: 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800/50' },
-            { label: 'New Quote',   icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',     href: '/quotes',    color: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50' },
-            { label: 'Add Client',  icon: 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z',                                      href: '/clients',   color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50' },
-            { label: 'Schedule',    icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',                                    href: '/schedule',  color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50' },
-          ].map(({ label, icon, href, color }) => (
+            { label: 'New Job',     icon: 'M12 4v16m8-8H4',                                                                                                                href: '/jobs' },
+            { label: 'New Quote',   icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',     href: '/quotes' },
+            { label: 'Add Client',  icon: 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z',                                      href: '/clients' },
+            { label: 'Schedule',    icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',                                    href: '/schedule' },
+          ].map(({ label, icon, href }) => (
             <button
               key={label}
               onClick={() => router.push(href)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl border font-medium text-sm transition-all hover:scale-[1.02] active:scale-[0.98] ${color}`}
+              className="group flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 font-medium text-sm text-gray-900 dark:text-white transition-colors hover:border-blue-500 dark:hover:border-blue-400/60"
             >
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
-              </svg>
+              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
+                </svg>
+              </span>
               {label}
             </button>
           ))}
@@ -401,14 +407,14 @@ export default function DashboardPage() {
                         />
                       </div>
                       <span className="text-xs text-gray-400 dark:text-gray-500 w-5 text-right flex-shrink-0">{count}</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white w-20 text-right flex-shrink-0">${value.toFixed(0)}</span>
+                      <span className="text-sm font-medium tabular-nums text-gray-900 dark:text-white w-20 text-right flex-shrink-0">${money(value)}</span>
                     </div>
                   )
                 })}
                 <div className="pt-2 border-t border-gray-100 dark:border-gray-700/50 flex justify-between text-sm">
                   <span className="text-gray-400 dark:text-gray-500">Open pipeline</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    ${quotePipeline.filter(g => g.status === 'Draft' || g.status === 'Sent').reduce((s, g) => s + g.value, 0).toFixed(0)}
+                  <span className="font-semibold tabular-nums text-gray-900 dark:text-white">
+                    ${money(quotePipeline.filter(g => g.status === 'Draft' || g.status === 'Sent').reduce((s, g) => s + g.value, 0))}
                   </span>
                 </div>
               </div>
@@ -420,7 +426,7 @@ export default function DashboardPage() {
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-gray-900 dark:text-white">Outstanding Invoices</h2>
-                <span className="text-lg font-bold text-gray-900 dark:text-white">${getTotalOutstanding().toFixed(0)}</span>
+                <span className="text-lg font-bold tabular-nums text-gray-900 dark:text-white">${money(getTotalOutstanding())}</span>
               </div>
               <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
                 {unpaidInvoices
@@ -451,8 +457,8 @@ export default function DashboardPage() {
                           </p>
                         </div>
                         <div className="text-right ml-3 flex-shrink-0">
-                          <p className={`text-sm font-semibold ${isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'}`}>
-                            ${balance.toFixed(0)}
+                          <p className={`text-sm font-semibold tabular-nums ${isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'}`}>
+                            ${money(balance)}
                           </p>
                           {isOverdue && <p className="text-[10px] font-medium text-rose-500 uppercase tracking-wide">Overdue</p>}
                         </div>
@@ -484,7 +490,7 @@ export default function DashboardPage() {
                   </span>
                 )}
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="font-display text-3xl font-bold tracking-tight tabular-nums text-gray-900 dark:text-white">
                 ${thisMonthRevenue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
               </p>
               <div className="mt-3 flex items-center gap-2">
@@ -514,7 +520,7 @@ export default function DashboardPage() {
                 <h2 className="font-semibold text-gray-900 dark:text-white">Net Profit</h2>
                 <span className="text-xs text-gray-400 dark:text-gray-500">Completed jobs</span>
               </div>
-              <p className={`text-3xl font-bold ${netProfit < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+              <p className={`font-display text-3xl font-bold tracking-tight tabular-nums ${netProfit < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                 {netProfit < 0 ? '-' : ''}${Math.abs(netProfit).toLocaleString('en-US', { maximumFractionDigits: 0 })}
               </p>
               <div className="mt-3 grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 dark:border-gray-700/50">
@@ -557,7 +563,7 @@ export default function DashboardPage() {
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{client!.name}</p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{client!.email || client!.phone || 'No contact info'}</p>
                     </div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white ml-3 flex-shrink-0">${revenue.toFixed(0)}</p>
+                    <p className="text-sm font-semibold tabular-nums text-gray-900 dark:text-white ml-3 flex-shrink-0">${money(revenue)}</p>
                   </div>
                 ))}
               </div>
@@ -643,7 +649,7 @@ export default function DashboardPage() {
                 <h2 className="font-semibold text-gray-900 dark:text-white">Hours This Week</h2>
                 <button onClick={() => router.push('/jobs')} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">View jobs</button>
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="font-display text-3xl font-bold tracking-tight tabular-nums text-gray-900 dark:text-white">
                 {hoursThisWeek.toFixed(1)}
                 <span className="text-base font-normal text-gray-400 dark:text-gray-500 ml-1">hrs</span>
               </p>

@@ -4,9 +4,12 @@
 // those caches served the app shell cache-first with no revalidation, so a
 // device that had ever loaded the app kept running that exact cached build
 // forever, silently ignoring every subsequent deploy.
-const CACHE_NAME = 'fieldkit-v4'
-const STATIC_CACHE_NAME = 'fieldkit-static-v4'
-const API_CACHE_NAME = 'fieldkit-api-v4'
+//
+// v5: new icons and manifest. These files keep the same URLs across deploys
+// and are served cache-first, so the old ones only go away with a new cache.
+const CACHE_NAME = 'fieldkit-v5'
+const STATIC_CACHE_NAME = 'fieldkit-static-v5'
+const API_CACHE_NAME = 'fieldkit-api-v5'
 const API_ORIGIN = 'https://fieldkit-api.recipeer-cbv.workers.dev'
 
 // Assets to cache immediately on install
@@ -17,9 +20,10 @@ const STATIC_ASSETS = [
   '/schedule',
   '/inventory',
   '/logo.svg',
-  '/icon-blue.svg',
-  '/icon-blue-512.svg',
-  '/manifest.json',
+  '/favicon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/manifest.json?v=2',
 ]
 
 // Install event - cache static assets

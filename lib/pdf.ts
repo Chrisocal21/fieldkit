@@ -1,3 +1,4 @@
+import { formatMoney } from '@/lib/format'
 import { Quote } from '@/store/quoteStore'
 import { Invoice } from '@/store/invoiceStore'
 import jsPDF from 'jspdf'
@@ -210,8 +211,8 @@ function generateDocumentPDF(
     
     doc.text(item.description.substring(0, 50), 20, yPos)
     doc.text(item.quantity.toString(), 120, yPos)
-    doc.text(`$${item.unitPrice.toFixed(2)}`, 145, yPos)
-    doc.text(`$${lineTotal.toFixed(2)}`, 190, yPos, { align: 'right' })
+    doc.text(`$${formatMoney(item.unitPrice)}`, 145, yPos)
+    doc.text(`$${formatMoney(lineTotal)}`, 190, yPos, { align: 'right' })
     yPos += 6
 
     // Tags sub-line
@@ -235,7 +236,7 @@ function generateDocumentPDF(
       doc.text(item.description.substring(0, 50), 20, yPos)
       doc.text('', 120, yPos)
       doc.text('', 145, yPos)
-      doc.text(`-$${lineTotal.toFixed(2)}`, 190, yPos, { align: 'right' })
+      doc.text(`-$${formatMoney(lineTotal)}`, 190, yPos, { align: 'right' })
       yPos += 6
       if (yPos > 250) { doc.addPage(); yPos = 20 }
     })
@@ -263,26 +264,26 @@ function generateDocumentPDF(
   doc.setTextColor(...hexToRgb(preset.colors.text))
   doc.setFont('helvetica', 'normal')
   doc.text('Subtotal:', 145, yPos)
-  doc.text(`$${subtotal.toFixed(2)}`, 190, yPos, { align: 'right' })
+  doc.text(`$${formatMoney(subtotal)}`, 190, yPos, { align: 'right' })
   yPos += 6
 
   if (discountTotal > 0) {
     doc.setTextColor(...hexToRgb('#dc2626'))
     doc.text('Discount:', 145, yPos)
-    doc.text(`-$${discountTotal.toFixed(2)}`, 190, yPos, { align: 'right' })
+    doc.text(`-$${formatMoney(discountTotal)}`, 190, yPos, { align: 'right' })
     doc.setTextColor(...hexToRgb(preset.colors.text))
     yPos += 6
   }
   
   if (quote.taxRate > 0) {
     doc.text(`Tax (${(quote.taxRate * 100).toFixed(1)}%):`, 145, yPos)
-    doc.text(`$${tax.toFixed(2)}`, 190, yPos, { align: 'right' })
+    doc.text(`$${formatMoney(tax)}`, 190, yPos, { align: 'right' })
     yPos += 6
   }
 
   if (roundingAdjustment !== 0) {
     doc.text('Rounding:', 145, yPos)
-    doc.text(`${roundingAdjustment >= 0 ? '+' : ''}$${roundingAdjustment.toFixed(2)}`, 190, yPos, { align: 'right' })
+    doc.text(`${roundingAdjustment >= 0 ? '+' : ''}$${formatMoney(roundingAdjustment)}`, 190, yPos, { align: 'right' })
     yPos += 6
   }
   
@@ -291,7 +292,7 @@ function generateDocumentPDF(
   doc.setFontSize(preset.fontSize.heading)
   doc.setTextColor(...accentRgb)
   doc.text('TOTAL:', 145, yPos)
-  doc.text(`$${total.toFixed(2)}`, 190, yPos, { align: 'right' })
+  doc.text(`$${formatMoney(total)}`, 190, yPos, { align: 'right' })
   yPos += 6
 
   // Deposit (if any)
@@ -300,14 +301,14 @@ function generateDocumentPDF(
     doc.setFontSize(preset.fontSize.body)
     doc.setTextColor(...hexToRgb(preset.colors.text))
     doc.text('Deposit:', 145, yPos)
-    doc.text(`-$${depositTotal.toFixed(2)}`, 190, yPos, { align: 'right' })
+    doc.text(`-$${formatMoney(depositTotal)}`, 190, yPos, { align: 'right' })
     yPos += 6
 
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(preset.fontSize.heading)
     doc.setTextColor(...accentRgb)
     doc.text('AMOUNT DUE:', 145, yPos)
-    doc.text(`$${amountDue.toFixed(2)}`, 190, yPos, { align: 'right' })
+    doc.text(`$${formatMoney(amountDue)}`, 190, yPos, { align: 'right' })
     yPos += 6
   }
 
@@ -321,14 +322,14 @@ function generateDocumentPDF(
       doc.setFontSize(preset.fontSize.body)
       doc.setTextColor(...hexToRgb(preset.colors.text))
       doc.text('Amount Paid:', 145, yPos)
-      doc.text(`$${inv.amountPaid.toFixed(2)}`, 190, yPos, { align: 'right' })
+      doc.text(`$${formatMoney(inv.amountPaid)}`, 190, yPos, { align: 'right' })
       yPos += 6
       
       const balance = inv.amountDue - inv.amountPaid
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(...accentRgb)
       doc.text('Balance Due:', 145, yPos)
-      doc.text(`$${balance.toFixed(2)}`, 190, yPos, { align: 'right' })
+      doc.text(`$${formatMoney(balance)}`, 190, yPos, { align: 'right' })
       yPos += 10
     }
   }

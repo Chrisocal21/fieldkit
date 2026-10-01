@@ -233,7 +233,7 @@ export default function NotesPage() {
 
           <div className="flex-1 overflow-y-auto">
             {visibleNotes.length === 0 ? (
-              <div className="p-6 text-center text-sm text-gray-400 dark:text-gray-600">
+              <div className="p-6 text-center text-sm text-gray-400 dark:text-gray-500">
                 No notes here yet
               </div>
             ) : (
@@ -241,7 +241,7 @@ export default function NotesPage() {
                 <button
                   key={note.id}
                   onClick={() => setSelectedNoteId(note.id)}
-                  className={`w-full text-left px-4 py-3 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/60 ${
+                  className={`w-full text-left px-4 py-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/60 ${
                     selectedNoteId === note.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                   }`}
                 >
@@ -268,7 +268,7 @@ export default function NotesPage() {
             <EmptyState
               title="No note selected"
               description="Pick a note from the list, or create a new one to get started."
-              icon={<DocIcon />}
+              icon={<DocIcon className="w-6 h-6" />}
               action={{ label: 'New Note', onClick: handleNewNote }}
             />
           ) : (
@@ -305,7 +305,7 @@ export default function NotesPage() {
                 )}
               </div>
 
-              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
+              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                 <select
                   value={selectedNote.folderId ?? ''}
                   onChange={(e) => updateNote(selectedNote.id, { folderId: e.target.value || null })}

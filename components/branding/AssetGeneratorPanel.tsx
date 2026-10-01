@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import BusinessCardGeneratorModal from '../shared/BusinessCardGeneratorModal'
@@ -135,11 +135,11 @@ export default function AssetGeneratorPanel({ onClose }: AssetGeneratorPanelProp
             </div>
             <div>
               <h4 className="text-white font-semibold mb-2">Pro Tips</h4>
-              <ul className="text-sm text-slate-300 space-y-1">
-                <li>â€¢ Complete your brand identity before generating assets</li>
-                <li>â€¢ Upload a high-quality logo for the best results</li>
-                <li>â€¢ Customize your color palette to match your brand</li>
-                <li>â€¢ Generate multiple variations and pick your favorite</li>
+              <ul className="text-sm text-slate-300 space-y-1 list-disc list-inside marker:text-slate-500">
+                <li>Complete your brand identity before generating assets</li>
+                <li>Upload a high-quality logo for the best results</li>
+                <li>Customize your color palette to match your brand</li>
+                <li>Generate multiple variations and pick your favorite</li>
               </ul>
             </div>
           </div>

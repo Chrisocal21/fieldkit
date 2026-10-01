@@ -10,6 +10,16 @@ interface JobBoardProps {
   onJobClick: (job: Job) => void
 }
 
+// Same color language as StatusBadge; custom columns fall back to neutral
+const STATUS_DOT: Record<string, string> = {
+  'Draft': 'bg-gray-400 dark:bg-gray-500',
+  'Quoted': 'bg-gray-500 dark:bg-gray-300',
+  'Scheduled': 'bg-blue-500 dark:bg-blue-400',
+  'In Progress': 'bg-amber-500 dark:bg-amber-400',
+  'Completed': 'bg-green-500 dark:bg-green-400',
+  'Cancelled': 'bg-red-500 dark:bg-red-400',
+}
+
 export default function JobBoard({ onJobClick }: JobBoardProps) {
   const jobs = useJobStore((state) => state.jobs.filter((job) => !job.archived))
   const updateJob = useJobStore((state) => state.updateJob)
@@ -102,18 +112,21 @@ export default function JobBoard({ onJobClick }: JobBoardProps) {
         return (
           <div
             key={column.id}
-            className={`flex-shrink-0 w-72 bg-gray-50 dark:bg-gray-900 rounded-lg p-3 flex flex-col h-full transition-colors ${
-              dragOverColumn === column.status ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
+            className={`flex-shrink-0 w-72 rounded-xl border p-3 flex flex-col h-full transition-colors ${
+              dragOverColumn === column.status
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                : 'border-gray-200 dark:border-gray-800 bg-gray-100/60 dark:bg-gray-900'
             }`}
             onDragOver={(e) => handleDragOver(e, column.status)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, column.status)}
           >
             <div className="flex items-center justify-between mb-3 flex-shrink-0">
-              <h3 className="font-medium text-sm text-gray-900 dark:text-white">
+              <h3 className="flex items-center gap-2 font-medium text-sm text-gray-900 dark:text-white">
+                <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[column.status] ?? 'bg-gray-400'}`} aria-hidden="true" />
                 {column.label}
               </h3>
-              <span className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-0.5 rounded">
+              <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-0.5 rounded">
                 {columnJobs.length}
               </span>
             </div>
@@ -129,12 +142,12 @@ export default function JobBoard({ onJobClick }: JobBoardProps) {
                     onDragStart={(e) => handleDragStart(e, job)}
                     onDragEnd={handleDragEnd}
                     onClick={() => onJobClick(job)}
-                    className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2.5 cursor-move hover:shadow-md transition-shadow ${
+                    className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2.5 cursor-move hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm transition ${
                       draggedJob?.id === job.id ? 'opacity-50' : ''
                     }`}
                   >
                     <div className="mb-2">
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">
+                      <p className="font-mono text-[11px] text-gray-500 dark:text-gray-400 mb-0.5">
                         {job.id}
                       </p>
                       <h4 className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
@@ -185,7 +198,7 @@ export default function JobBoard({ onJobClick }: JobBoardProps) {
               })}
 
               {columnJobs.length === 0 && (
-                <div className="text-center py-8 text-sm text-gray-400 dark:text-gray-600">
+                <div className="text-center py-8 text-sm text-gray-400 dark:text-gray-500">
                   No jobs
                 </div>
               )}

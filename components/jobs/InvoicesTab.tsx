@@ -1,5 +1,6 @@
 'use client'
 
+import { formatMoney } from '@/lib/format'
 import { useState } from 'react'
 import { useInvoiceStore } from '@/store/invoiceStore'
 import { useJobStore } from '@/store/jobStore'
@@ -129,7 +130,7 @@ export default function InvoicesTab({ jobId }: InvoicesTabProps) {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-base font-semibold tabular-nums ${paid ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-900 dark:text-white'}`}>
-                      ${total.toFixed(2)}
+                      ${formatMoney(total)}
                     </span>
                     {/* View */}
                     <button
@@ -202,17 +203,17 @@ export default function InvoicesTab({ jobId }: InvoicesTabProps) {
             <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-1.5">
               <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                 <span>Total Billed</span>
-                <span>${totalBilled.toFixed(2)}</span>
+                <span>${formatMoney(totalBilled)}</span>
               </div>
               {totalPaid > 0 && (
                 <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
                   <span>Paid</span>
-                  <span>−${totalPaid.toFixed(2)}</span>
+                  <span>−${formatMoney(totalPaid)}</span>
                 </div>
               )}
               <div className="flex justify-between text-base font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-1.5">
                 <span>Outstanding</span>
-                <span>${outstanding.toFixed(2)}</span>
+                <span>${formatMoney(outstanding)}</span>
               </div>
             </div>
           )}

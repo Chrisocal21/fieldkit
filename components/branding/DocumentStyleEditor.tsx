@@ -193,7 +193,7 @@ export default function DocumentStyleEditor({ mode, onPreviewChange }: { mode?: 
 
       {/* ── Document Options ── */}
       <Section title="Document Options" desc="Toggle optional sections that appear on generated documents.">
-        <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
           <ToggleRow
             label="Signature Line"
             desc='Adds an "Authorized by" signature field at the bottom'
@@ -269,7 +269,7 @@ function HeaderStylePreview({ style, color }: { style: DocumentHeaderStyle; colo
   }
   if (style === 'accent-bar') {
     return (
-      <div className="w-full h-10 rounded overflow-hidden border border-gray-100 dark:border-gray-800 flex">
+      <div className="w-full h-10 rounded overflow-hidden border border-gray-100 dark:border-gray-700 flex">
         <div className="w-1.5 h-full rounded-l" style={{ backgroundColor: color }} />
         <div className="flex-1 flex items-center justify-between px-2 bg-gray-50 dark:bg-gray-800">
           <div className="w-8 h-2 bg-gray-200 dark:bg-gray-600 rounded" />
@@ -280,7 +280,7 @@ function HeaderStylePreview({ style, color }: { style: DocumentHeaderStyle; colo
   }
   // standard
   return (
-    <div className="w-full h-10 rounded border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 flex items-center justify-between px-2">
+    <div className="w-full h-10 rounded border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between px-2">
       <div className="space-y-1">
         <div className="w-8 h-1.5 rounded" style={{ backgroundColor: color }} />
         <div className="w-5 h-1 bg-gray-200 dark:bg-gray-600 rounded" />

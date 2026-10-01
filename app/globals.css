@@ -2,61 +2,175 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------
+   Tokens
+   `gray-*` in Tailwind reads these (see tailwind.config.ts). Light mode
+   is plain zinc. Dark mode shifts 600-950 one step darker so the page is
+   true black, panels are zinc-950, and cards are zinc-900.
+------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --gray-50: 250 250 250;
+  --gray-100: 244 244 245;
+  --gray-200: 228 228 231;
+  --gray-300: 212 212 216;
+  --gray-400: 161 161 170;
+  --gray-500: 113 113 122;
+  --gray-600: 82 82 91;
+  --gray-700: 63 63 70;
+  --gray-800: 39 39 42;
+  --gray-900: 24 24 27;
+  --gray-950: 9 9 11;
+
+  --background: #fafafa;
+  --foreground: #18181b;
+  --ring: 8 145 178; /* brand-500 */
+
+  color-scheme: light;
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --gray-500: 130 130 140; /* lifted so muted text clears 4.5:1 on cards */
+  --gray-600: 63 63 70;
+  --gray-700: 39 39 42;
+  --gray-800: 24 24 27;
+  --gray-900: 9 9 11;
+  --gray-950: 0 0 0;
+
+  --background: #000000;
+  --foreground: #fafafa;
+  --ring: 34 211 238; /* brand-400 */
+
+  color-scheme: dark;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
+/* Quote and invoice previews are paper: they stay light in both themes and
+   keep a plain document font (the PDF export is Helvetica) instead of the
+   app's UI fonts. */
+.paper {
+  --gray-500: 113 113 122;
+  --gray-600: 82 82 91;
+  --gray-700: 63 63 70;
+  --gray-800: 39 39 42;
+  --gray-900: 24 24 27;
+  --gray-950: 9 9 11;
+  color-scheme: light;
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
+.paper h1,
+.paper h2 {
+  font-family: inherit;
+  letter-spacing: normal;
+}
+
+/* The landing and auth pages are always dark, whatever the app theme is. */
+html:has([data-surface='marketing']) {
+  --background: #000000;
+  --foreground: #fafafa;
+  --ring: 34 211 238;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+    /* Prevent text size adjustment on mobile */
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2 {
+    font-family: var(--font-sora), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    color: #ffffff;
+    background: #0e7490;
+  }
+
+  /* Remove tap highlight on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Keyboard focus: one consistent ring everywhere */
+  :focus-visible {
+    outline: 2px solid rgb(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Form controls get a soft ring instead of the offset outline. Fields that
+     opt out with `outline-none` (the search palette, inline editors) are left alone. */
+  input:focus-visible:not(.outline-none),
+  textarea:focus-visible:not(.outline-none),
+  select:focus-visible:not(.outline-none) {
+    outline: none;
+    border-color: rgb(var(--ring));
+    box-shadow: 0 0 0 3px rgb(var(--ring) / 0.25);
+  }
+
+  input.outline-none:focus-visible,
+  textarea.outline-none:focus-visible,
+  select.outline-none:focus-visible {
+    outline: none;
+  }
+
+  input[type='checkbox']:focus-visible,
+  input[type='radio']:focus-visible,
+  input[type='range']:focus-visible,
+  input[type='color']:focus-visible,
+  input[type='file']:focus-visible {
+    outline: 2px solid rgb(var(--ring));
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 /* Better tap targets for mobile */
 @media (hover: none) and (pointer: coarse) {
   button,
   a,
-  [role="button"] {
+  [role='button'] {
     min-height: 44px;
+  }
+
+  /* Clerk lays out its own controls; forcing a height on them breaks the form */
+  [class*='cl-'] button,
+  [class*='cl-'] a,
+  [class*='cl-'] [role='button'] {
+    min-height: 0;
   }
 }
 
-/* Prevent text size adjustment on mobile */
-html {
-  -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-/* Remove tap highlight on mobile */
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Better focus visible for keyboard navigation */
-*:focus-visible {
-  outline: 2px solid #3B82F6;
-  outline-offset: 2px;
-}
-
-/* Optimize font rendering */
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Improve scrollbar appearance in dark mode */
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -67,20 +181,22 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: #d4d4d8;
   border-radius: 4px;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: #4b5563;
-}
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: #a1a1aa;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
+.dark ::-webkit-scrollbar-thumb,
+[data-surface='marketing'] ::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover,
+[data-surface='marketing'] ::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
 }
 
 /* Loading skeleton animation */
@@ -94,9 +210,14 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background: linear-gradient(90deg, #f4f4f5 25%, #e4e4e7 50%, #f4f4f5 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #18181b 25%, #27272a 50%, #18181b 75%);
+  background-size: 200% 100%;
 }
 
 /* Hide scrollbar but keep scrolling functionality */
@@ -114,27 +235,76 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-.dark .skeleton {
-  background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
-  background-size: 200% 100%;
-}
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-  
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
   /* Safe area padding for notched devices */
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }
-  
+
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
-  
+
   /* Touch-friendly spacing */
   .touch-spacing {
     padding: 0.75rem;
+  }
+
+  /* Blueprint grid: the fine ruled background behind the hero and section breaks */
+  .bg-blueprint {
+    background-image:
+      linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .bg-blueprint-fine {
+    background-image:
+      linear-gradient(rgb(34 211 238 / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(34 211 238 / 0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+
+  /* Fade the right edge of something that scrolls off-canvas */
+  .mask-fade-r {
+    -webkit-mask-image: linear-gradient(to right, #000 70%, transparent);
+    mask-image: linear-gradient(to right, #000 70%, transparent);
+  }
+
+  .mask-fade-b {
+    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+    mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  }
+}
+
+/* Scroll reveal for landing sections. Progressive enhancement: browsers
+   without scroll-driven animations (and anyone who prefers reduced motion)
+   simply get the content, already visible. */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 45%;
+    }
   }
 }

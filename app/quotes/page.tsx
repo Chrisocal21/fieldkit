@@ -1,5 +1,6 @@
 'use client'
 
+import { formatMoney } from '@/lib/format'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Quote, useQuoteStore } from '@/store/quoteStore'
@@ -69,7 +70,7 @@ export default function QuotesPage() {
     return (
       <EmptyState
         title="No quotes yet"
-        description="Create a quote directly — a job will be created automatically."
+        description="Create a quote and FieldKit sets up the job for you."
         action={{
           label: 'New Quote',
           onClick: () => setIsFormOpen(true),
@@ -204,7 +205,7 @@ export default function QuotesPage() {
             setSelectedJobId(null)
             setIsFormOpen(true)
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+          className="flex-shrink-0 whitespace-nowrap px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
         >
           New Quote
         </button>
@@ -233,7 +234,7 @@ export default function QuotesPage() {
       {validQuotes.length === 0 && legacyQuotes.length === 0 && (
         <EmptyState
           title="No quotes yet"
-          description="Create a quote directly — a job will be created automatically."
+          description="Create a quote and FieldKit sets up the job for you."
           action={{
             label: 'New Quote',
             onClick: () => setIsFormOpen(true),
@@ -244,7 +245,7 @@ export default function QuotesPage() {
       {validQuotes.length === 0 && legacyQuotes.length > 0 && (
         <EmptyState
           title="No active quotes"
-          description="Your old quotes are incompatible with the new Jobs-First architecture. Create new quotes directly."
+          description="Quotes live inside jobs now, so older standalone quotes don't show up here. Create a new one to get going."
           action={{
             label: 'New Quote',
             onClick: () => setIsFormOpen(true),
@@ -290,7 +291,7 @@ export default function QuotesPage() {
               </div>
 
               <p className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                ${total.toFixed(2)}
+                ${formatMoney(total)}
               </p>
 
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">

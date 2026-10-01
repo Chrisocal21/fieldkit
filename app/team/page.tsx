@@ -633,9 +633,11 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* Upgrade Modal */}
+      {/* Upgrade Modal — also gated on the live plan: on a hard refresh the first
+          render sees the default Free plan before the saved one loads, which used
+          to leave this open for people already on Professional. */}
       <UpgradeModal
-        isOpen={isUpgradeModalOpen}
+        isOpen={isUpgradeModalOpen && !hasTeamFeature}
         onClose={() => setIsUpgradeModalOpen(false)}
         feature="Team Management"
         requiredPlan="professional"

@@ -1,5 +1,6 @@
 'use client'
 
+import { formatMoney } from '@/lib/format'
 import { Quote } from '@/store/quoteStore'
 import StatusBadge from '@/components/shared/StatusBadge'
 
@@ -51,13 +52,13 @@ export function QuoteCard({ quote, onEdit, onDelete, onSend, deleteConfirm }: Qu
             {quote.lineItems.filter(i => i.type !== 'discount' && i.type !== 'deposit').length} item{regularItems.length !== 1 ? 's' : ''}
           </span>
           <span className="text-gray-600 dark:text-gray-400">
-            ${subtotal.toFixed(2)}
+            ${formatMoney(subtotal)}
           </span>
         </div>
         {discountAmt > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">Discount</span>
-            <span className="text-rose-600 dark:text-rose-400">-${discountAmt.toFixed(2)}</span>
+            <span className="text-rose-600 dark:text-rose-400">-${formatMoney(discountAmt)}</span>
           </div>
         )}
         {quote.taxRate > 0 && (
@@ -66,19 +67,19 @@ export function QuoteCard({ quote, onEdit, onDelete, onSend, deleteConfirm }: Qu
               Tax ({(quote.taxRate * 100).toFixed(0)}%)
             </span>
             <span className="text-gray-600 dark:text-gray-400">
-              ${tax.toFixed(2)}
+              ${formatMoney(tax)}
             </span>
           </div>
         )}
         {depositAmt > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">Deposit</span>
-            <span className="text-blue-600 dark:text-blue-400">-${depositAmt.toFixed(2)}</span>
+            <span className="text-blue-600 dark:text-blue-400">-${formatMoney(depositAmt)}</span>
           </div>
         )}
         <div className="flex justify-between text-base font-semibold pt-1 border-t border-gray-200 dark:border-gray-700">
           <span className="text-gray-900 dark:text-white">{depositAmt > 0 ? 'Amount Due' : 'Total'}</span>
-          <span className="text-gray-900 dark:text-white">${amountDue.toFixed(2)}</span>
+          <span className="text-gray-900 dark:text-white">${formatMoney(amountDue)}</span>
         </div>
       </div>
 

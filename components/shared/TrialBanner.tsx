@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useSubscriptionStore } from '@/store/subscriptionStore'
+import { planLabel } from '@/lib/plans'
 
 export default function TrialBanner() {
   const { currentPlan, trialEndsAt, isTrialActive, isLifetime, endTrial } = useSubscriptionStore()
@@ -41,7 +42,7 @@ export default function TrialBanner() {
   }
 
   const isExpiringSoon = daysRemaining <= 3
-  const planName = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)
+  const planName = planLabel(currentPlan)
 
   return (
     <div
@@ -54,7 +55,7 @@ export default function TrialBanner() {
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <svg
-            className={`w-5 h-5 ${
+            className={`w-5 h-5 flex-shrink-0 ${
               isExpiringSoon
                 ? 'text-amber-600 dark:text-amber-400'
                 : 'text-blue-600 dark:text-blue-400'
@@ -62,6 +63,7 @@ export default function TrialBanner() {
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -86,20 +88,18 @@ export default function TrialBanner() {
                 <span className="font-bold">{daysRemaining} days left</span> in your {planName} trial
               </>
             )}
-            {isExpiringSoon && (
-              <span className="ml-1">— Add payment to continue after trial</span>
-            )}
+            {isExpiringSoon && <span>. Pick a plan to keep everything unlocked.</span>}
           </p>
         </div>
         <Link
-          href="/sign-up"
-          className={`text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors ${
+          href="/plans"
+          className={`inline-flex flex-shrink-0 items-center justify-center text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors ${
             isExpiringSoon
               ? 'bg-amber-600 hover:bg-amber-700 text-white'
               : 'bg-blue-600 hover:bg-blue-700 text-white'
           }`}
         >
-          Upgrade Now
+          See plans
         </Link>
       </div>
     </div>

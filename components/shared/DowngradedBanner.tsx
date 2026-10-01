@@ -34,6 +34,7 @@ export default function DowngradedBanner() {
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -47,23 +48,23 @@ export default function DowngradedBanner() {
               Your trial has ended
             </p>
             <p className="text-sm text-rose-700 dark:text-rose-300 mt-0.5">
-              You've been moved to the Free plan. Your data is safe — upgrade anytime to regain access to invoices, team management, and unlimited jobs.
+              You&apos;re back on the Free plan. Your data is safe: upgrade anytime to get invoices, team management, and unlimited jobs back.
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/sign-up"
-            className="text-sm font-semibold px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white transition-colors whitespace-nowrap"
+            href="/plans"
+            className="inline-flex items-center justify-center text-sm font-semibold px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white transition-colors whitespace-nowrap"
           >
-            Upgrade Now
+            See plans
           </Link>
           <button
             onClick={() => setDismissed(true)}
-            className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors"
+            className="flex items-center justify-center p-1 rounded-md text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors"
             aria-label="Dismiss"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>

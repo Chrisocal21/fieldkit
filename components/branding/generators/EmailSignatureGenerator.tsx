@@ -164,7 +164,7 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
             </div>
             <button
               onClick={copyToClipboard}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg text-sm font-semibold transition-all flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all flex items-center gap-2"
             >
               {copied ? (
                 <>
@@ -345,7 +345,7 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
                   <h3 className="text-lg font-semibold text-white mb-4">Export Signature</h3>
                   <button
                     onClick={copyToClipboard}
-                    className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-semibold transition-all transform hover:scale-[1.02] active:scale-98 flex items-center justify-center gap-2"
+                    className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all transform hover:scale-[1.02] active:scale-98 flex items-center justify-center gap-2"
                   >
                     {copied ? (
                       <>
@@ -368,7 +368,9 @@ export default function EmailSignatureGenerator({ isOpen, onClose, isEmbedded = 
                 {/* Instructions */}
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6">
                   <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
-                    <span className="text-xl">📖</span>
+                    <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
                     How to Use
                   </h4>
                   <div className="text-sm text-slate-300 space-y-3">

@@ -1,5 +1,6 @@
 'use client'
 
+import { formatMoney } from '@/lib/format'
 import { useState, useRef, useEffect } from 'react'
 import { useBrandingStore, BrandingPreset, DocumentLayoutType } from '@/store/brandingStore'
 import QRCode from 'qrcode'
@@ -1009,7 +1010,7 @@ export default function BrandingPresetsModal({ isOpen, onClose }: BrandingPreset
                                   color: selectedPreset.colors.text,
                                 }}
                               >
-                                ${(item.quantity * item.unitPrice).toFixed(2)}
+                                ${formatMoney(item.quantity * item.unitPrice)}
                               </td>
                             </tr>
                           ))}

@@ -124,7 +124,7 @@ export default function QRCodeGeneratorModal({ isOpen, onClose }: QRCodeGenerato
             )}
 
             {!text && (
-              <div className="text-center py-8 text-sm text-gray-400 dark:text-gray-600">
+              <div className="text-center py-8 text-sm text-gray-400 dark:text-gray-500">
                 Enter text above to generate QR code
               </div>
             )}

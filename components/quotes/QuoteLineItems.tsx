@@ -1,5 +1,6 @@
 'use client'
 
+import { formatMoney } from '@/lib/format'
 import { useState } from 'react'
 import { nanoid } from 'nanoid'
 import { QuoteLineItem } from '@/store/quoteStore'
@@ -131,17 +132,17 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
                     return (
                       <>
                         {personal.length > 0 && (
-                          <optgroup label="🏠 Personal">
+                          <optgroup label="Personal">
                             {personal.map(i => <option key={i.id} value={i.id}>{i.name} ({i.currentStock} {i.unit})</option>)}
                           </optgroup>
                         )}
                         {project.length > 0 && (
-                          <optgroup label="📋 Project">
+                          <optgroup label="Project">
                             {project.map(i => <option key={i.id} value={i.id}>{i.name} ({i.currentStock} {i.unit}) — {i.storageLocationLabel}</option>)}
                           </optgroup>
                         )}
                         {property.length > 0 && (
-                          <optgroup label="📍 Property">
+                          <optgroup label="Property">
                             {property.map(i => <option key={i.id} value={i.id}>{i.name} ({i.currentStock} {i.unit}) — {i.storageLocationLabel}</option>)}
                           </optgroup>
                         )}
@@ -265,11 +266,11 @@ export default function QuoteLineItems({ items, onChange }: QuoteLineItemsProps)
             {/* Line total */}
             <div className="text-sm font-medium">
               {item.type === 'discount' ? (
-                <span className="text-amber-600 dark:text-amber-400">−${calculateLineTotal(item).toFixed(2)}</span>
+                <span className="text-amber-600 dark:text-amber-400">−${formatMoney(calculateLineTotal(item))}</span>
               ) : item.type === 'deposit' ? (
-                <span className="text-green-600 dark:text-green-400">−${calculateLineTotal(item).toFixed(2)}</span>
+                <span className="text-green-600 dark:text-green-400">−${formatMoney(calculateLineTotal(item))}</span>
               ) : (
-                <span className="text-gray-600 dark:text-gray-400">${calculateLineTotal(item).toFixed(2)}</span>
+                <span className="text-gray-600 dark:text-gray-400">${formatMoney(calculateLineTotal(item))}</span>
               )}
             </div>
           </div>

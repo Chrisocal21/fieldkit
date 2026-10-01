@@ -175,7 +175,7 @@ export default function ShortURLGeneratorModal({ isOpen, onClose }: ShortURLGene
             )}
 
             {urls.length === 0 && (
-              <div className="text-center py-8 text-sm text-gray-400 dark:text-gray-600">
+              <div className="text-center py-8 text-sm text-gray-400 dark:text-gray-500">
                 No short links created yet
               </div>
             )}

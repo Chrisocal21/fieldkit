@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import BrandIdentityEditor from './BrandIdentityEditor'
@@ -68,7 +68,7 @@ function ExportTab() {
   const preset = getDefaultPreset()
   const [copied, setCopied] = useState<string | null>(null)
 
-  const cssVars = `/* ${preset.name} â€” Brand CSS Variables */
+  const cssVars = `/* ${preset.name}: Brand CSS Variables */
 :root {
   --brand-primary:     ${preset.colors.primary};
   --brand-secondary:   ${preset.colors.secondary};
@@ -127,7 +127,7 @@ colors: {
       <div>
         <h3 className="text-xl font-semibold text-white mb-2">Export Design Tokens</h3>
         <p className="text-slate-400 text-sm">
-          Copy your brand tokens into any project â€” CSS, Tailwind, or JSON.
+          Copy your brand tokens into any project: CSS, Tailwind, or JSON.
         </p>
       </div>
 
@@ -243,7 +243,7 @@ export default function BrandingModal({ isOpen, onClose }: BrandingModalProps) {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20'
+                      ? 'bg-blue-600 text-white'
                       : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                   }`}
                 >
@@ -305,7 +305,7 @@ export default function BrandingModal({ isOpen, onClose }: BrandingModalProps) {
               </button>
               <button
                 onClick={onClose}
-                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105 active:scale-95"
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105 active:scale-95"
               >
                 Done
               </button>

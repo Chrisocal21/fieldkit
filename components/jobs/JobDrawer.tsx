@@ -77,7 +77,7 @@ export default function JobDrawer({ job, isOpen, onClose }: JobDrawerProps) {
       <div className="absolute inset-0 overflow-hidden">
         {/* Backdrop */}
         <div
-          className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"
           onClick={onClose}
         />
 

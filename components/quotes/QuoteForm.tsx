@@ -1,5 +1,6 @@
 'use client'
 
+import { formatMoney } from '@/lib/format'
 import { useState, useEffect, useRef } from 'react'
 import { nanoid } from 'nanoid'
 import { Quote, QuoteLineItem } from '@/store/quoteStore'
@@ -57,6 +58,10 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
   useEffect(() => { formDataRef.current = formData }, [formData])
   useEffect(() => { lineItemsRef.current = lineItems }, [lineItems])
 
+  // Snapshot of what was just loaded into the form — lets the autosave effect
+  // below skip writing anything back until the user actually changes a field.
+  const loadedSnapshotRef = useRef<string>('')
+
   const handleClientSelect = (clientId: string) => {
     const client = getClientById(clientId)
     if (client) {
@@ -74,9 +79,11 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
   // Reset form when modal opens or quote changes, then restore any saved draft
   useEffect(() => {
     if (isOpen) {
+      let nextFormData = formData
+      let nextLineItems = lineItems
       if (quote) {
         // Editing existing quote
-        setFormData({
+        nextFormData = {
           clientName: quote.clientName || '',
           clientEmail: quote.clientEmail || '',
           clientPhone: quote.clientPhone || '',
@@ -87,8 +94,10 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
             ? new Date(quote.expiryDate).toISOString().split('T')[0]
             : '',
           status: quote.status || 'Draft',
-        })
-        setLineItems(quote.lineItems || [])
+        }
+        nextLineItems = quote.lineItems || []
+        setFormData(nextFormData)
+        setLineItems(nextLineItems)
         // Pre-select client if the job has one
         setSelectedClientId(job?.clientId)
         setSiteAddress('')
@@ -124,6 +133,11 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
         setSiteAddress('')
       }
 
+      // Snapshot of the just-loaded (pre-draft-restore) values — the autosave
+      // effect below diffs against this so it only writes once the user
+      // actually changes something (a restored draft counts as a change).
+      loadedSnapshotRef.current = JSON.stringify({ formData: nextFormData, lineItems: nextLineItems })
+
       // Restore draft after defaults — overrides if the user had unsaved work
       try {
         const saved = localStorage.getItem(draftKey)
@@ -138,7 +152,34 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
         }
       } catch {}
     }
-  }, [isOpen, quote, job])
+    // Keyed on id, not object identity — background cloud sync replaces the
+    // jobs array (and every job/quote object in it) every ~30s, which would
+    // otherwise re-run this effect and reset the open form mid-edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, quote?.id, job?.id])
+
+  // Debounced autosave for an existing quote — commits edits straight to the
+  // real store (which flows on to the cloud via the background sync) so the
+  // form is never relying on a local-only draft to survive a sync tick.
+  useEffect(() => {
+    if (!isOpen || !quote || !jobId) return
+    if (JSON.stringify({ formData, lineItems }) === loadedSnapshotRef.current) return
+    const timer = setTimeout(() => {
+      updateJobQuote(jobId, quote.id, {
+        clientName: formData.clientName,
+        clientEmail: formData.clientEmail || undefined,
+        clientPhone: formData.clientPhone || undefined,
+        notes: formData.notes,
+        taxRate: formData.taxRate / 100,
+        roundingAdjustment: formData.roundingAdjustment,
+        expiryDate: formData.expiryDate
+          ? new Date(formData.expiryDate).getTime()
+          : undefined,
+        lineItems,
+      })
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [formData, lineItems, isOpen, quote?.id, jobId, updateJobQuote])
 
   // Debounced draft save — persists in-progress form to localStorage every 500 ms
   useEffect(() => {
@@ -258,7 +299,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
       <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"
           onClick={onClose}
         />
 
@@ -369,13 +410,13 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
                 <span className="font-medium text-gray-900 dark:text-white">
-                  ${subtotal.toFixed(2)}
+                  ${formatMoney(subtotal)}
                 </span>
               </div>
               {discountTotal > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-amber-600 dark:text-amber-400">Discount:</span>
-                  <span className="font-medium text-amber-600 dark:text-amber-400">−${discountTotal.toFixed(2)}</span>
+                  <span className="font-medium text-amber-600 dark:text-amber-400">−${formatMoney(discountTotal)}</span>
                 </div>
               )}
               <div className="flex justify-between text-sm items-center">
@@ -399,7 +440,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
                   <span className="text-gray-600 dark:text-gray-400">%</span>
                 </div>
                 <span className="font-medium text-gray-900 dark:text-white">
-                  ${tax.toFixed(2)}
+                  ${formatMoney(tax)}
                 </span>
               </div>
               {formData.roundingAdjustment > 0 && (
@@ -418,7 +459,7 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
                     </button>
                   </div>
                   <span className="font-medium text-gray-700 dark:text-gray-300">
-                    +${formData.roundingAdjustment.toFixed(2)}
+                    +${formatMoney(formData.roundingAdjustment)}
                   </span>
                 </div>
               )}
@@ -440,18 +481,18 @@ export default function QuoteForm({ jobId, quote, isOpen, onClose }: QuoteFormPr
                   )}
                 </div>
                 <span className="text-gray-900 dark:text-white">
-                  ${total.toFixed(2)}
+                  ${formatMoney(total)}
                 </span>
               </div>
               {depositTotal > 0 && (
                 <>
                   <div className="flex justify-between text-sm">
                     <span className="text-green-600 dark:text-green-400">Deposit received:</span>
-                    <span className="font-medium text-green-600 dark:text-green-400">−${depositTotal.toFixed(2)}</span>
+                    <span className="font-medium text-green-600 dark:text-green-400">−${formatMoney(depositTotal)}</span>
                   </div>
                   <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
                     <span className="text-gray-900 dark:text-white">Amount Due:</span>
-                    <span className="text-gray-900 dark:text-white">${amountDue.toFixed(2)}</span>
+                    <span className="text-gray-900 dark:text-white">${formatMoney(amountDue)}</span>
                   </div>
                 </>
               )}

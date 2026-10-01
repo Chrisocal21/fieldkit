@@ -1,5 +1,6 @@
 'use client'
 
+import { formatMoney } from '@/lib/format'
 import { useState } from 'react'
 import { useTimeEntryStore, TimeEntry } from '@/store/timeEntryStore'
 import { useTeamStore } from '@/store/teamStore'
@@ -109,7 +110,7 @@ export default function TimeLog({ jobId }: TimeLogProps) {
         <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
           <p className="text-sm text-green-600 dark:text-green-400 font-medium">Labor Cost</p>
           <p className="text-2xl font-bold text-green-700 dark:text-green-300 mt-1">
-            ${totalLaborCost.toFixed(2)}
+            ${formatMoney(totalLaborCost)}
           </p>
         </div>
       </div>
@@ -314,7 +315,7 @@ export default function TimeLog({ jobId }: TimeLogProps) {
                             {formatDuration(entry.duration)}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            ${((entry.duration / 60) * member.hourlyRate).toFixed(2)}
+                            ${formatMoney((entry.duration / 60) * member.hourlyRate)}
                           </p>
                         </div>
                         <button

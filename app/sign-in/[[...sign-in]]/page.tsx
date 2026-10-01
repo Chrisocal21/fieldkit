@@ -1,9 +1,15 @@
+import type { Metadata, Viewport } from 'next'
 import { SignIn } from '@clerk/nextjs'
+import AuthShell from '@/components/marketing/AuthShell'
+import { authAppearance } from '@/lib/clerkAppearance'
+
+export const metadata: Metadata = { title: 'Sign in' }
+export const viewport: Viewport = { themeColor: '#000000' }
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-      <SignIn />
-    </div>
+    <AuthShell title="Welcome back." subtitle="Your jobs are right where you left them.">
+      <SignIn appearance={authAppearance} />
+    </AuthShell>
   )
 }

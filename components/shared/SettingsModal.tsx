@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useSettingsStore, Theme, NotificationSettings } from '@/store/settingsStore'
 import { useBrandingStore } from '@/store/brandingStore'
 import { useSubscriptionStore, PLAN_LIMITS } from '@/store/subscriptionStore'
+import { PLAN_BY_TIER, formatPlanPrice, planLabel } from '@/lib/plans'
 import { syncWithCloud } from '@/lib/sync'
 import QRCodeGeneratorModal from './QRCodeGeneratorModal'
 import ShortURLGeneratorModal from './ShortURLGeneratorModal'
@@ -100,7 +101,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'appearanc
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
 
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
             <div className="flex items-center gap-2.5">
               <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -122,7 +123,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'appearanc
           <div className="flex flex-1 overflow-hidden min-h-0">
 
             {/* Left sidebar nav */}
-            <div className="w-10 sm:w-40 flex-shrink-0 border-r border-gray-200 dark:border-gray-800 flex flex-col py-3 gap-0.5 px-1 sm:px-2">
+            <div className="w-10 sm:w-40 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 flex flex-col py-3 gap-0.5 px-1 sm:px-2">
               {TAB_NAV.map(({ id, label, icon }) => (
                 <button
                   key={id}
@@ -139,7 +140,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'appearanc
               ))}
 
               {/* About — separated at bottom */}
-              <div className="mt-auto pt-2 border-t border-gray-100 dark:border-gray-800">
+              <div className="mt-auto pt-2 border-t border-gray-100 dark:border-gray-700">
                 <button
                   onClick={() => setActiveTab('about')}
                 className={`w-full flex items-center justify-center sm:justify-start gap-2.5 px-0 sm:px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-colors ${
@@ -285,7 +286,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'appearanc
                 <div className="space-y-5">
                   <TabHeading>Notifications</TabHeading>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Control which activity sends you alerts.</p>
-                  <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <div className="divide-y divide-gray-100 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     {([
                       { key: 'jobUpdates',    label: 'Job Updates',      desc: 'Status changes, new assignments' },
                       { key: 'quoteActivity', label: 'Quote Activity',   desc: 'Views, acceptances, declines' },
@@ -308,40 +309,22 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'appearanc
               {activeTab === 'subscription' && (() => {
                 const { currentPlan, trialEndsAt, isTrialActive } = useSubscriptionStore.getState()
                 const limits = PLAN_LIMITS[currentPlan]
-                const planName = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)
-                
+                const planName = planLabel(currentPlan)
+
                 let trialDaysLeft = 0
                 if (isTrialActive && trialEndsAt) {
                   trialDaysLeft = Math.ceil((trialEndsAt - Date.now()) / (1000 * 60 * 60 * 24))
                 }
 
-                const planPrices: Record<typeof currentPlan, string> = {
-                  free: '$0',
-                  starter: '$29',
-                  professional: '$79',
-                  enterprise: '$199',
-                }
-
-                const planColors: Record<typeof currentPlan, string> = {
-                  free: 'gray',
-                  starter: 'blue',
-                  professional: 'violet',
-                  enterprise: 'amber',
-                }
-
                 return (
                   <div className="space-y-5">
                     <TabHeading>Subscription & Plan</TabHeading>
-                    
+
                     {/* Current Plan Card */}
-                    <div className={`border-2 rounded-xl p-5 bg-gradient-to-br ${
-                      currentPlan === 'free' 
-                        ? 'border-gray-200 dark:border-gray-700 from-gray-50 to-white dark:from-gray-800 dark:to-gray-900'
-                        : currentPlan === 'starter'
-                        ? 'border-blue-200 dark:border-blue-800 from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900'
-                        : currentPlan === 'professional'
-                        ? 'border-violet-200 dark:border-violet-800 from-violet-50 to-white dark:from-violet-900/20 dark:to-gray-900'
-                        : 'border-amber-200 dark:border-amber-800 from-amber-50 to-white dark:from-amber-900/20 dark:to-gray-900'
+                    <div className={`border rounded-xl p-5 ${
+                      currentPlan === 'free'
+                        ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
+                        : 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20'
                     }`}>
                       <div className="flex items-start justify-between mb-4">
                         <div>
@@ -354,22 +337,25 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'appearanc
                             )}
                           </div>
                           <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {planPrices[currentPlan]}<span className="text-sm font-normal text-gray-500">/month</span>
+                            {formatPlanPrice(PLAN_BY_TIER[currentPlan])}<span className="text-sm font-normal text-gray-500">/month</span>
                           </p>
                         </div>
                         {currentPlan === 'free' && (
                           <button
                             onClick={() => setPromoModalOpen(true)}
-                            className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-sm font-medium rounded-lg transition-all"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium rounded-lg transition-colors"
                           >
-                            🎟️ Promo Code
+                            <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                            </svg>
+                            Promo Code
                           </button>
                         )}
                         {currentPlan !== 'enterprise' && currentPlan !== 'free' && (
                           <Link
-                            href="/sign-up"
+                            href="/plans"
                             onClick={onClose}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
                           >
                             Upgrade
                           </Link>
@@ -382,7 +368,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'appearanc
                             <span className="font-semibold">{trialDaysLeft} {trialDaysLeft === 1 ? 'day' : 'days'} left</span> in your trial
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            Add payment before {new Date(trialEndsAt).toLocaleDateString()} to continue
+                            Pick a plan before {new Date(trialEndsAt).toLocaleDateString()} to keep everything unlocked
                           </p>
                         </div>
                       )}
@@ -412,19 +398,19 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'appearanc
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-gray-600 dark:text-gray-400">Invoices</span>
                             <span className={`font-medium ${limits.hasInvoices ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
-                              {limits.hasInvoices ? '✓ Enabled' : '✗ Locked'}
+                              {limits.hasInvoices ? 'Enabled' : 'Locked'}
                             </span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-gray-600 dark:text-gray-400">Inventory</span>
                             <span className={`font-medium ${limits.hasInventory ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
-                              {limits.hasInventory ? '✓ Enabled' : '✗ Locked'}
+                              {limits.hasInventory ? 'Enabled' : 'Locked'}
                             </span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-gray-600 dark:text-gray-400">Time Tracking</span>
                             <span className={`font-medium ${limits.hasTimeTracking ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
-                              {limits.hasTimeTracking ? '✓ Enabled' : '✗ Locked'}
+                              {limits.hasTimeTracking ? 'Enabled' : 'Locked'}
                             </span>
                           </div>
                         </div>
@@ -437,20 +423,20 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'appearanc
                         <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Available Plans</p>
                         {(['starter', 'professional', 'enterprise'] as const).filter(p => p !== currentPlan).map((plan) => {
                           const planLimits = PLAN_LIMITS[plan]
-                          const name = plan.charAt(0).toUpperCase() + plan.slice(1)
+                          const name = planLabel(plan)
                           return (
                             <div key={plan} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
                               <div className="flex items-center justify-between mb-2">
                                 <div>
                                   <h4 className="font-semibold text-gray-900 dark:text-white">{name}</h4>
                                   <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                    {planPrices[plan]}<span className="text-sm font-normal text-gray-500">/month</span>
+                                    {formatPlanPrice(PLAN_BY_TIER[plan])}<span className="text-sm font-normal text-gray-500">/month</span>
                                   </p>
                                 </div>
                                 <Link
-                                  href="/sign-up"
+                                  href="/plans"
                                   onClick={onClose}
-                                  className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
+                                  className="inline-flex items-center justify-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
                                 >
                                   Select
                                 </Link>
@@ -486,7 +472,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'appearanc
               {activeTab === 'tools' && (
                 <div className="space-y-5">
                   <TabHeading>Tools</TabHeading>
-                  <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <div className="divide-y divide-gray-100 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <ToolRow
                       label="QR Code Generator"
                       description="Create a scannable code for any URL"
@@ -522,7 +508,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'appearanc
                 <div className="space-y-5">
                   <TabHeading>Data & Privacy</TabHeading>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Manage your local app data and preferences.</p>
-                  <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <div className="divide-y divide-gray-100 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     {/* Sync to Cloud */}
                     <button
                       onClick={async () => {

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { isPublicPath } from '@/lib/routes'
 import { useJobStore } from '@/store/jobStore'
 import { useClientStore } from '@/store/clientStore'
 import { useInventoryStore } from '@/store/inventoryStore'
@@ -24,6 +25,8 @@ const MAX_RECENT_SEARCHES = 5
 
 export default function GlobalSearch() {
   const router = useRouter()
+  // Search is an app feature: stay out of the landing page and shared quote links
+  const isPublic = isPublicPath(usePathname())
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<SearchResultType | 'all'>('all')
@@ -59,6 +62,8 @@ export default function GlobalSearch() {
 
   // Keyboard shortcut handler
   useEffect(() => {
+    if (isPublic) return
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd+K or Ctrl+K
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -74,7 +79,7 @@ export default function GlobalSearch() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen])
+  }, [isOpen, isPublic])
 
   // Simple fuzzy match function
   const fuzzyMatch = (str: string, pattern: string): boolean => {
@@ -263,7 +268,7 @@ export default function GlobalSearch() {
     }
   }
 
-  if (!isOpen) return null
+  if (!isOpen || isPublic) return null
 
   return (
     <>

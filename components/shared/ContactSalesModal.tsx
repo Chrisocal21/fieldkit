@@ -1,13 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
+import { PLANS } from '@/lib/plans'
 
 interface ContactSalesModalProps {
   isOpen: boolean
   onClose: () => void
   selectedPlan?: string
 }
+
+const paidPlans = PLANS.filter((plan) => plan.price > 0)
+
+const inputClass =
+  'w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-950 px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500'
+const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'
 
 export default function ContactSalesModal({ isOpen, onClose, selectedPlan }: ContactSalesModalProps) {
   const [formData, setFormData] = useState({
@@ -21,10 +28,37 @@ export default function ContactSalesModal({ isOpen, onClose, selectedPlan }: Con
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
 
+  // Pick up the plan the user clicked each time the modal opens
+  useEffect(() => {
+    if (isOpen && selectedPlan) {
+      setFormData((prev) => ({ ...prev, plan: selectedPlan }))
+    }
+  }, [isOpen, selectedPlan])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isOpen, onClose])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setStatus('sending')
     setErrorMessage('')
+
+    // The inbox takes a single message body, so the plan, company, and phone
+    // ride along at the bottom of it instead of getting dropped.
+    const details = [
+      formData.plan && `Plan: ${formData.plan}`,
+      formData.company && `Company: ${formData.company}`,
+      formData.phone && `Phone: ${formData.phone}`,
+    ].filter(Boolean)
+    const message = details.length
+      ? `${formData.message}\n\n---\n${details.join('\n')}`
+      : formData.message
 
     try {
       const response = await fetch('https://mail.probablyfinestudios.com/api/public/messages', {
@@ -37,7 +71,7 @@ export default function ContactSalesModal({ isOpen, onClose, selectedPlan }: Con
           source_site: 'fieldkit',
           name: formData.name,
           email: formData.email,
-          message: formData.message,
+          message,
           company: '',
         }),
       })
@@ -56,7 +90,7 @@ export default function ContactSalesModal({ isOpen, onClose, selectedPlan }: Con
       }, 2000)
     } catch (error) {
       setStatus('error')
-      setErrorMessage('Failed to send message. Please try again or email us directly.')
+      setErrorMessage("That didn't send. Give it a minute and try again.")
     }
   }
 
@@ -70,126 +104,130 @@ export default function ContactSalesModal({ isOpen, onClose, selectedPlan }: Con
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm text-left"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="contact-title"
+        className="relative w-full max-w-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="sticky top-0 flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-2xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-t-2xl">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Contact Sales</h2>
+            <h2 id="contact-title" className="text-xl font-bold text-gray-900 dark:text-white">Get in touch</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Tell us about your needs and we'll get back to you within 24 hours
+              Tell me what you need. It goes straight to my inbox, and I&apos;ll get back to you within 24 hours.
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Close"
+            className="flex items-center justify-center p-2 -m-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            <XMarkIcon className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-              Full Name *
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="John Smith"
-            />
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="name" className={labelClass}>Name</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                required
+                autoComplete="name"
+                value={formData.name}
+                onChange={handleChange}
+                className={inputClass}
+                placeholder="John Smith"
+              />
+            </div>
+            <div>
+              <label htmlFor="email" className={labelClass}>Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                autoComplete="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={inputClass}
+                placeholder="john@company.com"
+              />
+            </div>
           </div>
 
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-              Email Address *
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="john@company.com"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="company" className={labelClass}>
+                Company <span className="font-normal text-gray-400 dark:text-gray-500">(optional)</span>
+              </label>
+              <input
+                type="text"
+                id="company"
+                name="company"
+                autoComplete="organization"
+                value={formData.company}
+                onChange={handleChange}
+                className={inputClass}
+                placeholder="Acme Plumbing"
+              />
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                className="absolute left-[-9999px] opacity-0"
+                aria-hidden="true"
+              />
+            </div>
+            <div>
+              <label htmlFor="phone" className={labelClass}>
+                Phone <span className="font-normal text-gray-400 dark:text-gray-500">(optional)</span>
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                autoComplete="tel"
+                value={formData.phone}
+                onChange={handleChange}
+                className={inputClass}
+                placeholder="+1 (555) 123-4567"
+              />
+            </div>
           </div>
 
-          {/* Company */}
           <div>
-            <label htmlFor="company" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-              Company Name
-            </label>
-            <input
-              type="text"
-              id="company"
-              name="company"
-              value={formData.company}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Acme Inc."
-            />
-            <input
-              type="text"
-              name="website"
-              tabIndex={-1}
-              autoComplete="off"
-              className="absolute left-[-9999px] opacity-0"
-              aria-hidden="true"
-            />
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="+1 (555) 123-4567"
-            />
-          </div>
-
-          {/* Plan Interest */}
-          <div>
-            <label htmlFor="plan" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-              Interested Plan *
-            </label>
+            <label htmlFor="plan" className={labelClass}>Plan you&apos;re interested in</label>
             <select
               id="plan"
               name="plan"
-              required
               value={formData.plan}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={inputClass}
             >
-              <option value="">Select a plan</option>
-              <option value="Starter">Starter - $29/month</option>
-              <option value="Professional">Professional - $79/month</option>
-              <option value="Enterprise">Enterprise - $149/month</option>
-              <option value="Custom">Custom Enterprise Solution</option>
+              <option value="">Not sure yet</option>
+              {paidPlans.map((plan) => (
+                <option key={plan.tier} value={plan.name}>
+                  {plan.name} - ${plan.price}/month
+                </option>
+              ))}
+              <option value="Custom">Something custom</option>
             </select>
           </div>
 
-          {/* Message */}
           <div>
-            <label htmlFor="message" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-              Message *
-            </label>
+            <label htmlFor="message" className={labelClass}>Message</label>
             <textarea
               id="message"
               name="message"
@@ -197,42 +235,47 @@ export default function ContactSalesModal({ isOpen, onClose, selectedPlan }: Con
               rows={4}
               value={formData.message}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              placeholder="Tell us about your team size, current challenges, and what features you're most interested in..."
+              className={`${inputClass} resize-none`}
+              placeholder="How big is the crew, and which part of the job is a mess right now?"
             />
           </div>
 
           {/* Status Messages */}
-          {status === 'success' && (
-            <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-              <p className="text-sm text-green-800 dark:text-green-200">
-                ✓ Message sent successfully! We'll get back to you within 24 hours.
-              </p>
-            </div>
-          )}
+          <div role="status" aria-live="polite">
+            {status === 'success' && (
+              <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                <p className="text-sm text-green-800 dark:text-green-200">
+                  Sent. I&apos;ll get back to you within 24 hours.
+                </p>
+              </div>
+            )}
 
-          {status === 'error' && (
-            <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <p className="text-sm text-red-800 dark:text-red-200">{errorMessage}</p>
-            </div>
-          )}
+            {status === 'error' && (
+              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                <p className="text-sm text-red-800 dark:text-red-200">{errorMessage}</p>
+              </div>
+            )}
+          </div>
 
           {/* Submit Button */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2.5 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={status === 'sending'}
-              className="px-6 py-2.5 rounded-lg font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {status === 'sending' ? 'Sending...' : 'Send Message'}
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400">No auto-replies. A person reads this.</p>
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={status === 'sending' || status === 'success'}
+                className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-gray-700 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {status === 'sending' ? 'Sending...' : 'Send it'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

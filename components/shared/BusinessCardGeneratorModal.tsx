@@ -166,10 +166,12 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
 
   if (!isOpen) return null
 
+  // Literal colors: the card is an exported image, so it must not follow the
+  // app theme or the brand palette.
   const themeStyles = {
-    light: 'bg-white text-gray-900',
-    dark: 'bg-gray-900 text-white',
-    blue: 'bg-gradient-to-br from-blue-600 to-blue-800 text-white',
+    light: 'bg-white text-[#111827]',
+    dark: 'bg-[#111827] text-white',
+    blue: 'bg-gradient-to-br from-[#2563eb] to-[#1e40af] text-white',
   }
 
   return (
@@ -397,7 +399,7 @@ export default function BusinessCardGeneratorModal({ isOpen, onClose }: Business
                 <div className="flex items-center justify-center bg-gray-100 dark:bg-gray-900 rounded-lg p-8">
                   <div
                     ref={cardRef}
-                    className={`w-96 h-56 rounded-xl shadow-2xl p-8 flex justify-between ${themeStyles[theme]}`}
+                    className={`paper w-96 h-56 rounded-xl shadow-2xl p-8 flex justify-between ${themeStyles[theme]}`}
                   >
                     <div className="flex flex-col justify-between flex-1">
                       <div>

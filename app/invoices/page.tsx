@@ -1,5 +1,6 @@
 'use client'
 
+import { formatMoney } from '@/lib/format'
 import { useState, useEffect, useMemo } from 'react'
 import { useJobStore } from '@/store/jobStore'
 import { useClientStore } from '@/store/clientStore'
@@ -141,7 +142,7 @@ export default function InvoicesPage() {
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Invoices</h1>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
@@ -150,28 +151,28 @@ export default function InvoicesPage() {
         </div>
         <button
           onClick={() => setIsNewInvoiceOpen(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+          className="flex-shrink-0 whitespace-nowrap px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
         >
           New Invoice
         </button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Outstanding</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">${totalOutstanding.toFixed(2)}</p>
+          <p className="font-display text-2xl font-bold tracking-tight tabular-nums text-gray-900 dark:text-white mt-1">${formatMoney(totalOutstanding)}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{unpaidCount} unpaid invoice{unpaidCount !== 1 ? 's' : ''}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Collected</p>
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">${totalPaid.toFixed(2)}</p>
+          <p className="font-display text-2xl font-bold tracking-tight tabular-nums text-green-600 dark:text-green-400 mt-1">${formatMoney(totalPaid)}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{billableRows.filter(r => r.isPaid).length} paid</p>
         </div>
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Billed</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-            ${billableRows.reduce((s, r) => s + r.total, 0).toFixed(2)}
+          <p className="font-display text-2xl font-bold tracking-tight tabular-nums text-gray-900 dark:text-white mt-1">
+            ${formatMoney(billableRows.reduce((s, r) => s + r.total, 0))}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{billableRows.length} invoice{billableRows.length !== 1 ? 's' : ''} total</p>
         </div>
@@ -216,7 +217,7 @@ export default function InvoicesPage() {
           </p>
           <button
             onClick={() => setIsNewInvoiceOpen(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+            className="flex-shrink-0 whitespace-nowrap px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
           >
             New Invoice
           </button>
@@ -263,14 +264,14 @@ export default function InvoicesPage() {
                 {/* Amount */}
                 <div className="text-right">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">
-                    ${row.total.toFixed(2)}
+                    ${formatMoney(row.total)}
                   </p>
                 </div>
 
                 {/* Paid */}
                 <div className="text-right">
                   <p className={`text-sm font-semibold tabular-nums ${row.amountPaid > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
-                    ${row.amountPaid.toFixed(2)}
+                    ${formatMoney(row.amountPaid)}
                   </p>
                 </div>
 

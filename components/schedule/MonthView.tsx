@@ -186,7 +186,7 @@ export default function MonthView({ jobs, onJobClick }: MonthViewProps) {
                       ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center'
                       : isCurrentMonthDay
                       ? 'text-gray-900 dark:text-white'
-                      : 'text-gray-400 dark:text-gray-600'
+                      : 'text-gray-400 dark:text-gray-500'
                   }`}
                 >
                   {date.getDate()}

@@ -1,5 +1,6 @@
 'use client'
 
+import { formatMoney } from '@/lib/format'
 import { useState } from 'react'
 import { useMaterialCostStore, JobMaterial } from '@/store/materialCostStore'
 import { useInventoryStore } from '@/store/inventoryStore'
@@ -98,7 +99,7 @@ export default function MaterialsTab({ jobId }: MaterialsTabProps) {
           <div>
             <p className="text-sm text-gray-600 dark:text-gray-400">Total Material Cost</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              ${totalMaterialCost.toFixed(2)}
+              ${formatMoney(totalMaterialCost)}
             </p>
           </div>
           <div className="text-right">
@@ -121,7 +122,7 @@ export default function MaterialsTab({ jobId }: MaterialsTabProps) {
                   <div className="flex-1">
                     <p className="font-medium text-gray-900 dark:text-white text-sm">{item.description}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {item.quantity} × ${item.unitPrice.toFixed(2)} = ${(item.quantity * item.unitPrice).toFixed(2)}
+                      {item.quantity} × ${formatMoney(item.unitPrice)} = ${formatMoney(item.quantity * item.unitPrice)}
                     </p>
                   </div>
                   <span className="text-xs text-blue-600 dark:text-blue-400 ml-2">Quote #{item.quoteNumber}</span>
@@ -154,7 +155,7 @@ export default function MaterialsTab({ jobId }: MaterialsTabProps) {
                     {material.description}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {material.quantity} × ${material.unitCost.toFixed(2)} = ${material.totalCost.toFixed(2)}
+                    {material.quantity} × ${formatMoney(material.unitCost)} = ${formatMoney(material.totalCost)}
                   </p>
                   {material.notes && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -269,17 +270,17 @@ export default function MaterialsTab({ jobId }: MaterialsTabProps) {
                     return (
                       <>
                         {personal.length > 0 && (
-                          <optgroup label="🏠 Personal Storage">
+                          <optgroup label="Personal Storage">
                             {personal.map(i => <option key={i.id} value={i.id}>{i.name} ({i.currentStock} {i.unit})</option>)}
                           </optgroup>
                         )}
                         {project.length > 0 && (
-                          <optgroup label="📋 Project Storage">
+                          <optgroup label="Project Storage">
                             {project.map(i => <option key={i.id} value={i.id}>{i.name} ({i.currentStock} {i.unit}) — {i.storageLocationLabel}</option>)}
                           </optgroup>
                         )}
                         {property.length > 0 && (
-                          <optgroup label="📍 Property Storage">
+                          <optgroup label="Property Storage">
                             {property.map(i => <option key={i.id} value={i.id}>{i.name} ({i.currentStock} {i.unit}) — {i.storageLocationLabel}</option>)}
                           </optgroup>
                         )}

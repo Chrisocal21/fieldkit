@@ -1,5 +1,6 @@
 'use client'
 
+import { formatMoney } from '@/lib/format'
 import { useState } from 'react'
 import { useExpenseStore, Expense, ExpenseCategory } from '@/store/expenseStore'
 
@@ -132,7 +133,7 @@ export default function ExpensesTab({ jobId }: ExpensesTabProps) {
           <div>
             <p className="text-sm text-gray-600 dark:text-gray-400">Total Expenses</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              ${totalExpenses.toFixed(2)}
+              ${formatMoney(totalExpenses)}
             </p>
           </div>
           <div className="text-right">
@@ -186,7 +187,7 @@ export default function ExpensesTab({ jobId }: ExpensesTabProps) {
                 </div>
                 <div className="flex items-center gap-3 ml-3">
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                    ${expense.amount.toFixed(2)}
+                    ${formatMoney(expense.amount)}
                   </p>
                   <div className="flex items-center gap-2">
                     <button

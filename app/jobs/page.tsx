@@ -62,7 +62,7 @@ export default function JobsPage() {
       <>
         <EmptyState
           title="No jobs yet"
-          description="Create your first job to start tracking work orders and projects."
+          description="Add your first job and the board takes it from there."
           action={{
             label: 'Create Job',
             onClick: handleCreateClick,
@@ -90,7 +90,7 @@ export default function JobsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Jobs</h1>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
@@ -136,7 +136,7 @@ export default function JobsPage() {
           {/* Create Button */}
           <button
             onClick={handleCreateClick}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex flex-shrink-0 items-center whitespace-nowrap px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
           >
             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

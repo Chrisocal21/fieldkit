@@ -87,7 +87,7 @@ export default function CreateJobModal({ isOpen, onClose, initialClientId }: Cre
       <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"
           onClick={onClose}
         />
 
